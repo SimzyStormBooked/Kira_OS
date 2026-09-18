@@ -133,6 +133,11 @@ test("the password form clears credentials after a successful simulated response
   await page.goto("/settings");
   await page.getByRole("navigation", { name: "Settings sections" }).getByRole("link", { name: "Your password", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Your password", exact: true })).toBeInViewport();
+  await page.getByRole("button", { name: "Open workspace guide", exact: true }).click();
+  const guide = page.getByRole("dialog", { name: "Make yourself at home.", exact: true });
+  await expect(guide.getByRole("link", { name: /^Briefings/ })).toBeVisible();
+  expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);
+  await page.keyboard.press("Escape");
   // API authentication and updateUser are covered by account-password.test.ts.
   // This response is deliberately simulated; no account password changes here.
   await page.route("**/api/account/password", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ changed: true }) }));
