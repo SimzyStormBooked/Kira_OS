@@ -5,6 +5,7 @@ import {
   WorkspaceAccessError,
 } from "@/lib/auth/session";
 import { assertSameOrigin } from "@/lib/auth/security";
+import { getWorkspaceRole } from "@/lib/auth/workspace-role";
 import {
   createConnectedRepository,
   ConnectedRepositoryError,
@@ -85,12 +86,13 @@ function failure(error: unknown) {
 export async function GET() {
   try {
     const session = await requireWorkspaceSession();
+    const role = await getWorkspaceRole(session);
     return NextResponse.json(
       await createConnectedRepository(
         session.supabase,
         session.authorId,
       ).loadWorkspace(),
-      { headers },
+      { headers: { ...headers, "X-Kira-Workspace-Role": role } },
     );
   } catch (error) {
     return failure(error);
@@ -100,6 +102,8 @@ export async function PATCH(request: Request) {
   try {
     assertSameOrigin(request);
     const session = await requireWorkspaceSession();
+    const role = await getWorkspaceRole(session);
+    if (role === "viewer") throw new WorkspaceAccessError(403, "forbidden", "You have viewer access. An owner or editor can save changes.");
     // Bound the actual stream; do not trust Content-Length from a caller.
     const reader = request.body?.getReader();
     if (!reader)
@@ -137,7 +141,7 @@ export async function PATCH(request: Request) {
             : input.action === "create"
               ? repo.createManualReview(input.title, input.draft)
               : repo.restoreRecommendations());
-    return NextResponse.json(workspace, { headers });
+    return NextResponse.json(workspace, { headers: { ...headers, "X-Kira-Workspace-Role": role } });
   } catch (error) {
     return failure(error);
   }

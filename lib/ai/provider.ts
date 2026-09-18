@@ -4,6 +4,16 @@ import type { AgentFinding, AgentRecommendation } from "@/types/domain";
 import { recommendationSchema } from "@/types/domain";
 import { validateFinding } from "@/lib/knowledge/provenance";
 import type { ModelConfig } from "./models";
+import { assertStudioPrompt, studioRequestSchema, type StudioRequest } from "./studio-contract";
+import { generateStudioReply } from "./studio-provider";
+
+/** On-demand thinking uses the same creative-policy boundary as other providers. */
+export async function runStudioProvider(input: StudioRequest) {
+  assertCapability("ALLOW_MARKETING_ANALYSIS");
+  const request = studioRequestSchema.parse(input);
+  assertStudioPrompt(request.prompt);
+  return generateStudioReply(request);
+}
 export interface IntelligenceProvider {
   readonly config: ModelConfig;
   synthesize(

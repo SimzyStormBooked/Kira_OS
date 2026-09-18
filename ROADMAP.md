@@ -4,13 +4,21 @@
 
 Responsive author workspace, sourced starter catalog, deterministic demo Raven, provenance, approval/edit/reject/teaching workflows, browser-local demo persistence/export/reset, creative firewall, database schema, and automated checks. Future modules are transparent previews.
 
-## Connected foundation — implemented, hosted verification pending
+## Connected foundation — hosted core verified
 
 Existing-account Supabase email/password auth, server-side sessions, owner/editor/viewer access, request-local workspace provider, private Mission Control, and authenticated shared briefs/decisions/lessons. SQL RPCs enforce expected versions and preserve source evidence; triggers retain actor/version audit events. Manual business briefs make the workspace useful before live intelligence exists.
 
-Launch work: accept the Supabase integration terms in Vercel; provision the dedicated resource in `storm-booked/kira-os`; apply migrations and production bootstrap; create an email-confirmed administrator/owner; verify deployed sign-in, save/reload across browsers, and sign-out. Explicit connected mode must fail closed until setup succeeds. See [SETUP.md](SETUP.md).
+The dedicated Supabase resource is provisioned and the sourced bootstrap is loaded. Michael’s confirmed owner account has passed hosted sign-in, a real brief save/reload, a separate-browser read, and sign-out. Public signup is disabled; connected mode fails closed. Cassie’s own confirmed account and chosen membership remain an onboarding step. See [SETUP.md](SETUP.md).
 
-No live models, autonomous specialists, publishing, outreach sending, spending, or learned feedback retrieval are enabled.
+The current implementation adds optional guidance, inspiration, a local Learn & Create blueprint workshop, owner-managed access, password changes, saved shortcuts, and a NotebookLM copy bridge. Final deployment checks for this latest slice are in progress.
+
+## Current activation work — on-demand thinking and authorized connections
+
+- Ask Raven’s Gateway adapter, private history, strict structured output, creative policy, recording capability, and daily request limits are implemented. Gateway currently has zero credits; the account must finish verification/funding before a live model check and enablement. There is no successful live generation to claim yet.
+- Meta OAuth/account-verification/disconnection code is implemented. App credentials, allowed callbacks, provider permissions, and real consent verification remain. Saved links work independently and do not sync accounts.
+- Verify owner/editor/viewer behavior, password change, and the latest migrations on the final deployment before completing the handoff.
+
+No autonomous specialists, publishing, outreach sending, scheduled execution, or learned-feedback retrieval are enabled. Agent blueprints remain planning documents. Only a deliberately submitted, enabled AI request consumes model credits.
 
 ## Phase 2 — Vault + Knowledge Graph (next product slice)
 
@@ -27,7 +35,7 @@ Ingest permitted review exports. Separate quotations, sentiment, themes, and inf
 
 ## Phase 4 — Social Intelligence
 
-Connect authorized account history and measured metrics. Define comparable windows, identify missing data, and analyze approved assets. Preserve manual snapshot lineage.
+Build on verified Meta authorization to ingest permitted account history and measured metrics. Define comparable windows, identify missing data, and analyze approved assets. Preserve manual snapshot lineage; authorization alone does not establish a data feed.
 
 ## Phase 5 — Discoverability
 

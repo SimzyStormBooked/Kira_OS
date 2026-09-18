@@ -1,48 +1,49 @@
 # KIRA OS verification
 
-Verified locally on 2026-09-17 using Node 24.16, Next.js 16.3.5, React 19.3 and Chromium.
+Recorded on 2026-09-17. The core private workspace is live at [KIRA OS](https://kira-os-dusky.vercel.app), backed by dedicated Supabase project `obusnqlwuoavwtmryiik`. Latest local work includes Learn & Create, access/password controls, persisted Ask Raven, saved links, and gated Meta authorization.
+
+## Hosted core workflow — verified
+
+Michael’s real email-confirmed administrator account signed in through the deployed app. A real business brief was saved in Supabase, survived reload, appeared in a separate browser session, and remained protected after sign-out. The browser reported no page errors during this workflow. The database contains eight sourced books and zero demo intelligence; public signup is disabled.
+
+The Vercel runtime uses publishable/anon Supabase credentials and caller sessions. Seven privileged integration-injected secrets, including service-role/secret credentials and privileged database connection values, were removed from the runtime. No service-role key is required by the application.
+
+These checks establish real hosted storage and authentication. They do not establish a working live AI model or a connected social account.
+
+The Studio, access, and manual-links migrations have since been applied to the hosted database, and the private AI recording key/hash has been provisioned. The Meta migration, encryption key/capability hash, and the forward-only Studio validation migration are also applied. No Meta account is connected.
+
+## Latest local checks
 
 | Check | Result |
 | --- | --- |
-| TypeScript and ESLint | PASS, no warnings |
-| Unit, API, auth, setup, inspiration and embedded database tests | PASS, 160 tests across 10 suites |
-| Production build | PASS |
-| Demo browser suite | PASS, 20 desktop/mobile cases |
-| Connected browser suite | PASS, 16 desktop/mobile cases against a local simulated Supabase service |
-| Automated accessibility | PASS on demo primary pages, private login, connected home and optional Guide |
-| Production dependency audit | Zero reported vulnerabilities |
-| Deployment upload inspection | Environment files and test recordings excluded |
-| Vercel production build | READY |
-| Public hosted access check | PASS: home redirects to login; setup screen loads; private API returns 503 while unconfigured; no private shell or shared caching |
+| Full `npm run check` | PASS: TypeScript, ESLint, 336 unit/API/database tests across 24 files, production build |
+| Demo browser workflows | PASS: 20 tests on desktop and mobile |
+| Connected browser workflows | PASS: 34 desktop/mobile tests against isolated simulated Supabase, including links, Studio setup, learning, access, password, and permission recovery |
+| Studio boundary tests | PASS: same-origin/body limits, roles, pending-before-model ordering, idempotency, rate limits, recorded failure, and persistence-only retry |
+| Studio SQL controls | PASS: tenant RLS, viewer denial, private recording capability, direct-write rejection, immutable final results, strict JSON/null checks, and source-excerpt checks |
+| AI provider requests during local tests | Mocked; no live model calls made |
+| Latest Meta regressions and integrated Connections/Studio browser checks | PASS: authorization replay/revocation/scope checks and Connections/Studio desktop/mobile flows |
 
-## Verified private workflow
+All 54 browser tests passed across the demo and connected suites. Tests use Node 24.16, Next.js 16.3.5, React 19.3, Chromium desktop, and an emulated mobile viewport. Physical Safari has not been verified.
 
-The production Next app exercised its normal Supabase SDK, session, repository and API paths against an isolated loopback service. Sign-in rejects invalid credentials and nonmembers. An authorized user can create a manual business brief, edit it, attach guidance, approve it, reload, export and sign out. Private pages then require sign-in. Cookies are HttpOnly with SameSite=Lax, responses disallow shared caching, and private state is absent from localStorage. Both desktop and mobile views fit the viewport and render without reported page errors.
+The simulated Supabase service is only browser-test infrastructure and is never imported by the application. PGlite separately executes actual SQL migrations with pgvector and emulated Auth primitives. It checks RLS, role isolation, provenance, expected versions, immutable decisions, and audit events; it does not replace a hosted provider test.
 
-The simulated service is only browser-test infrastructure; it is never imported by the application. It proves browser-to-API wiring, not hosted Supabase availability or security. PGlite independently executes all three SQL migrations with real pgvector, RLS, role isolation, tenant foreign keys, source provenance, optimistic versions, immutable final decisions and audit history. These tests also check direct table updates cannot rewrite an approval's original evidence or approve a changed draft without a separate review.
+## Learning and first use
 
-## Verified demo workflow
+The curated idea shelf changes only on user input. It opens an editable brief without saving one. Literary quotes link to source texts and retain context. Optional guidance can be hidden/reopened, used with a keyboard, and dismissed with Escape.
 
-Demo dashboard data stays labeled. Prepare, edit, teach, approve/reject, dismiss, restore, export and reload work. Raven refresh crosses the server provider boundary and returns only sourced demo output. Catalog search, filters, fourteen detail sections, global search, mobile navigation and unknown-route handling work. Unknown book details remain unverified.
+Unfinished desk text survives internal navigation without entering localStorage, API writes, or review exports. Replacing existing words requires a choice. A delayed save clears only the submitted scratchpad revision. Learn & Create assembles a local blueprint from editable recipe fields, and saves only through its explicit desk action. Viewers can learn, copy, and download while server write permission remains closed.
 
-## Verified first-use experience
+## Provider activation still pending
 
-Three agents reviewed the first-use flow, private draft boundaries, and browser behavior. The idea shelf stays still until a person changes it, supports keyboard controls and category filters, and opens an editable brief without writing a record. Quotes link to the original public-domain text and include excerpt context. Optional guidance can be hidden, reopened, navigated with a keyboard and dismissed with Escape.
+Ask Raven’s runtime adapter is implemented but disabled. Gateway currently reports zero credits; Vercel asks the account owner to complete its card-verification step to unlock the displayed free allowance. The live probe returned HTTP 403. No successful live model output, cost deduction, or hosted generation completion has been verified. Keep `KIRA_AI_ENABLED=false` until funding, private recording configuration, and a controlled live test succeed.
 
-Unfinished text survives internal navigation without entering localStorage, API writes or exports. Selecting a different idea asks before replacing existing words. Saving, reopening the same idea, and a deliberately delayed save while choosing another idea all pass on desktop and mobile. The first brief is saved, and the second remains unsaved for review. Desktop home, mobile home and the inspiration dialog were visually inspected using the local simulated service.
+Meta app credentials are missing. OAuth, encrypted credential storage, account verification, and disconnection code still require actual provider configuration and consent testing. Manual saved links and the NotebookLM copy bridge are separate from authorization or synchronization. Private uploads, embeddings, social metrics ingestion, and external publishing remain unimplemented.
 
-## Issues found and resolved
+The latest application/migration slice needs its final integrated deployment verification after the local checks complete. The GitHub Actions template remains inactive because the connected GitHub authorization lacks workflow scope; remote CI has not run.
 
-- Next normalizes loopback Request URLs to localhost. Same-origin validation now uses the configured canonical origin or a validated actual Host, without trusting forwarded-host input; logout redirects preserve the current origin.
-- Pending approval evidence could previously be changed by direct table updates. Migration 003 makes original evidence and review context immutable and separates draft edits from approval.
-- Expired or revoked sessions now clear private client state and return to sign-in after an authorization failure.
-- Deployment inspection found local browser recordings among upload candidates. `.vercelignore` now excludes them and environment files.
-- A saved inspiration starter could not be reused in the same mounted form. The consumed-idea guard now resets when its query changes.
-- A slow save could clear a newer unfinished idea. Replacement is disabled while saving, and completion clears only the submitted scratchpad revision.
-- Closing the inspiration dialog during navigation returned keyboard focus to its trigger. Idea navigation now preserves focus in the destination form; normal dismissal still returns to the trigger.
+## Hosted security advisor
 
-## Hosted verification remains pending
+The latest Supabase advisor result reports zero errors. Its warning is **Leaked Password Protection Disabled**: Supabase exposes that feature on the Pro plan, and this workspace currently uses Free without a purchased upgrade. Current-password verification and the application’s password-length rules remain active, but they are not a breached-password database check. See [Supabase password security](https://supabase.com/docs/guides/auth/password-security).
 
-The Vercel production deployment is ready at https://kira-os-dusky.vercel.app. Supabase provisioning requires marketplace terms acceptance. No hosted Supabase database, administrator or real cross-device save has been verified. A deployed setup screen is not a working private database. Finish provisioning, apply migrations and the non-demo bootstrap, assign the confirmed administrator, and test a real save/reload and sign-out before inviting Cassie.
-
-Live AI providers, social APIs, private document ingestion and external publishing remain unconnected. Browser coverage uses Chromium desktop and an emulated mobile viewport, not physical Safari. The GitHub Actions template remains inactive because the current GitHub OAuth connection lacks workflow scope; remote CI has not run.
+The advisor also reports five informational RLS-with-no-policy findings on `private.workspace_generation_config`, `private.meta_connector_config`, `private.meta_credentials`, `private.meta_oauth_states`, and `private.meta_revocations`. This is intentional: clients must not read or change these server-only records. Administrative provisioning and narrowly guarded private functions handle them; no client policies were added.

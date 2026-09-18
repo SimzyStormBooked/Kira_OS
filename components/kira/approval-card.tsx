@@ -29,7 +29,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
   const [editVersion, setEditVersion] = useState(approval.version);
   const [lesson, setLesson] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
-  const { ready, feedback, mode, busy } = useWorkspace();
+  const { ready, feedback, mode, busy, canEdit, roleError } = useWorkspace();
   const { decideApproval, showError, teachRaven } = useWorkspace();
   const lessons = feedback.filter((f) => f.approval_request_id === approval.id);
   async function decide(type: "approve" | "reject") {
@@ -78,13 +78,13 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
       <div className="approval-actions">
         {approval.status === "pending" ? (
           <>
-            <Button disabled={!ready || busy} onClick={() => decide("approve")}>
+            <Button disabled={!ready || busy || !canEdit} onClick={() => decide("approve")}>
               <Check size={15} />
               Approve
             </Button>
             <Button
               variant="outline"
-              disabled={!ready || busy}
+              disabled={!ready || busy || !canEdit}
               onClick={() => {
                 setDraft(approval.draft);
                 setEditVersion(approval.version);
@@ -97,7 +97,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
             </Button>
             <Button
               variant="ghost"
-              disabled={!ready || busy}
+              disabled={!ready || busy || !canEdit}
               onClick={() => decide("reject")}
             >
               <X size={15} />
@@ -115,7 +115,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
         <Button
           variant="outline"
           className="teach-button"
-          disabled={!ready || busy}
+          disabled={!ready || busy || !canEdit}
           onClick={() => {
             setFormError(null);
             setModal("teach");
@@ -126,6 +126,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
         </Button>
         <EvidenceDrawer evidence={approval.evidence} label="Evidence" />
       </div>
+      {!canEdit && <p className="quiet-note">{roleError ? "Decisions and lessons are paused until your permissions can be checked. You can still read this brief and its evidence." : "Viewer access · You can read this brief and its evidence. An owner or editor can record decisions and lessons."}</p>}
       {lessons.length > 0 && (
         <div className="saved-lessons">
           <span className="eyebrow">
@@ -171,6 +172,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
               : "What should Raven remember?"}
           </label>
           <Textarea
+            readOnly={!canEdit}
             id={`approval-input-${approval.id}`}
             rows={modal === "edit" ? 12 : 6}
             value={modal === "edit" ? draft : lesson}
@@ -192,7 +194,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
               Cancel
             </Button>
             <Button
-              disabled={busy || !(modal === "edit" ? draft : lesson).trim()}
+              disabled={busy || !canEdit || !(modal === "edit" ? draft : lesson).trim()}
               onClick={save}
             >
               {modal === "edit" ? "Save draft" : "Save lesson"}

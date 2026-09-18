@@ -10,6 +10,7 @@ import {
   requireWorkspaceSession,
 } from "@/lib/auth/session";
 import { createConnectedRepository } from "@/lib/db/connected-repository";
+import { getWorkspaceRole, type WorkspaceRole } from "@/lib/auth/workspace-role";
 import "./globals.css";
 export const metadata: Metadata = {
   title: { default: "Mission Control · KIRA OS", template: "%s · KIRA OS" },
@@ -39,12 +40,15 @@ export default async function RootLayout({
   else if (session.authorization !== "authorized") redirect("/login");
   else {
     let workspace: WorkspaceState | null = null;
+    let workspaceRole: WorkspaceRole = "viewer";
     try {
       const auth = await requireWorkspaceSession();
-      workspace = await createConnectedRepository(
-        auth.supabase,
-        auth.authorId,
-      ).loadWorkspace();
+      const [role, loaded] = await Promise.all([
+        getWorkspaceRole(auth),
+        createConnectedRepository(auth.supabase, auth.authorId).loadWorkspace(),
+      ]);
+      workspaceRole = role;
+      workspace = loaded;
     } catch {
       /* Fail closed, without rendering private child data. */
     }
@@ -53,6 +57,7 @@ export default async function RootLayout({
         mode="connected"
         initialWorkspace={workspace}
         viewerEmail={session.user?.email}
+        role={workspaceRole}
       >
         <AppShell
           dateKey={new Date().toLocaleDateString("en-CA", {

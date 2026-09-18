@@ -1,4 +1,6 @@
 "use client";
+import Link from "next/link";
+import { PasswordSettings } from "./password-settings";
 import { ContextHelp } from "./context-help";
 import { useState } from "react";
 import {
@@ -87,26 +89,30 @@ export function SettingsPage() {
               <h2>Connections</h2>
               <Unplug size={19} />
             </div>
-            {[
-              "Supabase · Authenticated storage",
-              "Instagram · Social intelligence",
-              "AI provider · Live synthesis",
-            ].map((c) => (
-              <div className="connection-row" key={c}>
-                <span>{c}</span>
+              <div className="connection-row">
+                <span>Private workspace storage</span>
                 <span className="status-pill">
-                  {c.startsWith("Supabase") && mode === "connected"
+                  {mode === "connected"
                     ? "CONNECTED"
                     : "NOT CONNECTED"}
                 </span>
               </div>
-            ))}
             <p className="quiet-note">
               {mode === "demo"
                 ? "Demo mode stores decisions in this browser. Follow SETUP.md to activate a private workspace."
-                : `Signed in as ${viewerEmail}. Decisions and lessons are shared securely across your workspace. Live intelligence still needs source and provider connections.`}
+                : `Signed in as ${viewerEmail}. Decisions and lessons are saved securely in your workspace.`}
             </p>
+            <div className="settings-actions">
+              <Button asChild variant="outline"><Link href="/connections">Manage social connections</Link></Button>
+              <Button asChild variant="ghost"><Link href="/studio">Check Ask Raven</Link></Button>
+            </div>
           </Card>
+          <Card className="settings-card">
+            <div className="section-heading"><h2>A space you choose to share</h2><ShieldCheck size={19} /></div>
+            <p>Give a collaborator a clear role: viewing, editing, or reviewing decisions. Your workspace owner controls access.</p>
+            <div className="settings-actions"><Button asChild variant="outline"><Link href="/access">Manage workspace access</Link></Button></div>
+          </Card>
+          {mode === "connected" && <PasswordSettings />}
           <Card className="settings-card">
             <div className="section-heading">
               <h2>
@@ -117,7 +123,7 @@ export function SettingsPage() {
             <p>
               {mode === "demo"
                 ? "Approvals, edits, feedback, and set-aside moves are saved in this browser. Export them before switching devices or clearing site data."
-                : "Your decisions and lessons are stored in Supabase. Export a copy of your workspace whenever you need it."}
+                : "Download your saved briefs, decisions, source evidence, and lessons. Ask Raven answers and account connections are separate and are not included in this file."}
             </p>
             <div className="settings-actions">
               <Button
@@ -132,7 +138,7 @@ export function SettingsPage() {
                 }}
               >
                 <Download size={14} />
-                Export workspace
+                Export briefs & lessons
               </Button>
               {mode === "demo" && (
                 <Button

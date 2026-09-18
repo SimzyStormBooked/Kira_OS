@@ -9,6 +9,8 @@ vi.mock("@/lib/db/connected-repository", async (importOriginal) => ({
   createConnectedRepository: vi.fn(),
 }));
 vi.mock("@/lib/ai/provider", () => ({ runProvider: vi.fn() }));
+vi.mock("@/lib/auth/workspace-role", () => ({ getWorkspaceRole: vi.fn() }));
+import { getWorkspaceRole } from "@/lib/auth/workspace-role";
 import { requireWorkspaceSession, WorkspaceAccessError } from "@/lib/auth/session";
 import { createConnectedRepository, ConnectedRepositoryError } from "@/lib/db/connected-repository";
 import { runProvider } from "@/lib/ai/provider";
@@ -41,6 +43,7 @@ describe("Private workspace API boundary", () => {
   beforeEach(() => {
     vi.stubEnv("KIRA_WORKSPACE_MODE", "connected");
     vi.mocked(requireWorkspaceSession).mockResolvedValue(access);
+    vi.mocked(getWorkspaceRole).mockResolvedValue("owner");
     vi.mocked(createConnectedRepository).mockReturnValue(repo);
     Object.values(repo).forEach((method) => method.mockResolvedValue(workspace));
   });
@@ -51,8 +54,18 @@ describe("Private workspace API boundary", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(workspace);
     expect(response.headers.get("cache-control")).toMatch(/private.*no-store/);
+    expect(response.headers.get("x-kira-workspace-role")).toBe("owner");
     expect(createConnectedRepository).toHaveBeenCalledWith(supabase, authorId);
     expect(repo.loadWorkspace).toHaveBeenCalledOnce();
+  });
+
+  it("reports a viewer role for reads but refuses writes before repository mutation", async () => {
+    vi.mocked(getWorkspaceRole).mockResolvedValue("viewer");
+    const response = await GET();
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-kira-workspace-role")).toBe("viewer");
+    expect((await PATCH(patch({ action: "create", title: "Viewer draft", draft: "No write permission" }))).status).toBe(403);
+    expect(repo.createManualReview).not.toHaveBeenCalled();
   });
 
   it.each([

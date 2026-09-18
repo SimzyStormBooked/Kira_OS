@@ -4,7 +4,7 @@
 
 KIRA OS is a private author-business workspace for Kira Stanley. It brings her catalog, business briefs, decisions, and lessons together while preserving her creative voice. It does not generate novels, manuscripts, chapters, scenes, or fiction.
 
-**Start with [SETUP.md](SETUP.md) to connect Vercel and Supabase.** Connected functionality is implemented; hosted setup and end-to-end verification are still required. Vercel project `storm-booked/kira-os` is deployed at [KIRA OS](https://kira-os-dusky.vercel.app), with access closed until setup is complete. The next setup step is accepting Supabase's integration terms in Vercel, after which the helper can provision the dedicated resource without a separate Supabase CLI login. No Supabase resource has been created yet. See [VERIFICATION.md](VERIFICATION.md) for checked results and remaining deployment work.
+**The private workspace is online at [KIRA OS](https://kira-os-dusky.vercel.app).** Vercel project `storm-booked/kira-os` uses dedicated Supabase project `obusnqlwuoavwtmryiik`. Michael’s confirmed administrator account has passed real hosted sign-in, brief save/reload, a separate-browser check, and sign-out. The database contains eight sourced books and no demo intelligence. [SETUP.md](SETUP.md) covers Cassie’s account and optional connections; [VERIFICATION.md](VERIFICATION.md) distinguishes hosted checks from the latest local feature work.
 
 ## Two explicit modes
 
@@ -13,7 +13,7 @@ KIRA OS is a private author-business workspace for Kira Stanley. It brings her c
 | `demo` (default) | Explore without credentials. Synthetic intelligence is labeled DEMO. Decisions and feedback stay in this browser. |
 | `connected` | Existing Supabase users sign in with email/password. Authorized owners, editors, and viewers access the configured author workspace. Briefs, decisions, and feedback persist in Supabase. Missing configuration or failed authorization closes private access. |
 
-Connected mode never substitutes demo data after a connection failure. Its home shows sourced catalog counts and actual workspace records. The Raven has no live model yet; demo refresh is unavailable in connected mode.
+Connected mode never substitutes demo data after a connection failure. Its home shows sourced catalog counts and actual workspace records. Ask Raven has a real on-demand model adapter, but live generation remains disabled pending AI Gateway funding and a successful hosted check. Demo Raven refresh is unavailable in connected mode.
 
 ## What works
 
@@ -22,12 +22,18 @@ Connected mode never substitutes demo data after a connection failure. Its home 
 - A curated idea shelf with manual category/previous/next controls, plus attributed public-domain literary quotes linked to their original texts.
 - Cassandra’s Desk: create a manual business brief; edit, approve, or reject pending requests; save lessons; retain reviewed decisions; export the workspace.
 - Authenticated shared storage with tenant isolation, version checks, immutable approval provenance, and database audit events.
+- Learn & Create: short lessons, four business-agent recipes, editable local blueprints, copying/downloading, and explicit saving to the desk. A blueprint is a plan, not a running agent.
+- Ask Raven implementation: bounded business brainstorming, agent design, and learning; saved questions/results at private addressable URLs. No live result has been verified yet.
+- Owner-managed access for existing confirmed accounts, viewer-aware controls, and password changes that require the current password.
+- Saved social/notebook shortcuts and an explicit copy bridge to NotebookLM. Meta authorization code is implemented but awaits app credentials and provider verification; a shortcut does not sync an account.
 - Demo-only Raven prioritization, recommendations, metrics, and tactic examples, separated from the private workspace.
 - Server-side creative policy, honest connection status, and a browser reset available only in demo mode.
-- Three SQL migrations, 25 tenant tables, pgvector foundation, a demo seed, and a separate production catalog bootstrap.
+- SQL migrations with RLS, pgvector foundation, a demo seed, and a separate production catalog bootstrap.
 - Local setup/check commands, logic/SQL/auth/API tests, and browser/accessibility checks.
 
 “Use this idea” opens an editable business brief from a known curated prompt. Nothing is saved until “Save for review.” An unfinished brief stays in memory while navigating inside the workspace, but is lost on reload or sign-out; it is excluded from saved workspace data and exports. Selecting another idea offers a choice before replacing existing words. The reflections and quotations are editorial material, not live AI findings or generated fiction.
+
+Learn & Create notes stay on that page until saved or downloaded. The workspace JSON export contains briefs, decisions, lessons, and recommendation state; it does not include unfinished text, Ask Raven history, account access, or connector credentials. Saved Raven answers can be copied individually.
 
 ## Start locally
 
@@ -63,9 +69,10 @@ See `.env.example`. Demo is the default when `KIRA_WORKSPACE_MODE` is absent. Se
 | `NEXT_PUBLIC_SUPABASE_URL` | HTTPS origin of the dedicated Supabase project |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key or legacy **anon** key |
 | `NEXT_PUBLIC_APP_URL` | Localhost origin during development; final HTTPS origin on Vercel |
-| `AI_PROVIDER`, `AI_RAVEN_MODEL`, `AI_SPECIALIST_MODEL` | Reserved configuration; shipped intelligence remains the demo engine |
+| `KIRA_AI_ENABLED` | Keep `false` until Gateway funding, recording setup, and hosted verification are complete |
+| `KIRA_AI_RECORDING_KEY` | Server-only 32-byte key encoded as 64 hex characters; its SHA-256 hash is provisioned in a private database table |
 
-The web app never uses a service-role or secret Supabase key. Creative permissions are enforced in code, not mutable client environment flags.
+The web app never uses a service-role or secret Supabase key. Privileged integration-injected Supabase credentials have been removed from Vercel’s runtime environment. Gateway uses Vercel authentication; optional Meta credentials stay server-only. Creative permissions are enforced in code, not mutable client environment flags.
 
 ## Data truth
 
@@ -79,6 +86,9 @@ The web app never uses a service-role or secret Supabase key. Creative permissio
 | Connected briefs, decisions, and lessons | Actual member input saved to the authorized author workspace |
 | Inspiration questions and brief starters | Curated editorial reflections, labeled as such; no claims about reader behavior or book performance |
 | Literary quotations | Source-linked public-domain excerpts with author, work, and context |
+| Agent blueprints | Locally assembled planning documents; member input when explicitly saved |
+| Ask Raven answers | AI-generated ideas using only supplied context; not verified research or executed work |
+| Saved connections | Manually supplied shortcuts; separate from a verified OAuth authorization |
 
 Sources: [My Alpha Team](https://www.kirastanleyauthor.com/myalphateam), [Fantasy](https://www.kirastanleyauthor.com/fantasy), [Ambros Triplets](https://www.kirastanleyauthor.com/ambrostriplets). The catalog is incomplete; naming inconsistencies remain verification notes. “Universe” organizes the catalog without asserting shared fictional continuity.
 
@@ -91,10 +101,17 @@ Sources: [My Alpha Team](https://www.kirastanleyauthor.com/myalphateam), [Fantas
 | `/universe`, `/universe/[slug]` | Searchable sourced catalog and book details |
 | `/desk` | Editable business briefs, approval queue, history, edits, and lessons; known `?idea=` values open a curated starting point |
 | `/raven` | Demo briefing; honest unconnected intelligence state in private mode |
-| `/settings` | Policy, connection state, export; demo-only reset |
+| `/learn` | Lessons and local agent-blueprint workshop |
+| `/studio`, `/studio/[id]` | Ask Raven, private question history, and saved results; funding gate applies to new calls |
+| `/connections` | Manual shortcuts, NotebookLM copy bridge, and gated Meta authorization |
+| `/access` | Role information; owner-only grant/change/revoke for existing confirmed accounts |
+| `/settings` | Policy, connection state, password change, brief/lesson export; demo-only reset |
 | `/reader-pulse`, `/social`, `/discoverability`, `/hunt`, `/campaigns`, `/outreach`, `/vault` | Clearly labeled future-module previews |
 | `GET/PATCH /api/workspace` | Authenticated, author-scoped reads and validated mutations |
 | `POST /api/raven` | Demo-only deterministic run; unavailable in connected mode |
+| `GET/POST /api/studio` | Authenticated history and bounded, persisted AI requests |
+| `GET/PATCH /api/access` | Role-aware reads and owner-only membership management |
+| `POST /api/account/password` | Current-password verification followed by same-account password update |
 | `POST /auth/login`, `POST /auth/logout` | Existing-account sign-in and sign-out |
 
 ## Database setup
@@ -121,6 +138,6 @@ SQL tests run the real migrations in PGlite with pgvector and emulated Supabase 
 
 Use the existing Vercel project with the Next.js preset, `npm ci`, and `npm run build` from the repository root. Configure connected mode and required values before inviting users. Redeploy after environment changes. Use a separate database for previews. The app is excluded from search indexing.
 
-Next is approved Vault ingestion: private Storage for official covers and documents, rights/provenance, field verification, then read-only retrieval with citations. Live models and integrations follow approved sources. Publishing, outreach sending, spending, autonomous scheduling, learned feedback retrieval, and embedding generation remain unimplemented.
+Next activation steps are AI Gateway funding/verification and Meta app setup/consent. Approved Vault ingestion remains future work: private Storage, rights/provenance, field verification, then read-only retrieval with citations. Publishing, outreach sending, autonomous scheduling, learned feedback retrieval, and embedding generation remain unimplemented. On-demand AI calls consume credits only after explicit submission and successful setup.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md), [DATABASE.md](DATABASE.md), [ROADMAP.md](ROADMAP.md), and [AGENTS.md](AGENTS.md).

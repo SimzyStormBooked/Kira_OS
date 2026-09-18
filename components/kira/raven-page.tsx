@@ -1,5 +1,6 @@
 "use client";
 import { ContextHelp } from "./context-help";
+import Link from "next/link";
 import { useState } from "react";
 import { z } from "zod";
 import { Feather, RefreshCw, RotateCcw } from "lucide-react";
@@ -51,17 +52,15 @@ export function RavenPage() {
             Evidence first. Instinct always. A business team with a paper trail.
           </p>
         </div>
-        <Button
+        {state.mode === "connected" ? <Button asChild><Link href="/studio">Ask Raven a question</Link></Button> : <Button
           onClick={run}
-          disabled={running || !state.ready || state.mode === "connected"}
+          disabled={running || !state.ready}
         >
           <RefreshCw size={15} className={running ? "animate-spin" : ""} />
-          {state.mode === "connected"
-            ? "Live recommendations coming later"
-            : running
+          {running
               ? "Synthesizing…"
               : "Refresh demo briefing"}
-        </Button>
+        </Button>}
       </div>
       <ContextHelp kind="raven" />
       <div className="inline-notice">

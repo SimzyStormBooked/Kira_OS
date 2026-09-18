@@ -1,38 +1,42 @@
-# Bring Cassie's KIRA OS online
+# Bring Cassie's KIRA OS into her day
 
-One private workspace, ready on her phone or laptop. Vercel hosts it; a dedicated Supabase project keeps her account, briefs, decisions, and lessons together.
+The private workspace is online at [KIRA OS](https://kira-os-dusky.vercel.app). Vercel project `storm-booked/kira-os` is connected to dedicated Supabase project `obusnqlwuoavwtmryiik`. Real administrator sign-in, brief saving/reloading, a separate-browser read, and sign-out have passed. Eight sourced books are loaded; no demo intelligence is in the private database.
 
-**Current state:** Vercel project `storm-booked/kira-os` is deployed at [KIRA OS](https://kira-os-dusky.vercel.app) with access closed until setup is complete. Supabase provisioning is waiting for integration terms; no Supabase resource has been created yet. Initial administrator: `michael@getanswerednow.ai`. Hosted sign-in and shared saving have not been verified.
+## 1. Sign in and make the account yours
 
-## 1. One account step
+Initial administrator/owner: `michael@getanswerednow.ai`. Use the privately supplied account password, then change it under **Settings → Your password**. The current password is required. Public signup is disabled; each person uses their own confirmed account.
 
-[Accept the Supabase integration terms in Vercel](https://vercel.com/storm-booked/~/integrations/accept-terms/supabase?source=cli), using the StormBooked team. Then tell your setup helper that the terms are accepted.
+Cassie needs her own email-confirmed Supabase account before access can be granted. An administrator creates that account privately; the app does not create accounts, send invitations, or email passwords.
 
-This lets the helper create the dedicated Supabase resource through Vercel. A separate Supabase CLI login is not required for this route. Keep passwords, secret keys, and access tokens in the setup UI or password manager, rather than chat.
+## 2. Give Cassie her place in the workspace
 
-## 2. Let the helper finish the connection
+As the owner, open **Settings → Manage workspace access**. Add her existing account email and choose **Editor** to let her save briefs, approve/reject decisions, and keep lessons. **Viewer** can read and export review data. The owner can change or remove collaborator access; saved work is retained. Ownership itself is not transferred from this screen.
 
-After terms are accepted, the helper can continue the prepared Free-plan integration in region `sfo1`, connect its environment settings to the existing Vercel project, apply all repository migrations, and load `supabase/bootstrap.sql`. The bootstrap includes sourced catalog records and the clearly manual snapshot, with no demo intelligence.
+Have her sign in, open the eight-book catalog, and save one business idea at Cassandra's Desk. The optional Guide and Learn & Create workshop provide a quiet introduction. Copying a sign-in link does not grant access, and saving an agent blueprint does not start an agent.
 
-The first administrator must be an **email-confirmed** Supabase email/password user, with its UUID assigned to `authors.owner_user_id`. Public signups stay disabled. The app signs in existing accounts only. Password entry must remain private; no setup script sends invitations or auth email. Cassie can receive her own account and author membership once her email is provided.
+## 3. Activate optional tools when their accounts are ready
 
-Production needs these values before its first verified launch:
+**Ask Raven:** the backend is implemented, but Gateway currently has zero credits and no successful live model response has been verified. Vercel currently asks the account owner to add a card to complete verification and unlock its displayed free-credit allowance. Complete that account step in Vercel; the setup helper then checks credits, provisions the private recording capability, runs a bounded hosted test, and enables the feature. Until then, leave `KIRA_AI_ENABLED=false`. No offline/demo answer substitutes for the model.
+
+**Social accounts:** profile shortcuts and the NotebookLM copy bridge can be used independently. Real Meta authorization needs an app, configured callbacks/permissions, and consent from the account owner. Meta app credentials are not configured yet. Follow the [Instagram and Facebook setup guide](lib/connections/SETUP.md). Account authorization does not yet import social metrics or publish content.
+
+## Deployment settings
 
 | Setting | Value |
 | --- | --- |
-| `KIRA_WORKSPACE_MODE` | `connected` — even while setup is incomplete, so private access stays closed |
+| `KIRA_WORKSPACE_MODE` | `connected` |
 | `NEXT_PUBLIC_SUPABASE_URL` | Dedicated Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key, or legacy **anon** key |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key or legacy **anon** key |
 | `KIRA_AUTHOR_ID` | `10000000-0000-4000-8000-000000000001` |
-| `NEXT_PUBLIC_APP_URL` | Final HTTPS Vercel URL or custom domain |
+| `NEXT_PUBLIC_APP_URL` | `https://kira-os-dusky.vercel.app` or the verified custom domain |
+| `KIRA_AI_ENABLED` | `false` until AI setup and verification succeed |
+| `KIRA_AI_RECORDING_KEY` | Server-only 32 random bytes encoded as 64 hexadecimal characters |
 
-Vercel may supply other integration variables. The app specifically requires the names above; it never needs a service-role key. Use a separate database for previews. Set Supabase's Auth Site URL to the final app URL and redeploy after environment changes.
+The AI recording key's SHA-256 hex hash belongs in `private.workspace_generation_config` with `singleton=true`; only the literal key belongs in the server environment. The Studio/access/links migrations and the recording key/hash are now provisioned in the hosted workspace. For a new installation, a helper provisions them through the administrative setup connection. Never put the key in a public environment variable or send it in browser props.
 
-## 3. Open it and try one real idea
+Seven privileged integration-injected Supabase secrets were removed from Vercel runtime. The web app uses a publishable/anon key and the signed-in session, never a service-role key, database password, or privileged database URL. Keep administrative credentials out of runtime and source control. Use a separate database for previews and redeploy after environment changes.
 
-The helper verifies the deployed app before calling it ready: sign in, add a business brief, reload, open it in a second browser, edit it, record a decision, save a lesson, and sign out. Private pages must require sign-in again. Then Cassie has a working home for her business, with saved work she can return to.
-
-Live AI models and social integrations are not connected by this setup. Approved documents, covers, and connected intelligence are the next chapter.
+The core hosted flow has passed; the latest AI/access/connector additions still require their final integrated deployment checks. Supabase Free does not include its Pro-only leaked-password protection; no upgrade was purchased. Use unique account passwords. See [Supabase password security](https://supabase.com/docs/guides/auth/password-security) and [VERIFICATION.md](VERIFICATION.md).
 
 ## Local setup and the standalone fallback
 

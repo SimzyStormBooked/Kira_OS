@@ -18,7 +18,7 @@ import { DailyQuote } from "./daily-quote";
 import { useWorkspace } from "@/lib/db/demo-store";
 
 export function ConnectedHome({ dateKey }: { dateKey?: string }) {
-  const { approvals, feedback, ready, viewerEmail } = useWorkspace();
+  const { approvals, feedback, ready, viewerEmail, canEdit } = useWorkspace();
   const pending = approvals.filter((approval) => approval.status === "pending");
   const reviewed = approvals.length - pending.length;
   const counts = [
@@ -121,7 +121,7 @@ export function ConnectedHome({ dateKey }: { dateKey?: string }) {
           )}
           <Button asChild variant="outline">
             <Link href="/desk">
-              {pending.length ? "Review your briefs" : "Add your first brief"}
+              {!canEdit ? "Read workspace briefs" : pending.length ? "Review your briefs" : "Add your first brief"}
               <ArrowRight size={15} />
             </Link>
           </Button>
@@ -170,15 +170,17 @@ export function ConnectedHome({ dateKey }: { dateKey?: string }) {
         <Card className="connected-next">
           <span className="eyebrow">THE NEXT CHAPTER</span>
           <h2>
-            Build on <em>what’s real.</em>
+            Follow <em>your curiosity.</em>
           </h2>
           <p>
-            Your account, saved briefs, and lessons form the foundation. Live AI
-            models and social integrations are not connected yet.
+            Shape an agent idea, learn a useful trick, or gather your social
+            accounts in one place. Start wherever the energy is.
           </p>
-          <Link href="/settings" className="text-link">
-            See workspace connections <ArrowUpRight size={14} />
-          </Link>
+          <div className="connected-explore-links">
+            <Link href="/learn" className="text-link">Learn & Create <ArrowUpRight size={14} /></Link>
+            <Link href="/studio" className="text-link">Ask Raven <ArrowUpRight size={14} /></Link>
+            <Link href="/connections" className="text-link">Your connections <ArrowUpRight size={14} /></Link>
+          </div>
         </Card>
       </div>
       {viewerEmail && (

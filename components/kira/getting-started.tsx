@@ -53,7 +53,7 @@ export function reopenGettingStarted() {
 }
 
 export function GettingStarted() {
-  const { mode, approvals, ready } = useWorkspace();
+  const { mode, approvals, ready, canEdit } = useWorkspace();
   const headingId = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const reopenRef = useRef<HTMLButtonElement>(null);
@@ -82,20 +82,20 @@ export function GettingStarted() {
       status: "A good place to begin",
     },
     {
-      title: "Save your first idea",
-      description: "Give a business idea a title and a few lines at your desk.",
+      title: canEdit ? "Save your first idea" : "Explore the shared desk",
+      description: canEdit ? "Give a business idea a title and a few lines at your desk." : "Read saved business briefs and the evidence behind them.",
       href: "/desk",
-      link: ideas ? "Open your ideas" : "Add an idea",
+      link: !canEdit ? "Read the briefs" : ideas ? "Open your ideas" : "Add an idea",
       complete: ready && ideas > 0,
       status: ready && ideas > 0 ? `${ideas} ${ideas === 1 ? "idea" : "ideas"} saved` : "Ready when you are",
     },
     {
-      title: "Make your first decision",
-      description: "Read a brief, adjust it if needed, then approve or reject it.",
-      href: "/desk",
-      link: decisions ? "Open your decisions" : "Visit your desk",
-      complete: ready && decisions > 0,
-      status: ready && decisions > 0 ? `${decisions} ${decisions === 1 ? "decision" : "decisions"} saved` : "Your judgment leads the way",
+      title: canEdit ? "Make your first decision" : "Try the agent workshop",
+      description: canEdit ? "Read a brief, adjust it if needed, then approve or reject it." : "Build and download your own assistant blueprint. Saving workspace changes needs editor access.",
+      href: canEdit ? "/desk" : "/learn",
+      link: !canEdit ? "Learn & Create" : decisions ? "Open your decisions" : "Visit your desk",
+      complete: canEdit && ready && decisions > 0,
+      status: !canEdit ? "Your own thinking space" : ready && decisions > 0 ? `${decisions} ${decisions === 1 ? "decision" : "decisions"} saved` : "Your judgment leads the way",
     },
   ];
 

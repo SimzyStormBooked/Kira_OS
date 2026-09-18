@@ -8,12 +8,16 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { createHmac, randomUUID } from "node:crypto";
 import type { User } from "@supabase/supabase-js";
 import type { ApprovalRequest, HumanFeedback } from "../../types/domain";
+import { connectionInputSchema, type ConnectionLink } from "../../lib/connections/schema";
 import { fixture } from "./fixture-data";
 
 const signingSecret = "local-test-fixture-signing-secret-not-for-production";
 const sessions = new Map<string, { user: User; refreshToken: string }>();
 let approvals: ApprovalRequest[] = [];
 let feedback: HumanFeedback[] = [];
+type FixtureMember = { id: string; userId: string; email: string; role: "editor" | "viewer"; version: number; createdAt: string; updatedAt: string };
+let members: FixtureMember[] = [];
+let links: ConnectionLink[] = [];
 const userFor = (email: string): User => ({
   id: email === fixture.memberEmail ? fixture.memberId : fixture.outsiderId,
   aud: "authenticated", role: "authenticated", email,
@@ -61,7 +65,7 @@ const server = createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", fixture.supabaseUrl);
     if (url.pathname === "/__test/health") return respond(response, 200, { simulated: true });
     if (url.pathname === "/__test/reset" && request.method === "POST") {
-      approvals = []; feedback = []; sessions.clear();
+      approvals = []; feedback = []; members = []; links = []; sessions.clear();
       return respond(response, 200, { simulated: true, reset: true });
     }
     if (url.pathname === "/auth/v1/token" && request.method === "POST") {
@@ -84,16 +88,70 @@ const server = createServer(async (request, response) => {
       sessions.delete(request.headers.authorization!.replace(/^Bearer /, ""));
       return respond(response, 204);
     }
-    const member = session.user.id === fixture.memberId;
+    const owner = session.user.id === fixture.memberId;
+    const membership = members.find((member) => member.userId === session.user.id);
+    const member = owner || Boolean(membership);
     if (url.pathname === "/rest/v1/authors") {
-      return respond(response, 200, member && url.searchParams.get("id") === `eq.${fixture.authorId}` ? [{ id: fixture.authorId }] : []);
+      return respond(response, 200, member && url.searchParams.get("id") === `eq.${fixture.authorId}` ? [{ id: fixture.authorId, owner_user_id: fixture.memberId }] : []);
     }
     if (!member) return respond(response, 403, { code: "42501", message: "Fixture workspace access denied" });
+    if (url.pathname === "/rest/v1/author_members") {
+      if (url.searchParams.get("author_id") !== `eq.${fixture.authorId}`) return respond(response, 403, { code: "42501", message: "Fixture tenant mismatch" });
+      const userFilter = url.searchParams.get("user_id");
+      return respond(response, 200, members.filter((item) => !userFilter || userFilter === `eq.${item.userId}`)
+        .map((item) => ({ id: item.id, author_id: fixture.authorId, user_id: item.userId, role: item.role, version: item.version, created_at: item.createdAt, updated_at: item.updatedAt })));
+    }
+    if (url.pathname === "/rest/v1/workspace_links") {
+      if (request.method === "POST") {
+        if (!owner && membership?.role !== "editor") return respond(response, 403, { code: "42501", message: "Fixture write access denied" });
+        const { author_id: authorId, ...input } = await jsonBody(request);
+        if (authorId !== fixture.authorId) return respond(response, 403, { code: "42501", message: "Fixture tenant mismatch" });
+        const parsed = connectionInputSchema.safeParse(input);
+        if (!parsed.success) return respond(response, 400, { code: "23514", message: "Invalid simulated link" });
+        if (links.some((link) => link.platform === parsed.data.platform && link.url === parsed.data.url)) return respond(response, 409, { code: "23505", message: "Simulated link already saved" });
+        links.unshift({ ...parsed.data, id: randomUUID(), author_id: fixture.authorId, created_by: session.user.id, created_at: new Date().toISOString(), data_origin: "manual" });
+        return respond(response, 201, null);
+      }
+      if (url.searchParams.get("author_id") !== `eq.${fixture.authorId}`) return respond(response, 403, { code: "42501", message: "Fixture tenant mismatch" });
+      if (request.method === "DELETE") {
+        if (!owner && membership?.role !== "editor") return respond(response, 403, { code: "42501", message: "Fixture write access denied" });
+        const target = links.find((link) => url.searchParams.get("id") === `eq.${link.id}`);
+        if (target) links = links.filter((link) => link.id !== target.id);
+        return respond(response, 200, target ? [{ id: target.id }] : []);
+      }
+      if (request.method === "GET") return respond(response, 200, links);
+    }
     if (url.pathname.startsWith("/rest/v1/rpc/") && request.method === "POST") {
       const body = await jsonBody(request);
       if (body.p_author_id !== fixture.authorId) return respond(response, 403, { code: "42501", message: "Fixture tenant mismatch" });
       const method = url.pathname.split("/").pop();
       const now = new Date().toISOString();
+      if (method?.startsWith("workspace_access_")) {
+        if (!owner) return respond(response, 403, { code: "42501", message: "Fixture owner access required" });
+        if (method === "workspace_access_list") return respond(response, 200, { owner: { userId: fixture.memberId, email: fixture.memberEmail }, members });
+        if (method === "workspace_access_grant") {
+          if (body.p_role !== "viewer" && body.p_role !== "editor") return respond(response, 400, { code: "22023", message: "Invalid fixture role" });
+          const email = String(body.p_email).trim().toLowerCase();
+          if (email === fixture.memberEmail) return respond(response, 400, { code: "22023", message: "Fixture owner is protected" });
+          if (email !== fixture.outsiderEmail) return respond(response, 404, { code: "P0002", message: "Existing confirmed fixture account unavailable" });
+          const existing = members.find((item) => item.userId === fixture.outsiderId);
+          if (existing && existing.role !== body.p_role) return respond(response, 409, { code: "40001", message: "Fixture access changed" });
+          if (!existing) members.push({ id: randomUUID(), userId: fixture.outsiderId, email, role: body.p_role, version: 0, createdAt: now, updatedAt: now });
+          return respond(response, 200, null);
+        }
+        const target = members.find((item) => item.id === body.p_member_id);
+        if (!target) return method === "workspace_access_revoke" ? respond(response, 200, null)
+          : respond(response, 404, { code: "P0002", message: "Fixture membership unavailable" });
+        if (target.version !== body.p_expected_version) return respond(response, 409, { code: "40001", message: "Fixture access changed" });
+        if (method === "workspace_access_change") {
+          if (body.p_role !== "viewer" && body.p_role !== "editor") return respond(response, 400, { code: "22023", message: "Invalid fixture role" });
+          if (target.role !== body.p_role) { target.role = body.p_role; target.version += 1; target.updatedAt = now; }
+          return respond(response, 200, null);
+        }
+        if (method === "workspace_access_revoke") { members = members.filter((item) => item.id !== target.id); return respond(response, 200, null); }
+        return respond(response, 400, { code: "42883", message: "Unsupported simulated access RPC" });
+      }
+      if (!owner && membership?.role !== "editor") return respond(response, 403, { code: "42501", message: "Fixture write access denied" });
       if (method === "create_manual_review") {
         const title = String(body.p_title);
         const draft = String(body.p_draft);
@@ -103,7 +161,7 @@ const server = createServer(async (request, response) => {
           status: "pending", created_at: now, updated_at: now, data_origin: "manual", version: 0,
           evidence: [{ id: randomUUID(), source_id: randomUUID(), source: "Simulated member-supplied business brief",
             source_type: "human_feedback", retrieved_at: now, excerpt_or_metric: draft,
-            metadata: { simulated_browser_fixture: true, submitted_by: fixture.memberId }, data_origin: "manual" }],
+            metadata: { simulated_browser_fixture: true, submitted_by: session.user.id }, data_origin: "manual" }],
         };
         approvals.unshift(approval);
         return respond(response, 200, approval);
@@ -121,7 +179,7 @@ const server = createServer(async (request, response) => {
       if (method === "teach_raven") {
         const lesson: HumanFeedback = { id: randomUUID(), approval_request_id: approval.id,
           feedback: String(body.p_feedback), created_at: now, data_origin: "manual",
-          scope: "author_workspace", user_id: fixture.memberId };
+          scope: "author_workspace", user_id: session.user.id };
         feedback.push(lesson);
         return respond(response, 200, lesson);
       }
@@ -132,6 +190,7 @@ const server = createServer(async (request, response) => {
       if (url.pathname === "/rest/v1/approval_requests") return respond(response, 200, approvals);
       if (url.pathname === "/rest/v1/human_feedback") return respond(response, 200, feedback);
       if (url.pathname === "/rest/v1/agent_recommendations" || url.pathname === "/rest/v1/agent_runs") return respond(response, 200, []);
+      if (url.pathname === "/rest/v1/workspace_generations" || url.pathname === "/rest/v1/meta_authorizations") return respond(response, 200, []);
     }
     return respond(response, 404, { code: "fixture_not_found", message: "Unsupported simulated Supabase endpoint" });
   } catch {

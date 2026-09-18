@@ -28,6 +28,8 @@ The shell keeps working destinations visible and groups future modules under a c
 
 “Use this idea” navigates with an allowlisted idea ID, never private draft text in the URL. `ManualReviewForm` resolves known IDs into editable starters and requires an explicit save. A provider-owned in-memory scratchpad preserves unfinished words across internal navigation; replacing existing words requires a choice. Scratchpad fields are outside `workspaceSchema`, so they never enter localStorage, Supabase persistence, or workspace exports. Reload/sign-out discards them; a before-unload prompt warns while a draft remains. Only a submitted brief enters the ordinary saved-review flow.
 
+`/learn` combines optional lessons with four curated agent recipes. Name, goal, context, and success criteria produce a local text blueprint. Copying/downloading is explicit; “Save blueprint to my desk” uses the existing manual-review operation. Recipe notes remain page-local and are not a running agent. Viewers can learn and export a blueprint without gaining write access.
+
 ## Authentication and authorization
 
 `lib/config.ts` validates mode, Supabase URL/key, and author UUID. The default is demo only when mode is absent. Invalid mode or incomplete connected configuration closes private access. Production must explicitly set `KIRA_WORKSPACE_MODE=connected`.
@@ -38,6 +40,8 @@ The shell keeps working destinations visible and groups future modules under a c
 
 The server layout and `/api/workspace` each enforce access. RLS and caller-scoped SQL RPCs provide the final tenant boundary. Owner/editor/viewer permissions remain effective if a member calls PostgREST directly.
 
+The workspace snapshot carries the verified role. UI controls reflect it, while every mutation still reauthorizes on the server. `/access` lets only the owner manage existing confirmed users through versioned SQL operations with append-only access events; it neither creates accounts nor sends invitations. `/api/account/password` verifies the current password using a nonpersistent client, checks the same user ID, installs a fresh HttpOnly session, then updates that account’s password.
+
 ## Directory map
 
 - `app/`: pages, auth routes, workspace/Raven APIs, layout boundary, error states.
@@ -46,12 +50,13 @@ The server layout and `/api/workspace` each enforce access. RLS and caller-scope
 - `lib/auth/`: session verification, user-scoped client, same-origin/redirect checks, access errors.
 - `lib/config.ts`: pure connection validation.
 - `lib/db/`: per-provider demo/connected state, shared schemas, connected repository, compatibility contracts.
-- `lib/ai/`: creative policy, job-model configuration, server-only intelligence provider interface.
+- `lib/ai/`: creative policy, deterministic-provider boundary, Studio contracts, and bounded Gateway adapter.
 - `lib/agents/`: demo provider, prioritization, approval state machine.
 - `lib/knowledge/`: provenance validation, origin propagation, safe evidence URLs.
 - `lib/data/seed.ts`: sourced catalog and separately labeled demo/manual records.
 - `lib/data/inspiration.ts`: curated business reflections and attributed literary quotes, independent of intelligence findings.
-- `supabase/`: three migrations, demo seed, production catalog bootstrap, local configuration.
+- `lib/connections/`: validated manual links and owner-consented Meta authorization/credential handling.
+- `supabase/`: tenant/access/AI/connector migrations, demo seed, production catalog bootstrap, local configuration.
 - `scripts/`: private local setup/check, seed/bootstrap generators, inactive CI template.
 - `tests/`: business rules, SQL/RLS/RPC behavior, auth/API boundaries, browser workflows.
 
@@ -67,14 +72,22 @@ Queueing a stored recommendation copies its database provenance; clients cannot 
 
 ## Raven and the creative boundary
 
-The only implemented intelligence provider is deterministic demo synthesis. `POST /api/raven` accepts no freeform prompt, reads seeded findings, enforces `lib/ai/policy.ts`, validates provenance, and returns a demo run plus recommendations. Connected mode does not execute or save demo Raven runs.
+`POST /api/raven` remains deterministic demo synthesis: it accepts no freeform prompt, reads seeded findings, enforces `lib/ai/policy.ts`, validates provenance, and returns a demo run plus recommendations. Connected mode does not execute or save demo Raven runs.
 
 The prioritizer ranks three findings by `round(objective_weight × confidence × freshness)`. Weights are 90 for audience, 75 for catalog, and 65 for tactic. Freshness uses the oldest evidence timestamp, decays over 120 days, and is floored at 0.25; UUID ordering breaks ties. Confidence and examples are synthetic, not measured outcomes.
 
-Future models belong behind `lib/ai/provider.ts`; no model SDK call belongs in a React component. Business analysis and approved-content repurposing are allowed capabilities, not claims that adapters exist. Fiction generation remains prohibited. Imported material is data, never agent instructions; future manuscripts are read-only references.
+Ask Raven uses a separate `POST /api/studio` path behind `runStudioProvider`. It accepts only brainstorming, business-agent design, or learning jobs and a bounded question. A UUID and pending record are persisted before the model call. Private history and `/studio/[id]` retrieve the same record; repeating an ID never runs the model again.
+
+The AI SDK `ToolLoopAgent` uses `google/gemini-3.8-flash` through Gateway, a strict structured output schema, one step, 3,000 output tokens, zero model retries, and a 45-second timeout. It has no tools, browser, catalog context, or external executor. Fixed system instructions enforce the creative boundary; supplied text is user data. Exact context excerpts are checked against the original question. Ideas remain unverified and require human review.
+
+Generation RPCs require the caller’s owner/editor role and a server-only recording capability. Public invoker wrappers call private definer functions; only the key hash is stored in locked private configuration. Author-row locking enforces one pending call and 20 attempts per UTC day. Stale pending rows are marked interrupted when a later request begins. Completed/failed records are immutable and retain model, actor, timestamps, available token usage, estimated cost, and sanitized failure codes. A final database write may be retried once idempotently, never the model call.
+
+`KIRA_AI_ENABLED=true`, valid recording configuration, and positive verified Gateway credit are required before submission. No demo/offline answer substitutes for an unavailable provider. Current hosted Gateway balance is zero and no successful live model response has been verified.
+
+Manual shortcuts never authorize accounts. The separate Meta implementation uses owner-initiated OAuth, scoped read permissions, encrypted private credentials, a server capability, account verification, and disconnect/deauthorization handling. It is not activated without Meta app configuration. Social metrics ingestion and publishing are not implemented. NotebookLM receives only text a person explicitly copies and pastes; there is no automatic document or account transfer.
 
 ## Current limits
 
-Catalog UI records are bundled sourced metadata; bootstrap carries the matching database catalog. Field editing, private uploads, retrieval, embeddings, social connectors, and live model adapters remain future work. Covers are placeholders and unknown details remain unverified.
+Catalog UI records are bundled sourced metadata; bootstrap carries the matching database catalog. Field editing, private uploads, retrieval, embeddings, and social metrics ingestion remain future work. Covers are placeholders and unknown details remain unverified. Workspace JSON export covers review data, not AI history, access records, connectors, or private credentials.
 
-Connected code and local tests are implemented. Hosted Supabase provisioning, ownership, and deployed sign-in/save/reload still require verification. [SETUP.md](SETUP.md) provides the launch path; [VERIFICATION.md](VERIFICATION.md) records actual checks.
+Hosted Supabase provisioning and the core administrator sign-in/save/reload/separate-browser/sign-out workflow are verified. The latest AI/access/connector slice still needs its final integrated deployment checks; live AI and Meta provider operations remain unverified. [SETUP.md](SETUP.md) provides activation steps; [VERIFICATION.md](VERIFICATION.md) records actual checks.

@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, BookOpen, Compass, Feather, FileCheck2, LayoutDashboard, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, BookOpen, Compass, Feather, FileCheck2, LayoutDashboard, ShieldCheck, GraduationCap, Lightbulb, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useWorkspace } from "@/lib/db/demo-store";
@@ -13,6 +13,9 @@ const places = [
   { name: "The Universe", plain: "Your books", description: "Find a title, browse a series, and see what is known about each book.", href: "/universe", icon: BookOpen },
   { name: "The Raven", plain: "Recommendations", description: "Look at suggestions, the reasons behind them, and their supporting sources.", href: "/raven", icon: Feather },
   { name: "Cassandra’s Desk", plain: "Your decisions", description: "Save an idea, review a brief, and keep the decisions and lessons that follow.", href: "/desk", icon: FileCheck2 },
+  { name: "Ask Raven", plain: "A thinking partner", description: "Ask a business question when AI is connected, then revisit the saved answer.", href: "/studio", icon: Lightbulb },
+  { name: "Learn & Create", plain: "Your agent workshop", description: "Try a short lesson and turn a useful job into an assistant blueprint.", href: "/learn", icon: GraduationCap },
+  { name: "Connections", plain: "Your tools, together", description: "Keep useful social links and see what is needed to authorize Instagram and Facebook.", href: "/connections", icon: Link2 },
 ];
 
 export function WorkspaceGuide() {
@@ -47,7 +50,7 @@ export function WorkspaceGuide() {
           </section>
           <div className="learning-guide-decision"><ShieldCheck size={18} aria-hidden="true" /><p><strong>You have the final say.</strong> Approve saves your decision. It does not publish, send, or purchase anything. Teach Raven keeps your note with that decision for future use.</p></div>
           <p className="learning-guide-mode">{mode === "connected"
-            ? "Your saved briefs, decisions, and lessons stay in your private workspace. Live AI recommendations and social connections are still to come."
+            ? "Your saved briefs, decisions, and lessons stay in your private workspace. Ask Raven and Connections show their current setup status. Nothing runs or publishes by itself."
             : "You are exploring a demo. Example intelligence is labeled DEMO, and changes stay in this browser."}</p>
         </div>
         <DialogFooter className="learning-guide-footer">

@@ -13,6 +13,9 @@ import {
   FileCheck2,
   FolderOpen,
   LayoutDashboard,
+  Lightbulb,
+  Link2,
+  GraduationCap,
   Menu,
   Megaphone,
   Radio,
@@ -46,6 +49,7 @@ import { books } from "@/lib/data/seed";
 import { cn } from "@/lib/utils";
 import { WorkspaceGuide } from "./workspace-guide";
 import { InspirationDialogTrigger } from "./inspiration-shelf";
+import { WorkspacePermissionNotice } from "./workspace-permission-notice";
 
 const navigation = [
   {
@@ -73,6 +77,11 @@ const navigation = [
   { href: "/campaigns", title: "Campaigns", icon: Megaphone },
   { href: "/outreach", title: "Outreach", icon: Users },
   { href: "/vault", title: "The Vault", icon: FolderOpen },
+];
+const creativeNavigation = [
+  { href: "/studio", title: "Ask Raven", description: "Think through your next move", icon: Lightbulb },
+  { href: "/learn", title: "Learn & Create", description: "Small lessons. Your own agent ideas.", icon: GraduationCap },
+  { href: "/connections", title: "Connections", description: "Your socials & useful tools", icon: Link2 },
 ];
 function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const path = usePathname();
@@ -142,6 +151,15 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
             {count}
           </span>
         </Link>
+        <div className="nav-label nav-creative-label">ROOM TO EXPLORE</div>
+        {creativeNavigation.map(({ href, title, description, icon: Icon }) => (
+          <Link key={href} href={href} aria-label={title} onClick={onNavigate}
+            className={cn("nav-item nav-item-explained", path.startsWith(href) && "active")}
+            aria-current={path.startsWith(href) ? "page" : undefined}>
+            <Icon size={17} strokeWidth={1.6} />
+            <span>{title}<small aria-hidden="true">{description}</small></span>
+          </Link>
+        ))}
       </nav>
       <div className="nav-planned">
         <button
@@ -191,7 +209,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
           <br />
           <em>The agents run the business.</em>
         </p>
-        <span>PHASE ONE · FOUNDATION</span>
+        <span>YOUR WORDS. YOUR WORLD.</span>
       </div>
       <div className="user-profile">
         <span className="user-avatar">C</span>
@@ -221,7 +239,8 @@ export function AppShell({
       ? "Cassandra’s Desk"
       : pathname === "/settings"
         ? "Settings"
-        : (navigation.find((n) => n.href !== "/" && pathname.startsWith(n.href))
+        : pathname === "/access" ? "Workspace access"
+        : ([...navigation, ...creativeNavigation].find((n) => n.href !== "/" && pathname.startsWith(n.href))
             ?.title ?? "Mission Control");
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -243,6 +262,9 @@ export function AppShell({
         : "Coming later · Preview",
     })),
     { href: "/desk", title: "Cassandra’s Desk", kind: "Approvals" },
+    ...creativeNavigation.map((n) => ({ href: n.href, title: n.title, kind: "Workspace" })),
+    { href: "/access", title: "Workspace access", kind: "Settings" },
+    { href: "/settings", title: "Settings", kind: "Workspace" },
     ...books.map((b) => ({
       href: `/universe/${b.slug}`,
       title: b.title,
@@ -309,7 +331,8 @@ export function AppShell({
             )}
           </div>
         </header>
-        <main id="main-content" className="page-container">
+        <main id="main-content" className="page-container" tabIndex={-1}>
+          <WorkspacePermissionNotice />
           {children}
         </main>
         <footer className="app-footer">

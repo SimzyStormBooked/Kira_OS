@@ -19,6 +19,8 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
     scratchpad,
     updateScratchpad,
     clearScratchpad,
+    canEdit,
+    roleError,
   } = useWorkspace();
   const { title, draft } = scratchpad;
   const [consumedIdea, setConsumedIdea] = useState<string | null>(null);
@@ -47,7 +49,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
     hasDraft;
   useEffect(() => {
     if (
-      pending ||
+      pending || !canEdit ||
       !idea ||
       consumedIdea === idea.id ||
       scratchpad.ideaId === idea.id ||
@@ -60,9 +62,9 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
       ideaId: idea.id,
     });
     titleRef.current?.focus();
-  }, [idea, consumedIdea, scratchpad.ideaId, hasDraft, pending, updateScratchpad]);
+  }, [idea, consumedIdea, scratchpad.ideaId, hasDraft, pending, canEdit, updateScratchpad]);
   function replaceWithIdea() {
-    if (!idea || pending) return;
+    if (!idea || pending || !canEdit) return;
     updateScratchpad({
       title: idea.briefTitle,
       draft: idea.briefDraft,
@@ -74,7 +76,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
   }
   async function saveBrief(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submission.current || busy || !ready) return;
+    if (submission.current || busy || !ready || !canEdit) return;
     setSaved(false);
     if (!title.trim() || !draft.trim()) {
       setError("Give your brief a title and add the idea you want to review.");
@@ -125,6 +127,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
         A brief is simply an idea with a little context. Capture a promotion,
         reader question, or book update. You can refine it before deciding.
       </p>
+      {!canEdit && <p className="quiet-note" role="status">{roleError ? "Saving is paused until your permissions can be checked. Your unfinished draft stays here while you explore." : "You have viewer access. You can read briefs and evidence; an owner or editor can save changes. Any unfinished draft stays here while you explore."}</p>}
       {needsChoice && (
         <div
           className="idea-draft-choice"
@@ -141,7 +144,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
             <div className="idea-draft-choice-actions">
               <Button
                 variant="outline"
-                disabled={pending}
+                disabled={pending || !canEdit}
                 onClick={() => {
                   setConsumedIdea(idea.id);
                   requestAnimationFrame(() => titleRef.current?.focus());
@@ -149,7 +152,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
               >
                 Keep my draft
               </Button>
-              <Button variant="ghost" onClick={replaceWithIdea} disabled={pending}>
+              <Button variant="ghost" onClick={replaceWithIdea} disabled={pending || !canEdit}>
                 Replace with this idea
               </Button>
             </div>
@@ -182,7 +185,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
             }}
             required
             maxLength={200}
-            disabled={pending || !ready}
+            disabled={pending || !ready || !canEdit}
             placeholder="For example, a fall reading-list promotion"
           />
         </div>
@@ -204,7 +207,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
             required
             maxLength={10000}
             rows={5}
-            disabled={pending || !ready}
+            disabled={pending || !ready || !canEdit}
             aria-describedby="manual-brief-help manual-draft-state"
             placeholder="What would you like to try? Which book is it for? What needs checking first?"
           />
@@ -227,7 +230,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
                 ? "Saving keeps this brief in this browser."
                 : "Saving keeps this brief in your private workspace."}
           </span>
-          <Button type="submit" disabled={pending || !ready}>
+          <Button type="submit" disabled={pending || !ready || !canEdit}>
             {pending ? "Saving your brief…" : "Save for review"}
             <ArrowRight size={15} />
           </Button>

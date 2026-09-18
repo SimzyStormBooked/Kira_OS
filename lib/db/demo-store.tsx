@@ -7,6 +7,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import type { AgentRecommendation, ApprovalRequest } from "@/types/domain";
+import type { WorkspaceRole } from "@/lib/auth/workspace-role";
 import {
   createFeedback,
   transitionApproval,
@@ -34,17 +35,25 @@ type Snapshot = WorkspaceState & {
   error: string | null;
   mode: Mode;
   viewerEmail: string | null;
+  role: WorkspaceRole;
+  canEdit: boolean;
+  roleError: string | null;
   scratchpad: { title: string; draft: string; ideaId: string | null };
 };
 function createStore(
   mode: Mode,
   initial: WorkspaceState,
   viewerEmail: string | null,
+  initialRole: WorkspaceRole,
 ) {
+  const role = mode === "demo" ? "owner" : initialRole;
   const server: Snapshot = {
     ...initial,
     mode,
     viewerEmail,
+    role,
+    canEdit: role === "owner" || role === "editor",
+    roleError: null,
     scratchpad: { title: "", draft: "", ideaId: null },
     ready: mode === "connected",
     busy: false,
@@ -70,22 +79,36 @@ function createStore(
     localStorage.setItem(storageKey, JSON.stringify(parsed));
     return parsed;
   };
+  const markRoleUnavailable = () => {
+    if (snapshot.ready) update({
+      canEdit: false,
+      roleError: "We could not confirm your workspace permissions. Saving is paused; your unfinished notes are still here.",
+    });
+  };
   const readResponse = async (response: Response, isRefresh = false) => {
     if (response.status === 401 || (isRefresh && response.status === 403)) {
       update({
         ...emptyWorkspace(),
         scratchpad: { title: "", draft: "", ideaId: null },
         ready: false,
+        role: "viewer", canEdit: false, roleError: null,
       });
       window.location.replace("/login");
       throw new Error("Your workspace session ended. Please sign in again.");
     }
     const data = await response.json();
-    if (!response.ok)
+    if (!response.ok) {
+      if (response.status === 403) markRoleUnavailable();
       throw new Error(
         data.error || "The workspace is unavailable. Please try again.",
       );
-    return workspaceSchema.parse(data);
+    }
+    const workspace = workspaceSchema.parse(data);
+    const roleHeader = response.headers.get("x-kira-workspace-role");
+    if (roleHeader === "owner" || roleHeader === "editor" || roleHeader === "viewer") {
+      update({ role: roleHeader, canEdit: roleHeader !== "viewer", roleError: null });
+    } else markRoleUnavailable();
+    return workspace;
   };
   async function refresh() {
     if (snapshot.busy) return;
@@ -107,13 +130,15 @@ function createStore(
     } else {
       update({ busy: true });
       try {
-        update(
-          await readResponse(
+        update({
+          ...await readResponse(
             await fetch("/api/workspace", { cache: "no-store" }),
             true,
           ),
-        );
+          error: null,
+        });
       } catch (error) {
+        markRoleUnavailable();
         showError(error);
       } finally {
         update({ busy: false });
@@ -126,6 +151,10 @@ function createStore(
     notice: string,
   ): Promise<boolean> {
     if (snapshot.busy) return false;
+    if (!snapshot.canEdit) {
+      showError(new Error(snapshot.roleError ?? "You have viewer access. An owner or editor can save changes; you can still read and export the workspace."));
+      return false;
+    }
     update({ busy: true, error: null, notice: null });
     try {
       const next =
@@ -151,7 +180,7 @@ function createStore(
             ),
           );
         } catch {
-          /* Keep last known private state with the visible error. */
+          markRoleUnavailable();
         }
       }
       showError(error);
@@ -359,15 +388,17 @@ export function WorkspaceProvider({
   mode,
   initialWorkspace,
   viewerEmail = null,
+  role = mode === "demo" ? "owner" : "viewer",
   children,
 }: {
   mode: Mode;
   initialWorkspace: WorkspaceState;
   viewerEmail?: string | null;
+  role?: WorkspaceRole;
   children: React.ReactNode;
 }) {
   const [store] = useState(() =>
-    createStore(mode, initialWorkspace, viewerEmail),
+    createStore(mode, initialWorkspace, viewerEmail, role),
   );
   useEffect(() => {
     if (mode === "demo") void store.actions.refresh();
