@@ -13,6 +13,12 @@ import { fixture } from "./fixture-data";
 
 const signingSecret = "local-test-fixture-signing-secret-not-for-production";
 const sessions = new Map<string, { user: User; refreshToken: string }>();
+const welcomeTokens = new Map([
+  ["fixture-welcome-member-token", fixture.memberEmail],
+  ["fixture-welcome-outsider-token", fixture.outsiderEmail],
+]);
+const consumedWelcomeTokens = new Set<string>();
+let welcomeVerificationRequests = 0;
 let approvals: ApprovalRequest[] = [];
 let feedback: HumanFeedback[] = [];
 type FixtureMember = { id: string; userId: string; email: string; role: "editor" | "viewer"; version: number; createdAt: string; updatedAt: string };
@@ -64,9 +70,24 @@ const server = createServer(async (request, response) => {
   try {
     const url = new URL(request.url ?? "/", fixture.supabaseUrl);
     if (url.pathname === "/__test/health") return respond(response, 200, { simulated: true });
+    if (url.pathname === "/__test/welcome" && request.method === "GET") {
+      return respond(response, 200, { verificationRequests: welcomeVerificationRequests, consumedTokens: consumedWelcomeTokens.size });
+    }
     if (url.pathname === "/__test/reset" && request.method === "POST") {
       approvals = []; feedback = []; members = []; links = []; sessions.clear();
+      consumedWelcomeTokens.clear(); welcomeVerificationRequests = 0;
       return respond(response, 200, { simulated: true, reset: true });
+    }
+    if (url.pathname === "/auth/v1/verify" && request.method === "POST") {
+      welcomeVerificationRequests += 1;
+      const body = await jsonBody(request);
+      const token = typeof body.token_hash === "string" ? body.token_hash : "";
+      const email = welcomeTokens.get(token);
+      if (body.type !== "magiclink" || !email || consumedWelcomeTokens.has(token)) {
+        return respond(response, 400, { code: "otp_expired", message: "The simulated welcome link is invalid or has expired." });
+      }
+      consumedWelcomeTokens.add(token);
+      return respond(response, 200, issueSession(userFor(email)));
     }
     if (url.pathname === "/auth/v1/token" && request.method === "POST") {
       const body = await jsonBody(request);

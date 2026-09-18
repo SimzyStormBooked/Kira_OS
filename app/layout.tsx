@@ -24,7 +24,7 @@ export default async function RootLayout({
   const path = (await headers()).get("x-kira-pathname") ?? "/";
   const session = await getWorkspaceSession();
   let content: React.ReactNode;
-  if (path === "/login") content = children;
+  if (path === "/login" || path === "/welcome") content = children;
   else if (session.authorization === "demo")
     content = (
       <WorkspaceProvider mode="demo" initialWorkspace={freshWorkspace()}>

@@ -11,7 +11,7 @@ KIRA OS is a private author-business workspace for Kira Stanley. It brings her c
 | Mode | What happens |
 | --- | --- |
 | `demo` (default) | Explore without credentials. Synthetic intelligence is labeled DEMO. Decisions and feedback stay in this browser. |
-| `connected` | Existing Supabase users sign in with email/password. Authorized owners, editors, and viewers access the configured author workspace. Briefs, decisions, and feedback persist in Supabase. Missing configuration or failed authorization closes private access. |
+| `connected` | Existing Supabase users sign in with email/password or an operator-issued, single-use private link. Authorized owners, editors, and viewers access the configured author workspace. Briefs, decisions, and feedback persist in Supabase. Missing configuration or failed authorization closes private access. |
 
 Connected mode never substitutes demo data after a connection failure. Its home shows sourced catalog counts and actual workspace records. Ask Raven is enabled in production using `google/gemini-3.8-flash`; a real in-app answer, reload, attributed Desk copy, and private access after sign-out have passed. The recommendations page does not monitor accounts or run research in the background. Demo Raven refresh is unavailable in connected mode.
 
@@ -100,6 +100,7 @@ Sources: [My Alpha Team](https://www.kirastanleyauthor.com/myalphateam), [Fantas
 | Route | Behavior |
 | --- | --- |
 | `/login` | Email/password sign-in for existing accounts; no public signup |
+| `/welcome` | Private one-time link landing page; an explicit button submits the token, so opening a preview does not consume it |
 | `/` | Demo Mission Control or private workspace home |
 | `/universe`, `/universe/[slug]` | Searchable sourced catalog, collapsed unverified sections, and explicit preparation of a sourced review brief |
 | `/desk` | Editable business briefs, confirmed final decisions, history and lessons; known `?idea=` values open curated starters and `?brief=` selects a saved record |
@@ -116,6 +117,7 @@ Sources: [My Alpha Team](https://www.kirastanleyauthor.com/myalphateam), [Fantas
 | `GET/PATCH /api/access` | Role-aware reads and owner-only membership management |
 | `POST /api/account/password` | Current-password verification followed by same-account password update |
 | `POST /auth/login`, `POST /auth/logout` | Existing-account sign-in and sign-out |
+| `POST /auth/welcome` | Supabase magic-link verification followed by existing workspace membership verification; same-origin only |
 
 ## Database setup
 
