@@ -60,6 +60,20 @@ export function getWorkspaceConfig(
   };
 }
 
+/**
+ * The address an owner shares with a collaborator: the configured public URL when
+ * set, otherwise this deployment's own host. Never a caller-supplied forwarded host.
+ */
+export function resolveShareOrigin(
+  host: string | null | undefined,
+  env: Readonly<Record<string, string | undefined>> = process.env,
+): string | null {
+  if (env.NEXT_PUBLIC_APP_URL !== undefined) return parseApplicationOrigin(env.NEXT_PUBLIC_APP_URL);
+  if (!host || !/^(?:[a-z0-9.-]+|\[[0-9a-f:]+\])(?::\d+)?$/i.test(host)) return null;
+  const local = /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(host);
+  return parseApplicationOrigin(`${local ? "http" : "https"}://${host}`);
+}
+
 export function parseApplicationOrigin(value: string): string | null {
   try {
     const url = new URL(value.trim());

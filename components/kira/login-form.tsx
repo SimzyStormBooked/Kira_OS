@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { safeRedirectPath } from "@/lib/auth/security";
 
-export function LoginForm({ next }: { next: string }) {
+export function LoginForm({ next, email = null }: { next: string; email?: string | null }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
@@ -43,11 +43,11 @@ export function LoginForm({ next }: { next: string }) {
     <form className="login-form" onSubmit={signIn} aria-busy={pending}>
       <div className="login-field">
         <label className="form-label" htmlFor="login-email">Email address</label>
-        <Input id="login-email" name="email" type="email" autoComplete="username" required maxLength={254} disabled={pending} />
+        <Input id="login-email" name="email" type="email" autoComplete="username" required maxLength={254} disabled={pending} defaultValue={email ?? undefined} />
       </div>
       <div className="login-field">
         <label className="form-label" htmlFor="login-password">Password</label>
-        <Input id="login-password" name="password" type="password" autoComplete="current-password" required maxLength={1024} disabled={pending} aria-describedby={error ? "login-error" : undefined} />
+        <Input id="login-password" name="password" type="password" autoComplete="current-password" required maxLength={1024} disabled={pending} autoFocus={Boolean(email)} aria-describedby={error ? "login-error" : undefined} />
       </div>
       {error && <p id="login-error" className="form-error" role="alert" tabIndex={-1} ref={errorRef}>{error}</p>}
       <Button type="submit" className="login-submit" disabled={pending}>

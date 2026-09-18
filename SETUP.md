@@ -8,6 +8,12 @@ Initial administrator/owner: `michael@getanswerednow.ai`. Use the privately supp
 
 Cassy now has her own confirmed account with Editor access. Use her privately supplied sign-in details; no password belongs in this repository. For future collaborators, an administrator must create their confirmed account before access can be granted. The app does not create accounts or send invitations.
 
+### Sharing a welcome link
+
+A person who already has an account can be sent a link instead of instructions. [https://kira-os-dusky.vercel.app/welcome](https://kira-os-dusky.vercel.app/welcome) is a public page with a sign-in button, a short description of the workspace, and three suggested first tasks. Adding `?for=` and their address — `…/welcome?for=cassy%40example.com` — prefills the email field on the sign-in screen so only the password is left to type. `?next=` opens a specific page after sign-in.
+
+Open **Settings → Manage workspace access** to read or copy the link, and **Copy their link** beside a person to include their address. The link travels safely through a text message: it carries no password or token, only a page path and an address to prefill, and an invalid value is dropped rather than shown. It does not create an account, send anything, or grant access — the recipient still needs their own confirmed account and a role here, and their password must reach them separately.
+
 ## 2. Make the workspace part of her day
 
 Cassy’s Editor role lets her save briefs, confirm approval/rejection, and keep lessons. Michael remains the owner and manages account access and Meta authorization. To add future collaborators, open **Settings → Manage workspace access** and add an existing confirmed account as Editor or Viewer. Viewers can read and export review data. Changing or removing access retains saved work; this screen does not transfer ownership.
