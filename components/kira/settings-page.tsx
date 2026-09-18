@@ -54,6 +54,11 @@ export function SettingsPage() {
         </div>
         <ShieldCheck size={32} strokeWidth={1} />
       </div>
+      {mode === "connected" && <nav className="settings-quick-links" aria-label="Settings sections">
+        <a href="#account-password">Your password</a>
+        <a href="#setup">Your connections</a>
+        <Link href="/access">Workspace access</Link>
+      </nav>}
       <ContextHelp kind="settings" />
       <SetupStatus />
       <div className="settings-grid">

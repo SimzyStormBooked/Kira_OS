@@ -47,7 +47,13 @@ Dedicated browser regressions have been added for:
 - Sourced book-detail collection, collapsed future sections, protection of existing Desk drafts, and accurate shared-workspace onboarding/Raven labels.
 - Owner/editor/viewer setup guidance, unavailable-to-ready status refresh, Meta configuration versus authorization, and session-expiry recovery. Status checks make no purchases or authorization mutations.
 
-The new regressions passed in the complete 74-test connected suite. They use the isolated fixture and mocked AI/Meta responses. Two initial failures were test-harness issues (awaiting a canceled reload and querying a dialog-hidden heading); both were corrected before the successful complete rerun. The real hosted AI workflow below also passed; a broader audit across 18 hosted page/viewport combinations is still running and is not yet included as a completed result.
+The new regressions passed in the complete 74-test connected suite. They use the isolated fixture and mocked AI/Meta responses. Two initial failures were test-harness issues (awaiting a canceled reload and querying a dialog-hidden heading); both were corrected before the successful complete rerun.
+
+The hosted audit on `eea4751` (production deployment `dpl_5rmKBVBY3VhKaackUnnu6xojNvnd`) passed all 18 main page/viewport checks and 12 desktop/mobile task checks. It used Cassy's real Editor account, verified draft/preview retention, saved-brief search and focus, safe decision cancellation, and sign-out/discard behavior. There were zero detected axe violations, horizontal overflows, browser runtime errors, or server errors. It made no workspace-record mutations. A CSS specificity issue initially left mobile workshop fields at 12px; the corrected 16px rule passed the live rerun and 12 focused local mobile regressions. Physical iOS Safari remains untested.
+
+Two independent adversarial persona reviews assessed the supported workspace at 8/10 after the fixes (visual design 8–8.5). These are heuristic reviews, not actual male/female user research or measured satisfaction. Meta authorization and autonomous/background workflows are not included as working features. Final small polish aligns the Guide's Briefings name, provides a direct password shortcut, and reduces the ready-state Raven banner.
+
+Michael explicitly authorized a welcome email. It was sent through his Gmail account to Cassy's specified address with private sign-in details and first-use instructions; Gmail confirmed the SENT label. Credentials are excluded from the repository and verification artifacts.
 
 ## Live production AI workflow — verified
 

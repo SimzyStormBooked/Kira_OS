@@ -39,8 +39,8 @@ export function PasswordSettings() {
       requestAnimationFrame(() => statusRef.current?.focus());
     }
   }
-  return <Card className="settings-card password-settings">
-    <div className="section-heading"><h2>Your password</h2><KeyRound size={19} aria-hidden="true" /></div>
+  return <Card id="account-password" tabIndex={-1} aria-labelledby="account-password-heading" className="settings-card password-settings">
+    <div className="section-heading"><h2 id="account-password-heading">Your password</h2><KeyRound size={19} aria-hidden="true" /></div>
     <p>Choose a password only you know. Enter your current password first, including your temporary one if this is your first visit.</p>
     <form className="access-form password-form" onSubmit={changePassword} aria-busy={busy}>
       <label className="form-label" htmlFor="account-current-password">Current password</label>

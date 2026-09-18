@@ -3641,6 +3641,14 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .learn-lessons-panel .learn-lessons { margin: 18px 0 24px; }
 .learn-workshop, .learn-form, #setup, .approval-card { scroll-margin-top: 95px; }
 .studio-status-actions { margin-bottom: 0; }
+.studio-status-ready { padding: 14px 18px; gap: 12px; }
+.studio-status-ready > div { display: flex; flex: 1; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+.studio-status-ready strong { margin: 0; }
+.studio-status-ready p { flex: 1 1 340px; font-size: 13px; }
+.studio-status-ready .studio-status-actions { margin: 0; }
+.settings-quick-links { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: -8px 0 24px; }
+.settings-quick-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--gold); text-decoration: underline; text-underline-offset: 4px; }
+#account-password { scroll-margin-top: 95px; }
 .studio-status-actions a[data-slot="button"] { padding: 10px 16px; color: var(--foreground); }
 .studio-status-actions a[data-variant="default"] { color: var(--primary-foreground); }
 .approval-card h2:focus { outline: 2px solid var(--gold); outline-offset: 8px; border-radius: 3px; }

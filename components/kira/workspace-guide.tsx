@@ -11,7 +11,7 @@ import { reopenGettingStarted } from "./getting-started";
 const places = [
   { name: "Mission Control", plain: "Your overview", description: "Start here to see your workspace and decide where to go next.", href: "/", icon: LayoutDashboard },
   { name: "The Universe", plain: "Your books", description: "Find a title, browse a series, and see what is known about each book.", href: "/universe", icon: BookOpen },
-  { name: "The Raven", plain: "Recommendations", description: "Look at suggestions, the reasons behind them, and their supporting sources.", href: "/raven", icon: Feather },
+  { name: "Briefings", plain: "Recommendations", description: "Look at suggestions, the reasons behind them, and their supporting sources.", href: "/raven", icon: Feather },
   { name: "Cassandra’s Desk", plain: "Your decisions", description: "Save an idea, review a brief, and keep the decisions and lessons that follow.", href: "/desk", icon: FileCheck2 },
   { name: "Ask Raven", plain: "A thinking partner", description: "Ask a business question when AI is connected, then revisit the saved answer.", href: "/studio", icon: Lightbulb },
   { name: "Learn & Create", plain: "Your agent workshop", description: "Try a short lesson and turn a useful job into an assistant blueprint.", href: "/learn", icon: GraduationCap },

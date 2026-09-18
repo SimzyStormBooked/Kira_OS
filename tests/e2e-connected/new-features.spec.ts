@@ -131,6 +131,8 @@ test("owner grants, changes and revokes access while viewer controls stay read-o
 
 test("the password form clears credentials after a successful simulated response", async ({ page }) => {
   await page.goto("/settings");
+  await page.getByRole("navigation", { name: "Settings sections" }).getByRole("link", { name: "Your password", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Your password", exact: true })).toBeInViewport();
   // API authentication and updateUser are covered by account-password.test.ts.
   // This response is deliberately simulated; no account password changes here.
   await page.route("**/api/account/password", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ changed: true }) }));
