@@ -1,4 +1,5 @@
 "use client";
+import { ContextHelp } from "./context-help";
 import { useState } from "react";
 import { z } from "zod";
 import { Feather, RefreshCw, RotateCcw } from "lucide-react";
@@ -56,18 +57,19 @@ export function RavenPage() {
         >
           <RefreshCw size={15} className={running ? "animate-spin" : ""} />
           {state.mode === "connected"
-            ? "Live synthesis not connected"
+            ? "Live recommendations coming later"
             : running
               ? "Synthesizing…"
               : "Refresh demo briefing"}
         </Button>
       </div>
+      <ContextHelp kind="raven" />
       <div className="inline-notice">
         <Feather size={16} />
         <span>
           {state.mode === "demo"
-            ? "Deterministic demo engine · 3 seeded findings · No model or live connector running"
-            : "Your private workspace is ready. Live intelligence needs an approved source connection and a model provider."}
+            ? "Sample briefing · 3 example findings · No live sources connected"
+            : "This is where recommendations will appear once your sources are connected. For now, browse the idea shelf or bring a business idea to your desk."}
           {state.last_run_at
             ? ` · Last run ${new Date(state.last_run_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
             : ""}

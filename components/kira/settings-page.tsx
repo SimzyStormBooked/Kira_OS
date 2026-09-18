@@ -1,4 +1,5 @@
 "use client";
+import { ContextHelp } from "./context-help";
 import { useState } from "react";
 import {
   Check,
@@ -50,6 +51,7 @@ export function SettingsPage() {
         </div>
         <ShieldCheck size={32} strokeWidth={1} />
       </div>
+      <ContextHelp kind="settings" />
       <div className="settings-grid">
         <Card className="settings-card">
           <div className="section-heading">

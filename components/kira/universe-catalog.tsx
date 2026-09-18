@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { books, series, universe } from "@/lib/data/seed";
+import { ContextHelp } from "./context-help";
 import { BookCard } from "./book-card";
 import { DemoBadge } from "./origin-badge";
 export function UniverseCard() {
@@ -16,7 +17,7 @@ export function UniverseCard() {
       <div>
         <span className="eyebrow">ONE AUTHOR. A WORLD OF POSSIBILITIES.</span>
         <h2>{universe.name}</h2>
-        <p>Eight sourced titles. The beginning of an institutional memory.</p>
+        <p>Eight sourced titles. A home for the details you want to keep.</p>
       </div>
       <div className="universe-counts">
         <div>
@@ -43,9 +44,7 @@ export function UniverseCatalog() {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow page-kicker">
-            CANONICAL KNOWLEDGE / THE UNIVERSE
-          </span>
+          <span className="eyebrow page-kicker">YOUR BOOKS / THE UNIVERSE</span>
           <h1>
             Every book.
             <br />
@@ -58,6 +57,7 @@ export function UniverseCatalog() {
           Titles sourced from the author’s site
         </span>
       </div>
+      <ContextHelp kind="universe" />
       <UniverseCard />
       <div className="catalog-toolbar">
         <div className="catalog-filters" aria-label="Filter by series">

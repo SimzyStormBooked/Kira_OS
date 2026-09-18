@@ -1,4 +1,5 @@
 "use client";
+import { ContextHelp } from "./context-help";
 import { useState } from "react";
 import { CheckCheck, Download, Lightbulb, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWorkspace } from "@/lib/db/demo-store";
 import { ManualReviewForm } from "./manual-review-form";
 import { ApprovalCard } from "./approval-card";
-export function DeskPage() {
+export function DeskPage({ ideaId }: { ideaId?: string }) {
   const { approvals, feedback, ready, mode } = useWorkspace();
   const { exportWorkspace, showError } = useWorkspace();
   const [tab, setTab] = useState("pending");
@@ -41,6 +42,7 @@ export function DeskPage() {
           Export decisions
         </Button>
       </div>
+      <ContextHelp kind="desk" />
       <div className="inline-notice">
         <ShieldCheck size={17} />
         <span>
@@ -49,7 +51,7 @@ export function DeskPage() {
           Nothing is posted, sent, purchased, or applied to the live catalog.
         </span>
       </div>
-      {mode === "connected" && <ManualReviewForm />}
+      <ManualReviewForm ideaId={ideaId} />
       <div className="desk-layout">
         <section>
           <Tabs value={tab} onValueChange={setTab}>

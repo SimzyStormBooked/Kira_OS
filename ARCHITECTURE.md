@@ -20,6 +20,14 @@ Server layout → validated mode + verified workspace session
 
 The provider is instantiated per application tree; private mutable state is not held in a process-wide singleton. It uses `useSyncExternalStore` with a stable initial server snapshot. Demo mode hydrates localStorage and listens for cross-tab updates. Connected mode receives its initial server snapshot, refreshes on focus, and reloads after mutations. It never writes private state to the demo storage key or falls back to demo records after an error.
 
+## Learning and inspiration
+
+The shell keeps working destinations visible and groups future modules under a collapsed “Coming later” section. `WorkspaceGuide` opens only on request; `ContextHelp` uses native expandable details. The connected home’s optional first steps derive saved-idea/decision progress from actual records. Only a display preference is stored in `kira-os:guide-dismissed:v1`; storage failure does not block use.
+
+`lib/data/inspiration.ts` contains fixed editorial business questions and source-linked public-domain literary quotes. The shelf moves only through explicit category, previous/next, or keyboard actions. Quotes retain attribution, source, and excerpt context; a server-selected date key keeps the displayed daily quote consistent during rendering. Neither feature calls a live model or generates fiction.
+
+“Use this idea” navigates with an allowlisted idea ID, never private draft text in the URL. `ManualReviewForm` resolves known IDs into editable starters and requires an explicit save. A provider-owned in-memory scratchpad preserves unfinished words across internal navigation; replacing existing words requires a choice. Scratchpad fields are outside `workspaceSchema`, so they never enter localStorage, Supabase persistence, or workspace exports. Reload/sign-out discards them; a before-unload prompt warns while a draft remains. Only a submitted brief enters the ordinary saved-review flow.
+
 ## Authentication and authorization
 
 `lib/config.ts` validates mode, Supabase URL/key, and author UUID. The default is demo only when mode is absent. Invalid mode or incomplete connected configuration closes private access. Production must explicitly set `KIRA_WORKSPACE_MODE=connected`.
@@ -33,7 +41,7 @@ The server layout and `/api/workspace` each enforce access. RLS and caller-scope
 ## Directory map
 
 - `app/`: pages, auth routes, workspace/Raven APIs, layout boundary, error states.
-- `components/kira/`: shell, private home, login, manual brief form, catalog, approval desk, evidence drawers, demo intelligence, settings.
+- `components/kira/`: shell, private home, login, manual brief form, catalog, approval desk, evidence drawers, demo intelligence, optional guidance, inspiration shelf, literary quotes, settings.
 - `components/ui/`: owned shadcn primitives.
 - `lib/auth/`: session verification, user-scoped client, same-origin/redirect checks, access errors.
 - `lib/config.ts`: pure connection validation.
@@ -42,6 +50,7 @@ The server layout and `/api/workspace` each enforce access. RLS and caller-scope
 - `lib/agents/`: demo provider, prioritization, approval state machine.
 - `lib/knowledge/`: provenance validation, origin propagation, safe evidence URLs.
 - `lib/data/seed.ts`: sourced catalog and separately labeled demo/manual records.
+- `lib/data/inspiration.ts`: curated business reflections and attributed literary quotes, independent of intelligence findings.
 - `supabase/`: three migrations, demo seed, production catalog bootstrap, local configuration.
 - `scripts/`: private local setup/check, seed/bootstrap generators, inactive CI template.
 - `tests/`: business rules, SQL/RLS/RPC behavior, auth/API boundaries, browser workflows.

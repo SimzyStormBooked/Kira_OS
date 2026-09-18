@@ -27,7 +27,13 @@ export default async function RootLayout({
   else if (session.authorization === "demo")
     content = (
       <WorkspaceProvider mode="demo" initialWorkspace={freshWorkspace()}>
-        <AppShell>{children}</AppShell>
+        <AppShell
+          dateKey={new Date().toLocaleDateString("en-CA", {
+            timeZone: "America/Phoenix",
+          })}
+        >
+          {children}
+        </AppShell>
       </WorkspaceProvider>
     );
   else if (session.authorization !== "authorized") redirect("/login");
@@ -48,7 +54,13 @@ export default async function RootLayout({
         initialWorkspace={workspace}
         viewerEmail={session.user?.email}
       >
-        <AppShell>{children}</AppShell>
+        <AppShell
+          dateKey={new Date().toLocaleDateString("en-CA", {
+            timeZone: "America/Phoenix",
+          })}
+        >
+          {children}
+        </AppShell>
       </WorkspaceProvider>
     ) : (
       <main className="login-stage">

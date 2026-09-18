@@ -18,14 +18,15 @@ import { RavenBriefing } from "./raven-briefing";
 import { RecommendationCard } from "./recommendation-card";
 import { AgentStatus } from "./agent-status";
 import { DemoBadge } from "./origin-badge";
+import { InspirationShelf } from "./inspiration-shelf";
 import { ConnectedHome } from "./connected-home";
-export function MissionControl() {
+export function MissionControl({ dateKey }: { dateKey?: string }) {
   const state = useWorkspace();
   const pending = state.approvals.filter((a) => a.status === "pending");
   const recommendations = state.recommendations.filter(
     (r) => !state.dismissed.includes(r.id),
   );
-  if (state.mode === "connected") return <ConnectedHome />;
+  if (state.mode === "connected") return <ConnectedHome dateKey={dateKey} />;
   return (
     <>
       <div className="page-heading">
@@ -131,6 +132,7 @@ export function MissionControl() {
           )}
         </div>
       </section>
+      <InspirationShelf dateKey={dateKey} />
       <div className="bottom-grid">
         <AgentStatus />
         <Card className="community-card">

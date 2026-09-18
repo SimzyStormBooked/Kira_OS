@@ -44,11 +44,28 @@ import { Input } from "@/components/ui/input";
 import { useWorkspace } from "@/lib/db/demo-store";
 import { books } from "@/lib/data/seed";
 import { cn } from "@/lib/utils";
+import { WorkspaceGuide } from "./workspace-guide";
+import { InspirationDialogTrigger } from "./inspiration-shelf";
 
 const navigation = [
-  { href: "/", title: "Mission Control", icon: LayoutDashboard },
-  { href: "/raven", title: "The Raven", icon: Feather },
-  { href: "/universe", title: "The Universe", icon: BookOpen },
+  {
+    href: "/",
+    title: "Mission Control",
+    description: "Your day at a glance",
+    icon: LayoutDashboard,
+  },
+  {
+    href: "/raven",
+    title: "The Raven",
+    description: "Evidence & recommendations",
+    icon: Feather,
+  },
+  {
+    href: "/universe",
+    title: "The Universe",
+    description: "Your books & their details",
+    icon: BookOpen,
+  },
   { href: "/reader-pulse", title: "Reader Pulse", icon: Activity },
   { href: "/social", title: "Social", icon: Radio },
   { href: "/discoverability", title: "Discoverability", icon: Telescope },
@@ -60,6 +77,7 @@ const navigation = [
 function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const path = usePathname();
   const { approvals, mode, viewerEmail } = useWorkspace();
+  const [plannedOpen, setPlannedOpen] = useState(false);
   const count = approvals.filter((a) => a.status === "pending").length;
   return (
     <>
@@ -77,42 +95,90 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
         <span>
           Kira Stanley<small>Author workspace</small>
         </span>
-        <ChevronDown size={13} />
       </div>
       <div className="nav-label">THE COMMAND CENTER</div>
       <nav aria-label="Main navigation">
-        {navigation.map(({ href, title, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            onClick={onNavigate}
-            className={cn(
-              "nav-item",
-              (href === "/" ? path === href : path.startsWith(href)) &&
-                "active",
-            )}
-            aria-current={path === href ? "page" : undefined}
-          >
-            <Icon size={17} strokeWidth={1.6} />
-            <span>{title}</span>
-            {href === "/raven" && <span className="nav-dot" />}
-          </Link>
-        ))}
-      </nav>
-      <div className="nav-bottom">
+        {navigation
+          .slice(0, 3)
+          .map(({ href, title, description, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              aria-label={title}
+              onClick={onNavigate}
+              className={cn(
+                "nav-item nav-item-explained",
+                (href === "/" ? path === href : path.startsWith(href)) &&
+                  "active",
+              )}
+              aria-current={path === href ? "page" : undefined}
+            >
+              <Icon size={17} strokeWidth={1.6} />
+              <span>
+                {title}
+                <small aria-hidden="true">{description}</small>
+              </span>
+            </Link>
+          ))}
         <Link
           href="/desk"
+          aria-label="Cassandra’s Desk"
           onClick={onNavigate}
-          className={cn("nav-item", path === "/desk" && "active")}
+          className={cn(
+            "nav-item nav-item-explained",
+            path === "/desk" && "active",
+          )}
+          aria-current={path === "/desk" ? "page" : undefined}
         >
           <FileCheck2 size={17} />
-          <span>Cassandra’s Desk</span>
-          <span className="count-badge">{count}</span>
+          <span>
+            Cassandra’s Desk
+            <small aria-hidden="true">Ideas, decisions & your guidance</small>
+          </span>
+          <span
+            className="count-badge"
+            aria-label={`${count} pending decisions`}
+          >
+            {count}
+          </span>
         </Link>
+      </nav>
+      <div className="nav-planned">
+        <button
+          type="button"
+          className="nav-planned-toggle"
+          onClick={() => setPlannedOpen(!plannedOpen)}
+          aria-expanded={plannedOpen}
+          aria-controls={onNavigate ? "planned-mobile" : "planned-desktop"}
+        >
+          Coming later{" "}
+          <ChevronDown size={13} className={plannedOpen ? "is-open" : ""} />
+        </button>
+        <div
+          id={onNavigate ? "planned-mobile" : "planned-desktop"}
+          hidden={!plannedOpen}
+        >
+          <p>Preview what can grow with your workspace.</p>
+          {navigation.slice(3).map(({ href, title, icon: Icon }) => (
+            <Link
+              className={cn("nav-item", path === href && "active")}
+              key={href}
+              href={href}
+              onClick={onNavigate}
+            >
+              <Icon size={16} />
+              <span>{title}</span>
+              <small>Preview</small>
+            </Link>
+          ))}
+        </div>
+      </div>
+      <div className="nav-bottom">
         <Link
           href="/settings"
           onClick={onNavigate}
           className={cn("nav-item", path === "/settings" && "active")}
+          aria-current={path === "/settings" ? "page" : undefined}
         >
           <Settings size={17} />
           <span>Settings</span>
@@ -138,7 +204,13 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
     </>
   );
 }
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  dateKey,
+}: {
+  children: React.ReactNode;
+  dateKey?: string;
+}) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -154,6 +226,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        if (document.querySelector("[role=dialog]")) return;
         e.preventDefault();
         setSearchOpen((o) => !o);
       }
@@ -165,7 +238,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ...navigation.map((n) => ({
       href: n.href,
       title: n.title,
-      kind: "Workspace",
+      kind: ["/", "/raven", "/universe"].includes(n.href)
+        ? "Workspace"
+        : "Coming later · Preview",
     })),
     { href: "/desk", title: "Cassandra’s Desk", kind: "Approvals" },
     ...books.map((b) => ({
@@ -209,10 +284,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span>{title}</span>
           </div>
           <div className="topbar-actions">
-            <span className="human-control">
-              <span />
-              Human in control
-            </span>
+            <InspirationDialogTrigger dateKey={dateKey} />
+            <WorkspaceGuide />
             <Button
               variant="ghost"
               size="sm"

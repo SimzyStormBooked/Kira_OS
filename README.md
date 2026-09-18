@@ -18,12 +18,16 @@ Connected mode never substitutes demo data after a connection failure. Its home 
 ## What works
 
 - Responsive Mission Control, private welcome/sign-in, searchable starter catalog, and sourced book-detail sections.
+- Optional Guide, dismissible first steps in the private home, and expandable page help. Future modules are grouped under “Coming later.”
+- A curated idea shelf with manual category/previous/next controls, plus attributed public-domain literary quotes linked to their original texts.
 - Cassandra’s Desk: create a manual business brief; edit, approve, or reject pending requests; save lessons; retain reviewed decisions; export the workspace.
 - Authenticated shared storage with tenant isolation, version checks, immutable approval provenance, and database audit events.
 - Demo-only Raven prioritization, recommendations, metrics, and tactic examples, separated from the private workspace.
 - Server-side creative policy, honest connection status, and a browser reset available only in demo mode.
 - Three SQL migrations, 25 tenant tables, pgvector foundation, a demo seed, and a separate production catalog bootstrap.
 - Local setup/check commands, logic/SQL/auth/API tests, and browser/accessibility checks.
+
+“Use this idea” opens an editable business brief from a known curated prompt. Nothing is saved until “Save for review.” An unfinished brief stays in memory while navigating inside the workspace, but is lost on reload or sign-out; it is excluded from saved workspace data and exports. Selecting another idea offers a choice before replacing existing words. The reflections and quotations are editorial material, not live AI findings or generated fiction.
 
 ## Start locally
 
@@ -73,6 +77,8 @@ The web app never uses a service-role or secret Supabase key. Creative permissio
 | Descriptions, characters, relationships, tropes, themes, reviews, sales | Not imported; still need verification |
 | Demo metrics, findings, recommendations, briefs, tactic example | Synthetic; no claims about real performance |
 | Connected briefs, decisions, and lessons | Actual member input saved to the authorized author workspace |
+| Inspiration questions and brief starters | Curated editorial reflections, labeled as such; no claims about reader behavior or book performance |
+| Literary quotations | Source-linked public-domain excerpts with author, work, and context |
 
 Sources: [My Alpha Team](https://www.kirastanleyauthor.com/myalphateam), [Fantasy](https://www.kirastanleyauthor.com/fantasy), [Ambros Triplets](https://www.kirastanleyauthor.com/ambrostriplets). The catalog is incomplete; naming inconsistencies remain verification notes. “Universe” organizes the catalog without asserting shared fictional continuity.
 
@@ -83,7 +89,7 @@ Sources: [My Alpha Team](https://www.kirastanleyauthor.com/myalphateam), [Fantas
 | `/login` | Email/password sign-in for existing accounts; no public signup |
 | `/` | Demo Mission Control or private workspace home |
 | `/universe`, `/universe/[slug]` | Searchable sourced catalog and book details |
-| `/desk` | Manual briefs in connected mode; approval queue, history, edits, and lessons |
+| `/desk` | Editable business briefs, approval queue, history, edits, and lessons; known `?idea=` values open a curated starting point |
 | `/raven` | Demo briefing; honest unconnected intelligence state in private mode |
 | `/settings` | Policy, connection state, export; demo-only reset |
 | `/reader-pulse`, `/social`, `/discoverability`, `/hunt`, `/campaigns`, `/outreach`, `/vault` | Clearly labeled future-module previews |

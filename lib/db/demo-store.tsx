@@ -34,6 +34,7 @@ type Snapshot = WorkspaceState & {
   error: string | null;
   mode: Mode;
   viewerEmail: string | null;
+  scratchpad: { title: string; draft: string; ideaId: string | null };
 };
 function createStore(
   mode: Mode,
@@ -44,6 +45,7 @@ function createStore(
     ...initial,
     mode,
     viewerEmail,
+    scratchpad: { title: "", draft: "", ideaId: null },
     ready: mode === "connected",
     busy: false,
     notice: null,
@@ -70,7 +72,11 @@ function createStore(
   };
   const readResponse = async (response: Response, isRefresh = false) => {
     if (response.status === 401 || (isRefresh && response.status === 403)) {
-      update({ ...emptyWorkspace(), ready: false });
+      update({
+        ...emptyWorkspace(),
+        scratchpad: { title: "", draft: "", ideaId: null },
+        ready: false,
+      });
       window.location.replace("/login");
       throw new Error("Your workspace session ended. Please sign in again.");
     }
@@ -156,6 +162,13 @@ function createStore(
   }
   const actions = {
     showError,
+    updateScratchpad: (patch: Partial<Snapshot["scratchpad"]>) =>
+      update({ scratchpad: { ...snapshot.scratchpad, ...patch } }),
+    clearScratchpad: (submitted?: Snapshot["scratchpad"]) => {
+      // A completed save must never erase words entered after that submission.
+      if (submitted && snapshot.scratchpad !== submitted) return;
+      update({ scratchpad: { title: "", draft: "", ideaId: null } });
+    },
     dismissNotice: () => update({ notice: null, error: null }),
     refresh,
     decideApproval: (id: string, action: ApprovalAction, version: number) =>
@@ -271,11 +284,45 @@ function createStore(
       perform(
         { action: "create", title, draft },
         () => {
-          throw new Error(
-            "Connect your private workspace to save a real brief.",
-          );
+          if (
+            !title.trim() ||
+            title.trim().length > 200 ||
+            !draft.trim() ||
+            draft.trim().length > 10000
+          )
+            throw new Error("Add a title and a brief within the field limits.");
+          const now = new Date().toISOString();
+          const approval: ApprovalRequest = {
+            id: crypto.randomUUID(),
+            recommendation_id: null,
+            type: "campaign",
+            title: title.trim(),
+            description:
+              "Your business idea, saved for review. No external action is authorized.",
+            draft: draft.trim(),
+            status: "pending",
+            created_at: now,
+            updated_at: now,
+            version: 0,
+            data_origin: "manual",
+            evidence: [
+              {
+                id: crypto.randomUUID(),
+                source_id: crypto.randomUUID(),
+                source: "Your original business brief",
+                source_type: "human_feedback",
+                retrieved_at: now,
+                excerpt_or_metric: draft.trim(),
+                metadata: { scope: "demo_workspace" },
+                data_origin: "manual",
+              },
+            ],
+          };
+          return { ...snapshot, approvals: [...snapshot.approvals, approval] };
         },
-        "Your brief is saved at Cassandra’s Desk.",
+        mode === "demo"
+          ? "Your brief is saved in this browser at Cassandra’s Desk."
+          : "Your brief is saved at Cassandra’s Desk.",
       ),
     exportWorkspace: () => {
       const blob = new Blob(
@@ -331,9 +378,18 @@ export function WorkspaceProvider({
     const focus = () => {
       void store.actions.refresh();
     };
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      const draft = store.getSnapshot().scratchpad;
+      if (draft.title.trim() || draft.draft.trim()) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", beforeUnload);
     window.addEventListener("storage", storage);
     window.addEventListener("focus", focus);
     return () => {
+      window.removeEventListener("beforeunload", beforeUnload);
       window.removeEventListener("storage", storage);
       window.removeEventListener("focus", focus);
     };
