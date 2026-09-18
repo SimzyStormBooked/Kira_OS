@@ -6,6 +6,14 @@ import { validateFinding } from "@/lib/knowledge/provenance";
 import type { ModelConfig } from "./models";
 import { assertStudioPrompt, studioRequestSchema, type StudioRequest } from "./studio-contract";
 import { generateStudioReply } from "./studio-provider";
+import { generateManuscriptExtraction } from "@/lib/manuscripts/provider";
+import type { ManuscriptChunk } from "@/lib/manuscripts/contract";
+
+/** Permission here is resolved from a sealed database batch, never a browser flag. */
+export async function runManuscriptExtraction(chunks: ManuscriptChunk[], context: { sourceApproved: boolean }) {
+  assertCapability("ALLOW_APPROVED_CONTENT_REPURPOSING", context);
+  return generateManuscriptExtraction(chunks);
+}
 
 /** On-demand thinking uses the same creative-policy boundary as other providers. */
 export async function runStudioProvider(input: StudioRequest) {

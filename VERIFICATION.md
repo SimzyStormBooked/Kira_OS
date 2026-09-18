@@ -12,7 +12,7 @@ These core checks establish real hosted storage and authentication. The real dep
 
 The Studio, access, and manual-links migrations have since been applied to the hosted database, and the private AI recording key/hash has been provisioned. The Meta migration, encryption key/capability hash, and the forward-only Studio validation migration are also applied. No Meta account is connected.
 
-## Current local release checks
+## Earlier workspace release checks
 
 | Check | Result |
 | --- | --- |
@@ -24,7 +24,7 @@ The Studio, access, and manual-links migrations have since been applied to the h
 | AI provider requests during local tests | Mocked; no live model calls made |
 | Latest Meta regressions and integrated Connections/Studio browser checks | PASS: authorization replay/revocation/scope checks and Connections/Studio desktop/mobile flows |
 
-All 94 browser tests passed across the demo and connected suites after the final source changes. Tests use Node 24.16, Next.js 16.3.5, React 19.3, Chromium desktop, and an emulated mobile viewport. Physical Safari has not been verified.
+All 94 browser tests passed across the demo and connected suites for that earlier workspace release. Tests use Node 24.16, Next.js 16.3.5, React 19.3, Chromium desktop, and an emulated mobile viewport. Physical Safari has not been verified.
 
 The simulated Supabase service is only browser-test infrastructure and is never imported by the application. PGlite separately executes actual SQL migrations with pgvector and emulated Auth primitives. It checks RLS, role isolation, provenance, expected versions, immutable decisions, and audit events; it does not replace a hosted provider test.
 
@@ -63,7 +63,7 @@ A real question was submitted through the production UI and completed as generat
 
 The generation recorded 1,018 input tokens and 1,078 output tokens, with an estimated model cost of **$0.004806**. This is the application's estimate, not a reconciled provider invoice. The hosted check establishes the real UI → authenticated API → model → durable answer → review-brief flow. It does not activate autonomous agents, background research, social synchronization, publishing, or message sending.
 
-Meta app credentials are missing. OAuth, encrypted credential storage, account verification, and disconnection code still require actual provider configuration and consent testing. Manual saved links and the NotebookLM copy bridge are separate from authorization or synchronization. Private uploads, embeddings, social metrics ingestion, and external publishing remain unimplemented.
+Meta app credentials are missing. OAuth, encrypted credential storage, account verification, and disconnection code still require actual provider configuration and consent testing. Manual saved links and the NotebookLM copy bridge are separate from authorization or synchronization. Social metrics ingestion and external publishing remain unimplemented. Manuscript uploads and embeddings are covered by the later foundation release entry below.
 
 The prior integrated feature release (`8a823da`, Vercel deployment `dpl_E4HMzprKX6T6TyZNhSdXcxfbgLHT`) reached READY in production. Its hosted checks passed: owner access, saved Instagram shortcut persistence, a Michael agent blueprint saved/reloaded through the real database, password-settings visibility, then-disabled AI and pending-Meta states, desktop accessibility on four new pages, mobile overflow checks on six pages, and zero browser runtime errors. No real user password was changed by the test. The initial deployment error-log query returned no entries; no external log drain or ongoing monitor was configured. The GitHub Actions template remains inactive because the connected GitHub authorization lacks workflow scope; remote CI has not run.
 
@@ -72,3 +72,20 @@ The prior integrated feature release (`8a823da`, Vercel deployment `dpl_E4HMzprK
 The latest Supabase advisor result reports zero errors. Its warning is **Leaked Password Protection Disabled**: Supabase exposes that feature on the Pro plan, and this workspace currently uses Free without a purchased upgrade. Current-password verification and the application’s password-length rules remain active, but they are not a breached-password database check. See [Supabase password security](https://supabase.com/docs/guides/auth/password-security).
 
 The advisor also reports five informational RLS-with-no-policy findings on `private.workspace_generation_config`, `private.meta_connector_config`, `private.meta_credentials`, `private.meta_oauth_states`, and `private.meta_revocations`. This is intentional: clients must not read or change these server-only records. Administrative provisioning and narrowly guarded private functions handle them; no client policies were added.
+
+
+## Manuscript foundation release — September 18, 2026
+
+The repository audit and implementation sequence are in [docs/manuscript-upgrade-audit.md](docs/manuscript-upgrade-audit.md). The author/operator workflow and remaining scope are in [docs/manuscript-foundation.md](docs/manuscript-foundation.md).
+
+The foundation extends The Universe with real book/series/audio metadata, private permission-approved manuscript uploads, versioned source passages, durable AI batch processing, persisted character observations and findings, optional vector indexing, exact source citations, spoiler controls, and free source-text search. Existing Desk review, drafts, sign-in and demo mode remain separate and supported.
+
+Final release checks passed TypeScript, ESLint, 465 unit/API/database/schema tests in 31 files, and the production build after the hosted schema compatibility correction. The 20 selected connected desktop/mobile browser tests passed: manuscript creation/edit/upload/queued recovery/duplicate detection, cited findings, spoiler consent including a delayed-response race, source search, prior-version retention, existing book-to-Desk flow, draft protection, login/logout, persistence and accessibility. These browser tests use a simulated Supabase boundary and synthetic extraction fixtures; the actual provider is checked separately. Demo browser verification passed 18 tests initially and the remaining two on a focused rerun after accounting for Next.js's retained hidden route elements.
+
+Adversarial review found and fixed EPUB inert-doctype compatibility, optional invalid vector handling, and delayed search results overriding spoiler consent. Exact citation validation, tenant boundaries, immutable source text, explicit reading retries, and prior-version activation rules remain enforced. The hosted database migration `202609190001_manuscript_intelligence.sql` applied transactionally and preserved all eight catalog books and six saved briefs.
+
+The first hosted synthetic upload saved successfully; Google and Vertex rejected the initial complex output grammar with HTTP 400 before extraction usage was reported. A separate minimal live probe reproduced the error, then succeeded after simplifying the provider transport schema. Strict local and database validation remain required. The corrected deployment `dpl_7SYyDFMKaD2b9L99BshDYUa5nifJ` reached READY at the existing production alias. Retrying the same saved synthetic manuscript through the real UI succeeded and persisted four findings plus one character appearance. Findings survived reload; the citation opened the exact saved passage; text search returned the passage; identical re-upload reused the version; signing out restored 401 access denial. Desktop/mobile checks reported no browser errors or horizontal overflow once the resized layout settled. The Storage bucket was private and anonymous access to the original file was denied. The synthetic file, book, manuscript, findings, character and test processing records were removed afterward; the original eight books and six briefs remained.
+
+The successful application extraction recorded 1,283 input tokens, 986 output tokens and 95 embedding tokens, with an estimated combined cost of $0.00466165. This excludes separate minimal debugging probes and is not a reconciled invoice. The test directly establishes text retrieval; the cleanup report aggregates embedding status across both the initial failed attempt and successful retry, so that aggregate is not evidence of vector-index health. Local SQL/provider tests separately verify vector shape/storage/retrieval and optional-index fallback. No real Cassy manuscript was supplied or analyzed.
+
+This is the foundation increment. Goal-linked strategy briefs, owner/admin strategy review, dated release plans, automatic catalog recommendations and manuscript retrieval inside Ask Raven remain later increments; no automatic publishing or background execution is claimed.

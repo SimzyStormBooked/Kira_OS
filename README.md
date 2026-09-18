@@ -17,7 +17,8 @@ Connected mode never substitutes demo data after a connection failure. Its home 
 
 ## What works
 
-- Responsive Mission Control, private welcome/sign-in, searchable starter catalog, and book details that lead with verified information. A book-details starter collects approved copy and source links in an editable Desk brief; it does not update the catalog or upload files.
+- Responsive Mission Control, private welcome/sign-in, a private editable book library, and book details that lead with attributed information. A book-details starter collects approved copy and source links in an editable Desk brief; it does not update the catalog or upload files.
+- The Universe supports adding/editing real books and series, audiobook metadata, permission-confirmed DOCX/PDF/EPUB/TXT/Markdown uploads, resumable reading, spoiler controls and manuscript version history.
 - Workspace search finds books, saved brief titles, and pages. Brief results open the correct pending/reviewed tab and focus the selected record.
 - Optional Guide, shared-workspace first steps, and expandable page help. Starter records do not count as Cassy personally completing onboarding. Future modules are grouped under “Coming later.”
 - A curated idea shelf with manual category/previous/next controls, plus attributed public-domain literary quotes linked to their original texts.
@@ -83,8 +84,9 @@ The web app never uses a service-role or secret Supabase key. Privileged integra
 | --- | --- |
 | Author name, website, Instagram handle | Supplied manually in the brief |
 | 5,447 followers and 880 posts | Manual snapshot; capture date unknown; never live metrics |
-| Eight book titles and order | Checked against the official author site on 2026-09-17; currently bundled in the catalog UI |
-| Descriptions, characters, relationships, tropes, themes, reviews, sales | Not imported; still need verification |
+| Eight book titles and order | Checked against the official author site on 2026-09-17; stored in Supabase; demo mode retains its separate bundled catalog |
+| Manuscript findings and characters | Extracted only from permission-approved uploads; exact citations retained; unreviewed, with inferences and spoilers labeled |
+| Reviews, sales and reader performance | Not integrated; never inferred as measured outcomes |
 | Demo metrics, findings, recommendations, briefs, tactic example | Synthetic; no claims about real performance |
 | Connected briefs, decisions, and lessons | Actual member input saved to the authorized author workspace |
 | Inspiration questions and brief starters | Curated editorial reflections, labeled as such; no claims about reader behavior or book performance |
@@ -102,7 +104,7 @@ Sources: [My Alpha Team](https://www.kirastanleyauthor.com/myalphateam), [Fantas
 | `/login` | Email/password sign-in for existing accounts; no public signup |
 | `/welcome` | Private one-time link landing page; an explicit button submits the token, so opening a preview does not consume it |
 | `/` | Demo Mission Control or private workspace home |
-| `/universe`, `/universe/[slug]` | Searchable sourced catalog, collapsed unverified sections, and explicit preparation of a sourced review brief |
+| `/universe`, `/universe/[slug]` | Private editable library, versioned manuscript upload, extracted knowledge, citations and source-text search; separate demo catalog |
 | `/desk` | Editable business briefs, confirmed final decisions, history and lessons; known `?idea=` values open curated starters and `?brief=` selects a saved record |
 | `/raven` | Demo briefing; honest unconnected intelligence state in private mode |
 | `/learn` | Lessons and local agent-blueprint workshop |
@@ -144,6 +146,6 @@ SQL tests run the real migrations in PGlite with pgvector and emulated Supabase 
 
 Use the existing Vercel project with the Next.js preset, `npm ci`, and `npm run build` from the repository root. Configure connected mode and required values before inviting users. Redeploy after environment changes. Use a separate database for previews. The app is excluded from search indexing.
 
-The UX release and live Ask Raven are deployed and the real generation/persistence workflow is verified. Meta still needs app setup and consent. Approved Vault ingestion remains future work: private Storage, rights/provenance, field verification, then read-only retrieval with citations. Publishing, outreach sending, autonomous scheduling, learned feedback retrieval, and embedding generation remain unimplemented. On-demand AI calls consume credits only after explicit submission and successful setup.
+The UX release and live Ask Raven are deployed and the real generation/persistence workflow is verified. Meta still needs app setup and consent. The manuscript foundation adds private versioned uploads, bounded extraction, persistent character observations, exact citations, optional embeddings and free source-text search. See [the manuscript runbook](docs/manuscript-foundation.md). Strategy briefs, flexible goals, admin strategy review, release plans, cross-book recommendations and automatic manuscript retrieval in Ask Raven are the next increments. Publishing, outreach sending, autonomous scheduling and learned feedback retrieval remain unimplemented. On-demand AI calls consume credits only after explicit submission and successful setup.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md), [DATABASE.md](DATABASE.md), [ROADMAP.md](ROADMAP.md), and [AGENTS.md](AGENTS.md).

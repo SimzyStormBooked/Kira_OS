@@ -11,22 +11,25 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { books, series } from "@/lib/data/seed";
+import { useLibrary } from "./library-provider";
 import { GettingStarted } from "./getting-started";
 import { InspirationShelf } from "./inspiration-shelf";
 import { DailyQuote } from "./daily-quote";
 import { useWorkspace } from "@/lib/db/demo-store";
 
 export function ConnectedHome({ dateKey }: { dateKey?: string }) {
+  const library = useLibrary();
+  const books = library.data?.books ?? [];
+  const series = library.data?.series ?? [];
   const { approvals, feedback, ready, viewerEmail, canEdit } = useWorkspace();
   const pending = approvals.filter((approval) => approval.status === "pending");
   const reviewed = approvals.length - pending.length;
   const counts = [
     {
-      label: "Sourced titles",
+      label: "Your books",
       value: books.length,
-      detail: "From your official catalog",
-      known: true,
+      detail: "Your private book library",
+      known: !!library.data,
     },
     {
       label: "Awaiting your eye",
@@ -154,9 +157,8 @@ export function ConnectedHome({ dateKey }: { dateKey?: string }) {
               {books.length} titles. <em>A growing memory.</em>
             </h2>
             <p>
-              {series.length} series and collections, with titles and order
-              sourced from your author website. Open a title to collect approved
-              descriptions and source links in a review brief.
+              {series.length} series and collections. Open a book to add a manuscript,
+              explore what Kira learned, and check the sources behind it.
             </p>
           </div>
           <Link

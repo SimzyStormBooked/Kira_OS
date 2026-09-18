@@ -215,7 +215,7 @@ test("all planned routes identify their boundaries and unknown URLs return 404",
   ]) {
     await page.goto(route);
     await expect(
-      page.getByText(/This module is a roadmap preview/),
+      page.getByText(/This module is a roadmap preview/).filter({ visible: true }),
     ).toBeVisible();
   }
   const response = await page.goto("/does-not-exist");

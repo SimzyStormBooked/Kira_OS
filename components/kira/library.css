@@ -1,0 +1,54 @@
+.library-page { display: grid; gap: 28px; min-width: 0; }
+.library-page .page-heading { margin-bottom: 4px; }
+.library-page .page-heading h1 { overflow-wrap: anywhere; }
+.library-intro { padding: 26px; display: flex; align-items: flex-start; gap: 20px; }
+.library-intro > svg { flex-shrink: 0; color: #b9a68b; margin-top: 6px; }
+.library-intro h2, .library-panel h2 { font-size: 27px; margin: 5px 0 12px; }
+.library-intro p, .library-panel > p, .library-knowledge > p { color: #bcb5ad; line-height: 1.75; max-width: 85ch; }
+.library-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+.library-panel { padding: 28px; min-width: 0; }
+.library-form { display: grid; gap: 18px; margin-top: 18px; }
+.library-form label { display: grid; gap: 8px; font-size: 13px; line-height: 1.6; color: #ded8cf; }
+.library-form-row { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+.library-form input, .library-form textarea, .library-form select { width: 100%; min-width: 0; }
+.library-form select { background: #181816; border: 1px solid #48443e; border-radius: 6px; padding: 10px 12px; color: #ede7df; }
+.library-form input[type=file] { height: auto; padding: 12px; font-size: 13px; }
+.library-form input[type=file]::file-selector-button { margin-right: 12px; color: #eee7dd; }
+.library-form summary, .library-history summary { cursor: pointer; color: #dbccba; padding: 8px 0; font-size: 14px; }
+.library-form .library-check, .library-check { display: flex; align-items: flex-start; gap: 11px; font-size: 13px; line-height: 1.7; color: #bcb5ad; }
+.library-check input[type=checkbox] { width: 17px; height: 17px; flex-shrink: 0; margin-top: 3px; accent-color: #b3a68f; }
+.library-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.library-dialog { max-height: 88dvh; overflow-y: auto; }
+.library-error { color: #f0bdbd; background: #3a202060; border: 1px solid #84535360; padding: 16px; border-radius: 8px; font-size: 14px; }
+.library-success { color: #c7d6b1; border: 1px solid #737e5860; padding: 16px; border-radius: 8px; font-size: 14px; }
+.library-preserve, .library-source-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.library-audio { margin-top: 25px; border-top: 1px solid #393630; padding-top: 18px; color: #bcb5ad; font-size: 14px; }
+.library-progress { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.library-progress > div:first-child { flex: 1; min-width: 0; }
+.library-progress p { overflow-wrap: anywhere; font-size: 14px; color: #bbb4ab; }
+.library-progress progress { width: 100%; height: 8px; accent-color: #a3af86; margin: 16px 0; }
+.library-knowledge { padding-top: 12px; }
+.library-knowledge .section-heading { align-items: center; }
+.library-spoilers { margin: 22px 0 12px; }
+.library-facts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin-top: 20px; }
+.library-fact { padding: 24px; display: flex; flex-direction: column; gap: 12px; overflow-wrap: anywhere; }
+.library-fact > p { color: #d0c9bf; line-height: 1.8; font-size: 14px; }
+.library-fact h3 { font-size: 26px; }
+.library-fact-label { font-size: 11px; color: #becdad; }
+.library-fact-label.inference { color: #d6b898; }
+.library-citations { display: flex; flex-wrap: wrap; gap: 5px; margin-top: auto; }
+.library-subheading { margin-top: 35px; font-size: 28px; }
+.library-search-row { display: flex; gap: 10px; align-items: center; }
+.library-search-row input { flex: 1; min-width: 0; }
+.library-search-result { border-top: 1px solid #37342e; padding: 22px 0 12px; margin-top: 18px; }
+.library-search-result p { color: #c9c0b6; font-size: 14px; line-height: 1.8; margin-top: 12px; white-space: pre-wrap; }
+.library-source-text { font-size: 14px; line-height: 1.9; padding: 18px; border-left: 2px solid #9e8f7c; background: #ffffff04; }
+.library-history { border-top: 1px solid #35322d; padding-top: 15px; }
+.library-history p { font-size: 13px; color: #b8b0a5; margin: 14px 0; }
+@media (max-width: 800px) {
+  .library-detail-grid, .library-facts { grid-template-columns: 1fr; }
+  .library-panel, .library-intro, .library-fact { padding: 22px; }
+  .library-progress { flex-direction: column; align-items: stretch; }
+  .library-search-row { flex-direction: column; align-items: stretch; }
+  .library-page .page-heading { align-items: flex-start; gap: 20px; }
+}

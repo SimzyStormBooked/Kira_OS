@@ -11,6 +11,8 @@ export const evidenceSchema = z.object({
     "website",
     "manual_snapshot",
     "human_feedback",
+    "document",
+    "api",
   ]),
   retrieved_at: z.iso.datetime(),
   excerpt_or_metric: z.string().min(1),

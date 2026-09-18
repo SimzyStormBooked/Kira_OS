@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/kira/app-shell";
 import { WorkspaceProvider } from "@/lib/db/demo-store";
+import { LibraryProvider } from "@/components/kira/library-provider";
 import { freshWorkspace, type WorkspaceState } from "@/lib/db/workspace-state";
 import {
   getWorkspaceSession,
@@ -28,13 +29,13 @@ export default async function RootLayout({
   else if (session.authorization === "demo")
     content = (
       <WorkspaceProvider mode="demo" initialWorkspace={freshWorkspace()}>
-        <AppShell
+        <LibraryProvider><AppShell
           dateKey={new Date().toLocaleDateString("en-CA", {
             timeZone: "America/Phoenix",
           })}
         >
           {children}
-        </AppShell>
+        </AppShell></LibraryProvider>
       </WorkspaceProvider>
     );
   else if (session.authorization !== "authorized") redirect("/login");
@@ -59,13 +60,13 @@ export default async function RootLayout({
         viewerEmail={session.user?.email}
         role={workspaceRole}
       >
-        <AppShell
+        <LibraryProvider><AppShell
           dateKey={new Date().toLocaleDateString("en-CA", {
             timeZone: "America/Phoenix",
           })}
         >
           {children}
-        </AppShell>
+        </AppShell></LibraryProvider>
       </WorkspaceProvider>
     ) : (
       <main className="login-stage">

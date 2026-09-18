@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ credits: vi.fn(), generate: vi.fn(), agent: vi.fn(), gateway: vi.fn() }));
 vi.mock("server-only", () => ({}));
-vi.mock("ai", () => ({
+vi.mock("ai", async importOriginal => ({
+  ...await importOriginal<typeof import("ai")>(),
   createGateway: () => Object.assign(mocks.gateway, { getCredits: mocks.credits }),
   isStepCount: (steps: number) => steps, Output: { object: (value: unknown) => value },
   ToolLoopAgent: class { constructor(options: unknown) { mocks.agent(options); } generate = mocks.generate; },

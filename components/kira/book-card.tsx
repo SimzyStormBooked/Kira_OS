@@ -6,7 +6,7 @@ export function BookCover({
   book,
   large = false,
 }: {
-  book: Book;
+  book: Pick<Book, "title" | "accent">;
   large?: boolean;
 }) {
   return (

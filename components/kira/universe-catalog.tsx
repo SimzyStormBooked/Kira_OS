@@ -8,6 +8,8 @@ import { books, series, universe } from "@/lib/data/seed";
 import { ContextHelp } from "./context-help";
 import { BookCard } from "./book-card";
 import { DemoBadge } from "./origin-badge";
+import { useWorkspace } from "@/lib/db/demo-store";
+import { ConnectedLibrary } from "./connected-library";
 export function UniverseCard() {
   return (
     <Card className="universe-card">
@@ -33,6 +35,10 @@ export function UniverseCard() {
   );
 }
 export function UniverseCatalog() {
+  const { mode } = useWorkspace();
+  return mode === "connected" ? <ConnectedLibrary /> : <DemoUniverseCatalog />;
+}
+function DemoUniverseCatalog() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const filtered = books.filter(

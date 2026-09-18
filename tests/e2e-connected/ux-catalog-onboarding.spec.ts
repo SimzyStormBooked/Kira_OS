@@ -22,15 +22,9 @@ test("book details lead with sources and prepare a review brief only on request"
   await page.goto("/universe/crazy-people");
   await expect(page.getByRole("heading", { name: "Crazy People", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "View author source", exact: true })).toHaveAttribute("href", "https://www.kirastanleyauthor.com/myalphateam");
-  const futureDetails = page.locator("details.book-future-details");
-  await expect(futureDetails).not.toHaveAttribute("open", "");
-  await expect(page.getByRole("tab", { name: "Characters", exact: true })).not.toBeVisible();
-  await futureDetails.locator("summary").focus();
-  await futureDetails.locator("summary").press("Enter");
-  await expect(futureDetails).toHaveAttribute("open", "");
-  await page.getByRole("tab", { name: "Characters", exact: true }).click();
-  await expect(page.getByRole("tabpanel")).toContainText("Nothing has been inferred");
-  await futureDetails.locator("summary").click();
+  await expect(page.getByRole("heading", { name: "What Kira learned", exact: true })).toBeVisible();
+  await expect(page.getByText("Once Kira finishes reading, its findings and characters will appear here with the passages behind them.", { exact: true }).filter({visible:true})).toBeVisible();
+  await expect(page.getByLabel("Manuscript file", { exact: true }).filter({visible:true})).toBeVisible();
   expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 

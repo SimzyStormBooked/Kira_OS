@@ -47,6 +47,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useWorkspace } from "@/lib/db/demo-store";
 import { books } from "@/lib/data/seed";
+import { useLibrary } from "./library-provider";
 import { cn } from "@/lib/utils";
 import { WorkspaceGuide } from "./workspace-guide";
 import { InspirationDialogTrigger } from "./inspiration-shelf";
@@ -241,6 +242,7 @@ export function AppShell({
   const signOutButtonRef = useRef<HTMLButtonElement>(null);
   const keepWorkingRef = useRef<HTMLButtonElement>(null);
   const state = useWorkspace();
+  const library = useLibrary();
   function signOut(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (logoutLock.current) return;
@@ -307,7 +309,7 @@ export function AppShell({
       kind: approval.status === "pending" ? "Brief · Needs your eye" : `Brief · ${approval.status === "approved" ? "Approved" : "Rejected"}`,
       keywords: "brief approval decision",
     })),
-    ...books.map((b) => ({
+    ...(state.mode === "connected" ? library.data?.books ?? [] : books).map((b) => ({
       href: `/universe/${b.slug}`,
       title: b.title,
       kind: "Book",

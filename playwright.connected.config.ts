@@ -27,6 +27,7 @@ export default defineConfig({
         NEXT_PUBLIC_SUPABASE_URL: fixture.supabaseUrl,
         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: fixture.publishableKey,
         KIRA_AI_ENABLED: "false",
+        KIRA_AI_RECORDING_KEY: "a".repeat(64),
         KIRA_META_APP_SECRET: "",
       },
     },
