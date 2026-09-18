@@ -1,6 +1,6 @@
 # KIRA OS verification
 
-Recorded on 2026-09-17. The core private workspace is live at [KIRA OS](https://kira-os-dusky.vercel.app), backed by dedicated Supabase project `obusnqlwuoavwtmryiik`. Latest local work includes Learn & Create, access/password controls, persisted Ask Raven, saved links, and gated Meta authorization.
+Recorded on 2026-09-17. The core private workspace is live at [KIRA OS](https://kira-os-dusky.vercel.app), backed by dedicated Supabase project `obusnqlwuoavwtmryiik`. The deployed release includes Learn & Create, access/password controls, persisted Ask Raven, saved links, and gated Meta authorization.
 
 ## Hosted core workflow — verified
 
@@ -40,7 +40,7 @@ Ask Raven’s runtime adapter is implemented but disabled. Gateway currently rep
 
 Meta app credentials are missing. OAuth, encrypted credential storage, account verification, and disconnection code still require actual provider configuration and consent testing. Manual saved links and the NotebookLM copy bridge are separate from authorization or synchronization. Private uploads, embeddings, social metrics ingestion, and external publishing remain unimplemented.
 
-The latest application/migration slice needs its final integrated deployment verification after the local checks complete. The GitHub Actions template remains inactive because the connected GitHub authorization lacks workflow scope; remote CI has not run.
+The integrated feature release (`8a823da`, Vercel deployment `dpl_E4HMzprKX6T6TyZNhSdXcxfbgLHT`) reached READY in production. Its hosted checks passed: owner access, saved Instagram shortcut persistence, a Michael agent blueprint saved/reloaded through the real database, password-settings visibility, honest disabled-AI and pending-Meta states, desktop accessibility on four new pages, mobile overflow checks on six pages, and zero browser runtime errors. No real user password was changed by the test. The initial deployment error-log query returned no entries; no external log drain or ongoing monitor was configured. The GitHub Actions template remains inactive because the connected GitHub authorization lacks workflow scope; remote CI has not run.
 
 ## Hosted security advisor
 

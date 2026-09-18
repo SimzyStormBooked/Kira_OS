@@ -4,7 +4,7 @@
 
 KIRA OS is a private author-business workspace for Kira Stanley. It brings her catalog, business briefs, decisions, and lessons together while preserving her creative voice. It does not generate novels, manuscripts, chapters, scenes, or fiction.
 
-**The private workspace is online at [KIRA OS](https://kira-os-dusky.vercel.app).** Vercel project `storm-booked/kira-os` uses dedicated Supabase project `obusnqlwuoavwtmryiik`. Michael’s confirmed administrator account has passed real hosted sign-in, brief save/reload, a separate-browser check, and sign-out. The database contains eight sourced books and no demo intelligence. [SETUP.md](SETUP.md) covers Cassie’s account and optional connections; [VERIFICATION.md](VERIFICATION.md) distinguishes hosted checks from the latest local feature work.
+**The private workspace is online at [KIRA OS](https://kira-os-dusky.vercel.app).** Vercel project `storm-booked/kira-os` uses dedicated Supabase project `obusnqlwuoavwtmryiik`. Michael’s confirmed administrator account has passed real hosted sign-in, brief save/reload, a separate-browser check, and sign-out. The database contains eight sourced books and no demo intelligence. [SETUP.md](SETUP.md) covers Cassie’s account and optional connections; [VERIFICATION.md](VERIFICATION.md) records the hosted checks and provider activation still needed.
 
 ## Two explicit modes
 

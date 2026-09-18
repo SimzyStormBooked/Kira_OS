@@ -36,7 +36,7 @@ The AI recording key's SHA-256 hex hash belongs in `private.workspace_generation
 
 Seven privileged integration-injected Supabase secrets were removed from Vercel runtime. The web app uses a publishable/anon key and the signed-in session, never a service-role key, database password, or privileged database URL. Keep administrative credentials out of runtime and source control. Use a separate database for previews and redeploy after environment changes.
 
-The core hosted flow has passed; the latest AI/access/connector additions still require their final integrated deployment checks. Supabase Free does not include its Pro-only leaked-password protection; no upgrade was purchased. Use unique account passwords. See [Supabase password security](https://supabase.com/docs/guides/auth/password-security) and [VERIFICATION.md](VERIFICATION.md).
+The core hosted flow and integrated learning/access/link/AI-setup pages have passed their production checks. Successful live AI generation and Meta account consent remain pending the provider setup steps above. Supabase Free does not include its Pro-only leaked-password protection; no upgrade was purchased. Use unique account passwords. See [Supabase password security](https://supabase.com/docs/guides/auth/password-security) and [VERIFICATION.md](VERIFICATION.md).
 
 ## Local setup and the standalone fallback
 
