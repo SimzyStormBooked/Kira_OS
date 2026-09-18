@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { buildWelcomeLink } from "@/lib/auth/invitation";
 import type { WorkspaceAccessDetails, WorkspaceMember } from "@/lib/auth/workspace-role";
 
 type MemberRole = "editor" | "viewer";
@@ -18,8 +19,9 @@ const roleDescriptions = {
   viewer: "You can read the workspace and export a copy. You cannot save changes or manage access.",
 };
 
-export function AccessPage({ mode, initialAccess, initialError = null }: {
-  mode: "demo" | "connected"; initialAccess: WorkspaceAccessDetails | null; initialError?: string | null;
+export function AccessPage({ mode, initialAccess, initialError = null, appOrigin = null }: {
+  mode: "demo" | "connected"; initialAccess: WorkspaceAccessDetails | null;
+  initialError?: string | null; appOrigin?: string | null;
 }) {
   const router = useRouter();
   const [access, setAccess] = useState(initialAccess);
@@ -34,6 +36,23 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
   const requestVersion = useRef(0);
   const statusRef = useRef<HTMLParagraphElement>(null);
   const removedMember = useRef(false);
+
+  const welcomeLink = appOrigin ? buildWelcomeLink(appOrigin) : "";
+
+  async function copyWelcomeLink(member?: WorkspaceMember) {
+    if (!appOrigin) return;
+    try {
+      await navigator.clipboard.writeText(buildWelcomeLink(appOrigin, member?.email));
+      setError(null);
+      setNotice(member?.email
+        ? `Welcome link for ${member.email} copied. Send their password separately — it is never in the link.`
+        : "Welcome link copied. The recipient still needs their own confirmed account and access here.");
+    } catch {
+      setNotice(null);
+      setError("The link could not be copied automatically. Select the link above and copy it by hand.");
+    }
+    requestAnimationFrame(() => statusRef.current?.focus());
+  }
 
   useEffect(() => {
     if (mode !== "connected") return;
@@ -108,12 +127,16 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
       {mode === "demo" ? <p className="quiet-note">You are exploring a demo. Collaborator access becomes available after private setup; no real accounts are listed or changed here.</p>
         : access ? <><p className="access-your-role"><strong>Your role: {access.role}</strong></p><p>{roleDescriptions[access.role]}</p></>
           : <p>Private access details are not available right now.</p>}
-      {mode === "connected" && <div className="settings-actions">
-        <Button variant="outline" disabled={busy} onClick={() => void request()}><RefreshCw size={14} />Refresh access</Button>
-        <Button variant="ghost" disabled={busy} onClick={async () => {
-          try { await navigator.clipboard.writeText(new URL("/login", window.location.origin).toString()); setNotice("Sign-in link copied. The recipient still needs an account and workspace access."); setError(null); }
-          catch { setError("The link could not be copied. You can share this site's sign-in address."); }
-        }}><Copy size={14} />Copy sign-in link</Button>
+      {mode === "connected" && <div className="access-share">
+        <label className="form-label" htmlFor="access-welcome-link">Shareable welcome link</label>
+        <Input id="access-welcome-link" readOnly value={welcomeLink} onFocus={(event) => event.currentTarget.select()} />
+        <p className="quiet-note">{welcomeLink
+          ? <>Send this by text or message. It opens a welcome page with a sign-in button, carries no password, and grants nothing on its own. Use <strong>Copy their link</strong> below to prefill a person&rsquo;s email address.</>
+          : "Set NEXT_PUBLIC_APP_URL for this deployment to show the address you can share."}</p>
+        <div className="settings-actions">
+          <Button variant="outline" disabled={busy} onClick={() => void request()}><RefreshCw size={14} />Refresh access</Button>
+          <Button variant="ghost" disabled={busy || !welcomeLink} onClick={() => void copyWelcomeLink()}><Copy size={14} />Copy welcome link</Button>
+        </div>
       </div>}
     </Card>
     <p ref={statusRef} tabIndex={-1} role={error ? "alert" : "status"} aria-live="polite" className={error ? "form-error" : "access-status"}>{error ?? notice}</p>
@@ -141,6 +164,7 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
             <option value="viewer">Viewer — read and export</option><option value="editor">Editor — write and make decisions</option>
           </select>
           <div className="settings-actions"><Button variant="outline" disabled={busy || !roles[member.id] || roles[member.id] === member.role} onClick={() => void request({ action: "change", id: member.id, role: roles[member.id], version: member.version })}>Save role</Button>
+            <Button variant="ghost" disabled={busy || !member.email || !welcomeLink} onClick={() => void copyWelcomeLink(member)}><Copy size={14} />Copy their link</Button>
             <Button variant="ghost" disabled={busy} onClick={() => { setError(null); removedMember.current = false; setRemoving(member); }}>Remove access</Button></div>
         </li>)}</ul>
       </Card>

@@ -7,6 +7,7 @@ import { LoginForm } from "@/components/kira/login-form";
 import { Button } from "@/components/ui/button";
 import { getWorkspaceSession } from "@/lib/auth/session";
 import { safeRedirectPath } from "@/lib/auth/security";
+import { safeInvitationEmail } from "@/lib/auth/invitation";
 
 export const metadata: Metadata = { title: "Welcome home" };
 export const dynamic = "force-dynamic";
@@ -14,10 +15,12 @@ export const dynamic = "force-dynamic";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string | string[] }>;
+  searchParams: Promise<{ next?: string | string[]; email?: string | string[] }>;
 }) {
   const session = await getWorkspaceSession();
-  const next = safeRedirectPath((await searchParams).next);
+  const params = await searchParams;
+  const next = safeRedirectPath(params.next);
+  const invited = safeInvitationEmail(params.email);
   if (session.authorization === "authorized") redirect(next);
   const canSignIn =
     session.configured && session.mode === "connected" && !session.user;
@@ -60,7 +63,7 @@ export default async function LoginPage({
         {canSignIn ? (
           <>
             <p>Sign in to pick up where you left off.</p>
-            <LoginForm next={next} />
+            <LoginForm next={next} email={invited} />
           </>
         ) : session.mode === "demo" ? (
           <>

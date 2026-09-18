@@ -24,7 +24,9 @@ export default async function RootLayout({
   const path = (await headers()).get("x-kira-pathname") ?? "/";
   const session = await getWorkspaceSession();
   let content: React.ReactNode;
-  if (path === "/login") content = children;
+  // The shared welcome link must open for a signed-out recipient, so it stays
+  // public alongside sign-in. It renders no private workspace data.
+  if (path === "/login" || path === "/welcome") content = children;
   else if (session.authorization === "demo")
     content = (
       <WorkspaceProvider mode="demo" initialWorkspace={freshWorkspace()}>

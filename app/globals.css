@@ -3684,3 +3684,20 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
   .book-materials-choices { display: grid; }
   .book-materials-choices button { white-space: normal; height: auto; min-height: 44px; }
 }
+
+/* The shared welcome link opens a public page: warm, short, and legible on a phone. */
+.welcome-card { max-width: 560px; }
+.login-card > .welcome-invited { margin-top: 13px; font-size: 12px; color: #b0b5a4; overflow-wrap: anywhere; }
+.welcome-invited strong { color: #e4dcc9; }
+.welcome-action[data-slot="button"] { width: 100%; height: 46px; justify-content: space-between; padding-inline: 16px; font-size: 12px; }
+.welcome-steps { margin-top: 30px; padding-top: 26px; border-top: 1px solid #444333; }
+.welcome-steps h3 { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: #b6ad94; }
+.welcome-steps ul { list-style: none; padding: 0; margin: 19px 0 0; display: grid; gap: 19px; }
+.welcome-steps li { display: flex; gap: 13px; }
+.welcome-steps li > svg { flex: none; margin-top: 3px; color: #c4ae86; }
+.welcome-steps strong { font-size: 13px; color: #ece5d6; }
+.welcome-steps p { margin-top: 6px; font-size: 12px; line-height: 1.8; color: #a9b098; }
+.welcome-card > .login-privacy { margin-top: 26px; font-size: 10px; color: #a9b098; }
+.access-share { display: grid; gap: 10px; margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--border); }
+.access-share input { overflow-wrap: anywhere; }
+.access-share .settings-actions { margin-top: 8px; }
