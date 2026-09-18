@@ -72,6 +72,7 @@ test("prepare → edit → teach → approve survives a reload", async ({ page }
   await page.getByRole("button", { name: "Save lesson", exact: true }).click();
   await expect(card).toContainText("Readers must fit our audience");
   await card.getByRole("button", { name: "Approve", exact: true }).click();
+  await page.getByRole("button", { name: "Confirm approval", exact: true }).click();
   await expect(page.getByRole("status")).toContainText(
     "Nothing has been published or sent",
   );
@@ -96,6 +97,7 @@ test("reject, set aside and restore have real state transitions", async ({
     .first()
     .getByRole("button", { name: "Reject", exact: true })
     .click();
+  await page.getByRole("button", { name: "Confirm rejection", exact: true }).click();
   await page.getByRole("tab", { name: /Reviewed/ }).click();
   await expect(
     page.getByText("Rejected · Kept for audit history", { exact: true }),
@@ -164,7 +166,7 @@ test("search and responsive navigation work without overflow", async ({
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Search workspace" }).click();
-  await page.getByLabel("Search books and pages").fill("Crazy People");
+  await page.getByLabel("Search books, briefs and pages").fill("Crazy People");
   await page.getByRole("link", { name: "Crazy People Book" }).click();
   await expect(
     page.getByRole("heading", { name: "Crazy People", exact: true }),

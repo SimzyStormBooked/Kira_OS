@@ -1,6 +1,7 @@
 "use client";
 import { ContextHelp } from "./context-help";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCheck, Download, Lightbulb, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,10 +9,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWorkspace } from "@/lib/db/demo-store";
 import { ManualReviewForm } from "./manual-review-form";
 import { ApprovalCard } from "./approval-card";
-export function DeskPage({ ideaId }: { ideaId?: string }) {
+export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: string }) {
   const { approvals, feedback, ready, mode } = useWorkspace();
   const { exportWorkspace, showError } = useWorkspace();
-  const [tab, setTab] = useState("pending");
+  const router = useRouter();
+  const [selection, setSelection] = useState<{ briefId?: string; tab: string } | null>(null);
+  const selectedBrief = approvals.find((approval) => approval.id === briefId);
+  const tab = selection && selection.briefId === briefId ? selection.tab : selectedBrief && selectedBrief.status !== "pending" ? "reviewed" : "pending";
+  const targetId = selectedBrief?.id;
+  useEffect(() => {
+    if (!ready || !targetId) return;
+    const frame = requestAnimationFrame(() => {
+      const heading = document.getElementById(`brief-${targetId}`);
+      if (heading && heading.getClientRects().length > 0) {
+        heading.focus({ preventScroll: true });
+        heading.scrollIntoView({ block: "center", behavior: "instant" });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [ready, targetId, tab]);
   const pending = approvals.filter((a) => a.status === "pending");
   return (
     <>
@@ -52,14 +68,18 @@ export function DeskPage({ ideaId }: { ideaId?: string }) {
         </span>
       </div>
       <ManualReviewForm ideaId={ideaId} />
+      {briefId && ready && !selectedBrief && <p role="status" className="quiet-note">That brief is not available in your workspace. You can search your saved briefs or browse the desk below.</p>}
       <div className="desk-layout">
         <section>
-          <Tabs value={tab} onValueChange={setTab}>
+          <Tabs value={tab} onValueChange={(value) => {
+            setSelection({ tab: value });
+            if (briefId) router.replace("/desk", { scroll: false });
+          }}>
             <TabsList>
               <TabsTrigger value="pending">
                 Needs your eye ({pending.length})
               </TabsTrigger>
-              <TabsTrigger value="reviewed">
+              <TabsTrigger id="desk-reviewed-tab" value="reviewed">
                 Reviewed ({approvals.length - pending.length})
               </TabsTrigger>
             </TabsList>
@@ -70,7 +90,7 @@ export function DeskPage({ ideaId }: { ideaId?: string }) {
                   : a.status !== "pending",
               );
               return (
-                <TabsContent value={panel} key={panel}>
+                <TabsContent value={panel} key={panel} {...(panel === "reviewed" ? { "aria-labelledby": "desk-reviewed-tab" } : {})}>
                   <div className="approval-list">
                     {items.map((a) => (
                       <ApprovalCard key={a.id} approval={a} />

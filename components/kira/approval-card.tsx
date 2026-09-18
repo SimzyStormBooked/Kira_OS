@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   BookOpen,
   Check,
@@ -24,36 +24,47 @@ import type { ApprovalRequest } from "@/types/domain";
 import { DemoBadge } from "./origin-badge";
 import { EvidenceDrawer } from "./evidence-drawer";
 export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
-  const [modal, setModal] = useState<"edit" | "teach" | null>(null);
+  const [modal, setModal] = useState<"edit" | "teach" | "approve" | "reject" | null>(null);
   const [draft, setDraft] = useState("");
   const [editVersion, setEditVersion] = useState(approval.version);
   const [lesson, setLesson] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const submitLock = useRef(false);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const decisionTriggerRef = useRef<HTMLButtonElement | null>(null);
   const { ready, feedback, mode, busy, canEdit, roleError } = useWorkspace();
   const { decideApproval, showError, teachRaven } = useWorkspace();
   const lessons = feedback.filter((f) => f.approval_request_id === approval.id);
-  async function decide(type: "approve" | "reject") {
-    try {
-      await decideApproval(approval.id, { type }, approval.version);
-    } catch (e) {
-      showError(e);
-    }
+  const isDecision = modal === "approve" || modal === "reject";
+  const pending = busy || saving;
+  const changedSinceOpening = modal !== null && modal !== "teach" && (approval.version !== editVersion || approval.status !== "pending");
+  function requestDecision(type: "approve" | "reject", trigger: HTMLButtonElement) {
+    decisionTriggerRef.current = trigger;
+    setEditVersion(approval.version);
+    setFormError(null);
+    setModal(type);
   }
   async function save() {
-    const saved =
-      modal === "edit"
-        ? await decideApproval(
-            approval.id,
-            { type: "edit", draft },
-            editVersion,
-          )
-        : await teachRaven(approval.id, lesson);
-    if (saved) {
-      setModal(null);
-      setLesson("");
-      setFormError(null);
-    } else
-      setFormError("Could not save. Check the workspace notice and try again.");
+    if (!modal || pending || submitLock.current || !ready || !canEdit || changedSinceOpening) return;
+    submitLock.current = true;
+    setSaving(true);
+    setFormError(null);
+    try {
+      const saved = modal === "teach"
+        ? await teachRaven(approval.id, lesson)
+        : await decideApproval(approval.id, modal === "edit" ? { type: "edit", draft } : { type: modal }, editVersion);
+      if (saved) {
+        setModal(null);
+        setLesson("");
+      } else setFormError("Could not save. Your decision has not been confirmed. Check the workspace notice and try again.");
+    } catch (error) {
+      showError(error);
+      setFormError("Could not save. Your decision has not been confirmed. Check the workspace notice and try again.");
+    } finally {
+      submitLock.current = false;
+      setSaving(false);
+    }
   }
   return (
     <Card className="approval-card">
@@ -67,7 +78,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
           {approval.status}
         </span>
       </div>
-      <h2>{approval.title}</h2>
+      <h2 id={`brief-${approval.id}`} tabIndex={-1}>{approval.title}</h2>
       <p>{approval.description}</p>
       <details className="approval-draft" open>
         <summary>
@@ -78,14 +89,15 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
       <div className="approval-actions">
         {approval.status === "pending" ? (
           <>
-            <Button disabled={!ready || busy || !canEdit} onClick={() => decide("approve")}>
+            <Button disabled={!ready || pending || !canEdit} onClick={(event) => requestDecision("approve", event.currentTarget)}>
               <Check size={15} />
               Approve
             </Button>
             <Button
               variant="outline"
-              disabled={!ready || busy || !canEdit}
+              disabled={!ready || pending || !canEdit}
               onClick={() => {
+                decisionTriggerRef.current = null;
                 setDraft(approval.draft);
                 setEditVersion(approval.version);
                 setFormError(null);
@@ -97,8 +109,8 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
             </Button>
             <Button
               variant="ghost"
-              disabled={!ready || busy || !canEdit}
-              onClick={() => decide("reject")}
+              disabled={!ready || pending || !canEdit}
+              onClick={(event) => requestDecision("reject", event.currentTarget)}
             >
               <X size={15} />
               Reject
@@ -115,8 +127,9 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
         <Button
           variant="outline"
           className="teach-button"
-          disabled={!ready || busy || !canEdit}
+          disabled={!ready || pending || !canEdit}
           onClick={() => {
+            decisionTriggerRef.current = null;
             setFormError(null);
             setModal("teach");
           }}
@@ -126,6 +139,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
         </Button>
         <EvidenceDrawer evidence={approval.evidence} label="Evidence" />
       </div>
+      {approval.status === "pending" && <p className="quiet-note">Approve or reject records a final decision. Review and edit the brief first; you will confirm before it is locked.</p>}
       {!canEdit && <p className="quiet-note">{roleError ? "Decisions and lessons are paused until your permissions can be checked. You can still read this brief and its evidence." : "Viewer access · You can read this brief and its evidence. An owner or editor can record decisions and lessons."}</p>}
       {lessons.length > 0 && (
         <div className="saved-lessons">
@@ -146,24 +160,33 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
       <Dialog
         open={modal !== null}
         onOpenChange={(open) => {
-          if (!open) setModal(null);
+          if (!open && !saving) setModal(null);
         }}
       >
-        <DialogContent>
+        <DialogContent showCloseButton={!saving}
+          onOpenAutoFocus={(event) => {
+            if (isDecision) { event.preventDefault(); cancelRef.current?.focus(); }
+          }}
+          onCloseAutoFocus={(event) => {
+            const trigger = decisionTriggerRef.current;
+            if (!trigger) return;
+            const target = trigger.isConnected ? trigger : document.getElementById("desk-reviewed-tab");
+            if (target) { event.preventDefault(); target.focus(); }
+          }}>
           <DialogHeader>
             <span className="eyebrow">CASSANDRA’S DESK</span>
             <DialogTitle className="serif text-3xl">
-              {modal === "edit"
+              {isDecision ? modal === "approve" ? "Approve this brief?" : "Reject this brief?" : modal === "edit"
                 ? "Make it yours."
                 : "Instinct is intelligence."}
             </DialogTitle>
             <DialogDescription>
-              {modal === "edit"
+              {isDecision ? `You are about to ${modal} “${approval.title}”. This decision is final: the brief becomes read-only and cannot be reopened or edited. You can still add a lesson. Nothing will be published, sent, purchased, or changed outside this workspace.` : modal === "edit"
                 ? "Save an edited brief for review. Editing does not approve it."
                 : "Tell Raven what the numbers missed. Your guidance is saved for future use; it does not retrain a model."}
             </DialogDescription>
           </DialogHeader>
-          <label
+          {!isDecision && <><label
             htmlFor={`approval-input-${approval.id}`}
             className="form-label"
           >
@@ -172,7 +195,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
               : "What should Raven remember?"}
           </label>
           <Textarea
-            readOnly={!canEdit}
+            readOnly={!canEdit || pending}
             id={`approval-input-${approval.id}`}
             rows={modal === "edit" ? 12 : 6}
             value={modal === "edit" ? draft : lesson}
@@ -183,21 +206,23 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
                 : setLesson(e.target.value)
             }
             placeholder="Those readers aren’t my audience. Here’s what matters…"
-          />
+          /></>}
+          {changedSinceOpening && <p role="alert" className="form-error">This brief changed while you were reviewing it. Cancel, read the latest version, then choose your next step.</p>}
+          {!canEdit && <p role="alert" className="form-error">{roleError ? "Your permissions could not be checked. Close this dialog and retry the permission check before making a decision." : "Your access no longer allows changes. You can cancel and read this brief."}</p>}
           {formError && (
             <p role="alert" className="form-error">
               {formError}
             </p>
           )}
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setModal(null)}>
+            <Button ref={cancelRef} variant="ghost" disabled={saving} onClick={() => setModal(null)}>
               Cancel
             </Button>
             <Button
-              disabled={busy || !canEdit || !(modal === "edit" ? draft : lesson).trim()}
+              disabled={!ready || pending || !canEdit || changedSinceOpening || (!isDecision && !(modal === "edit" ? draft : lesson).trim())}
               onClick={save}
             >
-              {modal === "edit" ? "Save draft" : "Save lesson"}
+              {saving ? "Saving…" : modal === "approve" ? "Confirm approval" : modal === "reject" ? "Confirm rejection" : modal === "edit" ? "Save draft" : "Save lesson"}
             </Button>
           </DialogFooter>
         </DialogContent>

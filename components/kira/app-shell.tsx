@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Activity,
   ArrowUpRight,
@@ -34,6 +34,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Sheet,
@@ -60,8 +61,8 @@ const navigation = [
   },
   {
     href: "/raven",
-    title: "The Raven",
-    description: "Evidence & recommendations",
+    title: "Briefings",
+    description: "Evidence & recommendations to review",
     icon: Feather,
   },
   {
@@ -207,7 +208,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
         <p>
           Let Kira write.
           <br />
-          <em>The agents run the business.</em>
+          <em>A little help for the business.</em>
         </p>
         <span>YOUR WORDS. YOUR WORLD.</span>
       </div>
@@ -233,7 +234,41 @@ export function AppShell({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [signingOut, setSigningOut] = useState(false);
+  const [logoutConfirmation, setLogoutConfirmation] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+  const logoutLock = useRef(false);
+  const signOutButtonRef = useRef<HTMLButtonElement>(null);
+  const keepWorkingRef = useRef<HTMLButtonElement>(null);
   const state = useWorkspace();
+  function signOut(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (logoutLock.current) return;
+    setLogoutError(null);
+    if (state.hasUnsavedPrivateDrafts()) {
+      setLogoutConfirmation(true);
+      return;
+    }
+    void completeSignOut();
+  }
+  async function completeSignOut() {
+    if (logoutLock.current) return;
+    logoutLock.current = true;
+    setSigningOut(true);
+    setLogoutError(null);
+    try {
+      const response = await fetch("/auth/logout", { method: "POST" });
+      if (!response.ok || new URL(response.url).pathname !== "/login") throw new Error("We could not sign you out. Please try again.");
+      state.clearPrivateScratchpads();
+      window.location.replace("/login");
+    } catch {
+      const message = "We could not confirm sign-out. Your unfinished work is still here; please try again.";
+      setLogoutError(message);
+      state.showError(new Error(message));
+      logoutLock.current = false;
+      setSigningOut(false);
+    }
+  }
   const title =
     pathname === "/desk"
       ? "Cassandra’s Desk"
@@ -257,20 +292,28 @@ export function AppShell({
     ...navigation.map((n) => ({
       href: n.href,
       title: n.title,
+      keywords: `${n.description ?? ""} ${n.href === "/raven" ? "raven recommendations" : n.href === "/universe" ? "books catalog" : n.href === "/" ? "home dashboard" : ""}`,
       kind: ["/", "/raven", "/universe"].includes(n.href)
         ? "Workspace"
         : "Coming later · Preview",
     })),
-    { href: "/desk", title: "Cassandra’s Desk", kind: "Approvals" },
-    ...creativeNavigation.map((n) => ({ href: n.href, title: n.title, kind: "Workspace" })),
-    { href: "/access", title: "Workspace access", kind: "Settings" },
-    { href: "/settings", title: "Settings", kind: "Workspace" },
+    { href: "/desk", title: "Cassandra’s Desk", kind: "Briefs & decisions", keywords: "ideas approvals drafts lessons" },
+    ...creativeNavigation.map((n) => ({ href: n.href, title: n.title, kind: "Workspace", keywords: n.description })),
+    { href: "/access", title: "Workspace access", kind: "Settings", keywords: "people team roles collaborators sharing" },
+    { href: "/settings", title: "Settings", kind: "Workspace", keywords: "password account setup export" },
+    ...state.approvals.map((approval) => ({
+      href: `/desk?brief=${encodeURIComponent(approval.id)}`,
+      title: approval.title,
+      kind: approval.status === "pending" ? "Brief · Needs your eye" : `Brief · ${approval.status === "approved" ? "Approved" : "Rejected"}`,
+      keywords: "brief approval decision",
+    })),
     ...books.map((b) => ({
       href: `/universe/${b.slug}`,
       title: b.title,
       kind: "Book",
+      keywords: "book catalog",
     })),
-  ].filter((n) => n.title.toLowerCase().includes(query.toLowerCase()));
+  ].filter((n) => `${n.title} ${n.keywords}`.toLowerCase().includes(query.trim().toLowerCase()));
   return (
     <div className="app-shell">
       <a href="#main-content" className="skip-link">
@@ -321,9 +364,9 @@ export function AppShell({
               </kbd>
             </Button>
             {state.mode === "connected" ? (
-              <form action="/auth/logout" method="post">
-                <Button variant="ghost" size="sm" type="submit">
-                  Sign out
+              <form action="/auth/logout" method="post" onSubmit={(event) => void signOut(event)}>
+                <Button ref={signOutButtonRef} variant="ghost" size="sm" type="submit" disabled={signingOut}>
+                  {signingOut ? "Signing out…" : "Sign out"}
                 </Button>
               </form>
             ) : (
@@ -364,17 +407,32 @@ export function AppShell({
           </Button>
         </div>
       )}
+      <Dialog open={logoutConfirmation} onOpenChange={(open) => { if (!signingOut) setLogoutConfirmation(open); }}>
+        <DialogContent showCloseButton={!signingOut}
+          onOpenAutoFocus={(event) => { event.preventDefault(); keepWorkingRef.current?.focus(); }}
+          onCloseAutoFocus={(event) => { event.preventDefault(); signOutButtonRef.current?.focus(); }}>
+          <DialogHeader>
+            <DialogTitle>Sign out with unfinished work?</DialogTitle>
+            <DialogDescription>You have unsaved work in this browser session. Signing out discards unfinished desk briefs, workshop notes, and questions. Your saved workspace records stay available.</DialogDescription>
+          </DialogHeader>
+          {logoutError && <p className="form-error" role="alert">{logoutError}</p>}
+          <DialogFooter>
+            <Button ref={keepWorkingRef} type="button" variant="outline" disabled={signingOut} onClick={() => setLogoutConfirmation(false)}>Keep working</Button>
+            <Button type="button" disabled={signingOut} onClick={() => void completeSignOut()}>{signingOut ? "Signing out…" : "Sign out and discard drafts"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
         <DialogContent className="search-dialog">
           <DialogHeader>
             <DialogTitle>Search your universe</DialogTitle>
             <DialogDescription>
-              Find a title or jump to a workspace.
+              Find a book, saved brief, or workspace page.
             </DialogDescription>
           </DialogHeader>
           <Input
-            placeholder="Books, pages, approvals…"
-            aria-label="Search books and pages"
+            placeholder="Books, saved briefs, pages…"
+            aria-label="Search books, briefs and pages"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -394,7 +452,7 @@ export function AppShell({
             ))}
             {results.length === 0 && (
               <p className="quiet-note">
-                No matches. Try a book title or “Raven”.
+                No matches. Try a book or saved brief title, or a page such as “Settings”.
               </p>
             )}
           </div>

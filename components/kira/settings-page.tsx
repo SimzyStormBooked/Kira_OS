@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { PasswordSettings } from "./password-settings";
 import { ContextHelp } from "./context-help";
+import { SetupStatus } from "./setup-status";
 import { useState } from "react";
 import {
   Check,
@@ -37,7 +38,7 @@ const capabilityLabels: Record<keyof typeof creativeFirewall, string> = {
 };
 export function SettingsPage() {
   const [confirm, setConfirm] = useState(false);
-  const { ready, mode, viewerEmail } = useWorkspace();
+  const { ready, mode, viewerEmail, role } = useWorkspace();
   const { exportWorkspace, resetWorkspace, showError } = useWorkspace();
   return (
     <>
@@ -49,11 +50,12 @@ export function SettingsPage() {
             <br />
             <em>Beautifully nonnegotiable.</em>
           </h1>
-          <p>Kira is the author. AI is the business team.</p>
+          <p>Your account, your connections, and the boundaries that keep your writing yours.</p>
         </div>
         <ShieldCheck size={32} strokeWidth={1} />
       </div>
       <ContextHelp kind="settings" />
+      <SetupStatus />
       <div className="settings-grid">
         <Card className="settings-card">
           <div className="section-heading">
@@ -110,7 +112,7 @@ export function SettingsPage() {
           <Card className="settings-card">
             <div className="section-heading"><h2>A space you choose to share</h2><ShieldCheck size={19} /></div>
             <p>Give a collaborator a clear role: viewing, editing, or reviewing decisions. Your workspace owner controls access.</p>
-            <div className="settings-actions"><Button asChild variant="outline"><Link href="/access">Manage workspace access</Link></Button></div>
+            <div className="settings-actions"><Button asChild variant="outline"><Link href="/access">{role === "owner" ? "Manage workspace access" : "View my workspace access"}</Link></Button></div>
           </Card>
           {mode === "connected" && <PasswordSettings />}
           <Card className="settings-card">

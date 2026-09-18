@@ -42,7 +42,7 @@ test("sign in → create → edit → teach → approve persists through reload 
   expect(authCookies.length).toBeGreaterThan(0);
   expect(authCookies.every((cookie) => cookie.httpOnly && cookie.secure && cookie.sameSite === "Lax")).toBe(true);
   await expect(page.getByRole("region", { name: "Demo metrics" })).toHaveCount(0);
-  await page.getByRole("link", { name: "Add your first brief" }).click();
+  await page.getByRole("link", { name: "Add a business brief" }).click();
   await page.getByLabel("Give it a title").fill("Simulated autumn campaign brief");
   await page.getByLabel("Your brief", { exact: true }).fill("Use only approved book descriptions for our autumn reading-list promotion.");
   await page.getByRole("button", { name: "Save for review" }).click();
@@ -57,6 +57,7 @@ test("sign in → create → edit → teach → approve persists through reload 
   await page.getByRole("button", { name: "Save lesson", exact: true }).click();
   await expect(card).toContainText("A suitable audience matters more");
   await card.getByRole("button", { name: "Approve", exact: true }).click();
+  await page.getByRole("button", { name: "Confirm approval", exact: true }).click();
   await expect(page.locator(".toast")).toContainText("Nothing has been published or sent");
   await page.reload();
   await page.getByRole("tab", { name: /Reviewed/ }).click();

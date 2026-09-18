@@ -49,7 +49,7 @@ export function RavenPage() {
             <em>Your next move.</em>
           </h1>
           <p>
-            Evidence first. Instinct always. A business team with a paper trail.
+            Evidence first. Instinct always. Keep the reason behind a recommendation.
           </p>
         </div>
         {state.mode === "connected" ? <Button asChild><Link href="/studio">Ask Raven a question</Link></Button> : <Button
@@ -68,7 +68,7 @@ export function RavenPage() {
         <span>
           {state.mode === "demo"
             ? "Sample briefing · 3 example findings · No live sources connected"
-            : "This is where recommendations will appear once your sources are connected. For now, browse the idea shelf or bring a business idea to your desk."}
+            : "Recommendations need approved sources and a connected research workflow. None is running yet. Ask Raven is a separate, on-demand thinking space with its own setup status."}
           {state.last_run_at
             ? ` · Last run ${new Date(state.last_run_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
             : ""}
@@ -76,7 +76,7 @@ export function RavenPage() {
         {state.mode === "demo" && <DemoBadge />}
       </div>
       <RavenBriefing />
-      <section className="moves-section">
+      {(state.mode === "demo" || state.recommendations.length > 0) && <section className="moves-section">
         <div className="section-heading">
           <h2>Recommended moves</h2>
           {state.dismissed.length > 0 && (
@@ -102,7 +102,7 @@ export function RavenPage() {
               <RecommendationCard key={r.id} recommendation={r} index={i} />
             ))}
         </div>
-      </section>
+      </section>}
       {state.mode === "demo" && (
         <div className="bottom-grid">
           <AgentStatus />

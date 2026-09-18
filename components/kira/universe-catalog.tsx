@@ -17,7 +17,7 @@ export function UniverseCard() {
       <div>
         <span className="eyebrow">ONE AUTHOR. A WORLD OF POSSIBILITIES.</span>
         <h2>{universe.name}</h2>
-        <p>Eight sourced titles. A home for the details you want to keep.</p>
+        <p>Eight sourced titles. Open a book to review its source or prepare approved details.</p>
       </div>
       <div className="universe-counts">
         <div>
@@ -50,7 +50,7 @@ export function UniverseCatalog() {
             <br />
             <em>Every possibility.</em>
           </h1>
-          <p>Your worlds deserve a memory as devoted as your readers.</p>
+          <p>Find a book, check its source, and gather the details you want to add.</p>
         </div>
         <span className="heading-note">
           <ShieldCheck size={17} />

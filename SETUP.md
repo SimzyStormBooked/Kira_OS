@@ -6,17 +6,25 @@ The private workspace is online at [KIRA OS](https://kira-os-dusky.vercel.app). 
 
 Initial administrator/owner: `michael@getanswerednow.ai`. Use the privately supplied account password, then change it under **Settings → Your password**. The current password is required. Public signup is disabled; each person uses their own confirmed account.
 
-Cassie needs her own email-confirmed Supabase account before access can be granted. An administrator creates that account privately; the app does not create accounts, send invitations, or email passwords.
+Cassy now has her own confirmed account with Editor access. Use her privately supplied sign-in details; no password belongs in this repository. For future collaborators, an administrator must create their confirmed account before access can be granted. The app does not create accounts or send invitations.
 
-## 2. Give Cassie her place in the workspace
+## 2. Make the workspace part of her day
 
-As the owner, open **Settings → Manage workspace access**. Add her existing account email and choose **Editor** to let her save briefs, approve/reject decisions, and keep lessons. **Viewer** can read and export review data. The owner can change or remove collaborator access; saved work is retained. Ownership itself is not transferred from this screen.
+Cassy’s Editor role lets her save briefs, confirm approval/rejection, and keep lessons. Michael remains the owner and manages account access and Meta authorization. To add future collaborators, open **Settings → Manage workspace access** and add an existing confirmed account as Editor or Viewer. Viewers can read and export review data. Changing or removing access retains saved work; this screen does not transfer ownership.
 
-Have her sign in, open the eight-book catalog, and save one business idea at Cassandra's Desk. The optional Guide and Learn & Create workshop provide a quiet introduction. Copying a sign-in link does not grant access, and saving an agent blueprint does not start an agent.
+Have her sign in, change her temporary password, and try one small task:
+
+- Open a title in the eight-book catalog. **Prepare book details** starts an editable brief with its verified source; she can add approved copy and material links. Saving records a review brief, not a catalog edit or upload.
+- Save an idea at **Cassandra’s Desk**. Edit it first, then confirm approval or rejection when ready; final decisions lock the brief, and lessons can still be added afterward.
+- Open **Learn & Create**, choose **Start my blueprint**, and shape one assistant idea. The five lessons are available when needed. Saving a blueprint records a plan; it does not start an agent.
+
+Search finds books, saved brief titles, and pages. Desk, workshop, and unsent question drafts survive internal navigation in the same tab. Save, download, or copy before reloading or closing the tab; sign-out explains when unfinished work will be discarded. Shared starter records are labeled as shared work, not personal onboarding achievements.
 
 ## 3. Activate optional tools when their accounts are ready
 
-**Ask Raven:** the backend is implemented, but Gateway currently has zero credits and no successful live model response has been verified. Vercel currently asks the account owner to add a card to complete verification and unlock its displayed free-credit allowance. Complete that account step in Vercel; the setup helper then checks credits, provisions the private recording capability, runs a bounded hosted test, and enables the feature. Until then, leave `KIRA_AI_ENABLED=false`. No offline/demo answer substitutes for the model.
+Open **Settings → Your workspace connections** for current status and the next step. **Refresh connection status** checks existing setup; it does not purchase credits or connect accounts. Setup account links are shown only to the workspace owner.
+
+**Ask Raven:** Gateway funding is complete and a direct Gemini 3.8 Flash connectivity probe has succeeded. Production activation and a controlled in-app answer/save/reload check are still pending. No further card-setup request is needed for this activation. The release helper will enable the configured adapter, redeploy, and verify private generation persistence. After verification, use Ask Raven for a business question, revisit the saved answer, and optionally save an attributed copy to the Desk. No offline/demo answer substitutes for the model, and no background agent starts automatically.
 
 **Social accounts:** profile shortcuts and the NotebookLM copy bridge can be used independently. Real Meta authorization needs an app, configured callbacks/permissions, and consent from the account owner. Meta app credentials are not configured yet. Follow the [Instagram and Facebook setup guide](lib/connections/SETUP.md). Account authorization does not yet import social metrics or publish content.
 
@@ -29,14 +37,14 @@ Have her sign in, open the eight-book catalog, and save one business idea at Cas
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key or legacy **anon** key |
 | `KIRA_AUTHOR_ID` | `10000000-0000-4000-8000-000000000001` |
 | `NEXT_PUBLIC_APP_URL` | `https://kira-os-dusky.vercel.app` or the verified custom domain |
-| `KIRA_AI_ENABLED` | `false` until AI setup and verification succeed |
+| `KIRA_AI_ENABLED` | Default `false`; controlled activation enables it after provider/recording setup, followed by hosted verification before handoff |
 | `KIRA_AI_RECORDING_KEY` | Server-only 32 random bytes encoded as 64 hexadecimal characters |
 
 The AI recording key's SHA-256 hex hash belongs in `private.workspace_generation_config` with `singleton=true`; only the literal key belongs in the server environment. The Studio/access/links migrations and the recording key/hash are now provisioned in the hosted workspace. For a new installation, a helper provisions them through the administrative setup connection. Never put the key in a public environment variable or send it in browser props.
 
 Seven privileged integration-injected Supabase secrets were removed from Vercel runtime. The web app uses a publishable/anon key and the signed-in session, never a service-role key, database password, or privileged database URL. Keep administrative credentials out of runtime and source control. Use a separate database for previews and redeploy after environment changes.
 
-The core hosted flow and integrated learning/access/link/AI-setup pages have passed their production checks. Successful live AI generation and Meta account consent remain pending the provider setup steps above. Supabase Free does not include its Pro-only leaked-password protection; no upgrade was purchased. Use unique account passwords. See [Supabase password security](https://supabase.com/docs/guides/auth/password-security) and [VERIFICATION.md](VERIFICATION.md).
+The core hosted flow and prior integrated learning/access/link release passed their production checks. The current UX revision and activated AI workflow still need their final deployed checks. Direct model connectivity is now verified; Meta account consent remains pending. Supabase Free does not include its Pro-only leaked-password protection; no Supabase upgrade was purchased. Use unique account passwords. See [Supabase password security](https://supabase.com/docs/guides/auth/password-security) and [VERIFICATION.md](VERIFICATION.md).
 
 ## Local setup and the standalone fallback
 

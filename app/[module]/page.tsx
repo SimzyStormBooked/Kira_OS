@@ -152,7 +152,7 @@ export default async function Page({
           <Button asChild>
             <Link href={module === "campaigns" ? "/desk" : "/universe"}>
               {module === "campaigns"
-                ? "Review prepared demo briefs"
+                ? "Review saved briefs"
                 : "Explore the verified catalog"}
               <ArrowUpRight size={15} />
             </Link>

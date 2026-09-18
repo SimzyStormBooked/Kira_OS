@@ -8,6 +8,8 @@ import {
 } from "react";
 import type { AgentRecommendation, ApprovalRequest } from "@/types/domain";
 import type { WorkspaceRole } from "@/lib/auth/workspace-role";
+import { agentRecipes, starterForRecipe, type AgentBlueprint, type AgentBlueprintInput, type AgentRecipeId } from "@/lib/data/agent-recipes";
+import type { StudioJob } from "@/lib/ai/studio-contract";
 import {
   createFeedback,
   transitionApproval,
@@ -28,6 +30,43 @@ export {
 export type { DemoWorkspace } from "./workspace-state";
 export const storageKey = "kira-os:phase-one:v1";
 type Mode = "demo" | "connected";
+export type BlueprintPreview = AgentBlueprint & { signature: string };
+export interface LearnScratchpad {
+  recipeId: AgentRecipeId;
+  drafts: Record<AgentRecipeId, AgentBlueprintInput>;
+  previews: Partial<Record<AgentRecipeId, BlueprintPreview>>;
+  savedSignatures: Partial<Record<AgentRecipeId, string>>;
+  downloadedSignatures: Partial<Record<AgentRecipeId, string>>;
+}
+export interface StudioScratchpad {
+  job: StudioJob;
+  prompt: string;
+  savedSignature: string | null;
+  requestIdentity: { signature: string; id: string } | null;
+  submittedId: string | null;
+  pendingRequestId: string | null;
+}
+function freshPrivateScratchpads() {
+  return {
+    scratchpad: { title: "", draft: "", ideaId: null as string | null },
+    learnScratchpad: {
+      recipeId: "brainstorm-partner" as AgentRecipeId,
+      drafts: Object.fromEntries(agentRecipes.map((recipe) => [recipe.id, starterForRecipe(recipe)])) as Record<AgentRecipeId, AgentBlueprintInput>,
+      previews: {}, savedSignatures: {}, downloadedSignatures: {},
+    } satisfies LearnScratchpad,
+    studioScratchpad: { job: "brainstorm" as StudioJob, prompt: "", savedSignature: null, requestIdentity: null, submittedId: null, pendingRequestId: null } as StudioScratchpad,
+  };
+}
+function hasPrivateDrafts(snapshot: Snapshot) {
+  const { scratchpad, learnScratchpad, studioScratchpad } = snapshot;
+  const changedRecipe = agentRecipes.some((recipe) => {
+    const input = learnScratchpad.drafts[recipe.id];
+    const signature = JSON.stringify({ recipeId: recipe.id, input });
+    return JSON.stringify(input) !== JSON.stringify(starterForRecipe(recipe)) && learnScratchpad.savedSignatures[recipe.id] !== signature && learnScratchpad.downloadedSignatures[recipe.id] !== signature;
+  });
+  const questionSignature = JSON.stringify({ job: studioScratchpad.job, prompt: studioScratchpad.prompt.trim() });
+  return Boolean(scratchpad.title.trim() || scratchpad.draft.trim() || changedRecipe || (studioScratchpad.prompt.trim() && studioScratchpad.savedSignature !== questionSignature));
+}
 type Snapshot = WorkspaceState & {
   ready: boolean;
   busy: boolean;
@@ -39,6 +78,8 @@ type Snapshot = WorkspaceState & {
   canEdit: boolean;
   roleError: string | null;
   scratchpad: { title: string; draft: string; ideaId: string | null };
+  learnScratchpad: LearnScratchpad;
+  studioScratchpad: StudioScratchpad;
 };
 function createStore(
   mode: Mode,
@@ -54,7 +95,7 @@ function createStore(
     role,
     canEdit: role === "owner" || role === "editor",
     roleError: null,
-    scratchpad: { title: "", draft: "", ideaId: null },
+    ...freshPrivateScratchpads(),
     ready: mode === "connected",
     busy: false,
     notice: null,
@@ -89,7 +130,7 @@ function createStore(
     if (response.status === 401 || (isRefresh && response.status === 403)) {
       update({
         ...emptyWorkspace(),
-        scratchpad: { title: "", draft: "", ideaId: null },
+        ...freshPrivateScratchpads(),
         ready: false,
         role: "viewer", canEdit: false, roleError: null,
       });
@@ -191,6 +232,16 @@ function createStore(
   }
   const actions = {
     showError,
+    hasUnsavedPrivateDrafts: () => hasPrivateDrafts(snapshot),
+    clearPrivateScratchpads: () => update(freshPrivateScratchpads()),
+    updateLearnScratchpad: (change: (previous: LearnScratchpad) => LearnScratchpad) => update({ learnScratchpad: change(snapshot.learnScratchpad) }),
+    updateStudioScratchpad: (patch: Partial<StudioScratchpad>) => update({ studioScratchpad: { ...snapshot.studioScratchpad, ...patch } }),
+    markStudioQuestionSaved: (id: string, signature: string) => {
+      if (snapshot.studioScratchpad.requestIdentity?.id === id) update({ studioScratchpad: { ...snapshot.studioScratchpad, savedSignature: signature } });
+    },
+    finishStudioRequest: (id: string) => {
+      if (snapshot.studioScratchpad.pendingRequestId === id) update({ studioScratchpad: { ...snapshot.studioScratchpad, pendingRequestId: null } });
+    },
     updateScratchpad: (patch: Partial<Snapshot["scratchpad"]>) =>
       update({ scratchpad: { ...snapshot.scratchpad, ...patch } }),
     clearScratchpad: (submitted?: Snapshot["scratchpad"]) => {
@@ -384,19 +435,24 @@ function createStore(
 const WorkspaceContext = createContext<ReturnType<typeof createStore> | null>(
   null,
 );
-export function WorkspaceProvider({
-  mode,
-  initialWorkspace,
-  viewerEmail = null,
-  role = mode === "demo" ? "owner" : "viewer",
-  children,
-}: {
+export function WorkspaceProvider(props: WorkspaceProviderProps) {
+  // A different signed-in account must never inherit private in-memory notes.
+  return <WorkspaceSessionProvider key={`${props.mode}:${props.viewerEmail ?? "demo"}`} {...props} />;
+}
+type WorkspaceProviderProps = {
   mode: Mode;
   initialWorkspace: WorkspaceState;
   viewerEmail?: string | null;
   role?: WorkspaceRole;
   children: React.ReactNode;
-}) {
+};
+function WorkspaceSessionProvider({
+  mode,
+  initialWorkspace,
+  viewerEmail = null,
+  role = mode === "demo" ? "owner" : "viewer",
+  children,
+}: WorkspaceProviderProps) {
   const [store] = useState(() =>
     createStore(mode, initialWorkspace, viewerEmail, role),
   );
@@ -410,8 +466,7 @@ export function WorkspaceProvider({
       void store.actions.refresh();
     };
     const beforeUnload = (event: BeforeUnloadEvent) => {
-      const draft = store.getSnapshot().scratchpad;
-      if (draft.title.trim() || draft.draft.trim()) {
+      if (hasPrivateDrafts(store.getSnapshot())) {
         event.preventDefault();
         event.returnValue = "";
       }

@@ -26,7 +26,7 @@ export function RavenBriefing() {
           <span className="eyebrow">
             <Feather size={14} /> THE RAVEN
           </span>
-          <span className="briefing-edition">DAILY BRIEFING / 001</span>
+          <span className="briefing-edition">{state.mode === "demo" ? "DEMO BRIEFING / 001" : "RECOMMENDATIONS / NOT MONITORING"}</span>
           {state.mode === "demo" && <DemoBadge />}
         </div>
         <p className="raven-intro">
@@ -35,7 +35,7 @@ export function RavenBriefing() {
             : "Your evidence. Your judgment. A clear next step."}
         </p>
         <span className="eyebrow signal-label">
-          {rec ? "TODAY’S SIGNAL" : "ALL CLEAR, CASSANDRA"}
+          {rec ? "A FINDING TO REVIEW" : state.mode === "demo" ? "DEMO MOVES SET ASIDE" : "NO CONNECTED FINDINGS YET"}
         </span>
         <h2>
           {rec?.finding_id.endsWith("40") ? (
@@ -48,9 +48,9 @@ export function RavenBriefing() {
             rec.title
           ) : (
             <>
-              A little room
+              {state.mode === "demo" ? "A little room" : "Start with"}
               <br />
-              <em>to breathe.</em>
+              <em>{state.mode === "demo" ? "to breathe." : "what you know."}</em>
             </>
           )}
         </h2>
@@ -58,7 +58,7 @@ export function RavenBriefing() {
           {rec?.description ??
             (state.mode === "demo"
               ? "You’ve set the demo recommendations aside. Restore them from The Raven whenever you’re ready."
-              : "No live findings yet. Start by capturing a business brief at Cassandra’s Desk; your decisions and guidance will stay together.")}
+              : "Raven is not monitoring your accounts or researching in the background. Capture a business brief at Cassandra’s Desk to keep your own evidence, decisions, and guidance together.")}
         </p>
         {rec && (
           <p className="raven-reason">
@@ -113,7 +113,7 @@ export function RavenBriefing() {
         <span className="tiny-diamond">✦</span>{" "}
         {state.mode === "demo"
           ? "Demo synthesis · Seeded findings · Your judgment, always."
-          : "Private workspace · Live synthesis not connected"}
+          : "No background monitoring · No connected recommendation sources"}
       </div>
     </Card>
   );

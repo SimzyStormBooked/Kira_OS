@@ -22,7 +22,8 @@ test("learning builds a local blueprint, preserves recipe notes, and saves only 
     if (request.url().includes("/api/") && ["POST", "PATCH", "DELETE"].includes(request.method())) writes.push(request.url());
   });
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  const lesson = page.locator("details").filter({ hasText: "Give it a clear job and some context" });
+  await page.getByText("Five quick lessons, when you need them", { exact: true }).click();
+  const lesson = page.locator("details.learn-lesson").filter({ hasText: "Give it a clear job and some context" });
   await lesson.locator("summary").focus();
   await lesson.locator("summary").press("Enter");
   await expect(lesson).toHaveAttribute("open", "");

@@ -1,6 +1,6 @@
 # KIRA OS verification
 
-Recorded on 2026-09-17. The core private workspace is live at [KIRA OS](https://kira-os-dusky.vercel.app), backed by dedicated Supabase project `obusnqlwuoavwtmryiik`. The deployed release includes Learn & Create, access/password controls, persisted Ask Raven, saved links, and gated Meta authorization.
+Baseline release recorded on 2026-09-17; updated during the first adversarial UX review. The core private workspace is live at [KIRA OS](https://kira-os-dusky.vercel.app), backed by dedicated Supabase project `obusnqlwuoavwtmryiik`. The deployed baseline includes Learn & Create, access/password controls, persisted Ask Raven, saved links, and gated Meta authorization. The current UX fixes and funded AI activation are being verified separately below.
 
 ## Hosted core workflow — verified
 
@@ -8,23 +8,23 @@ Michael’s real email-confirmed administrator account signed in through the dep
 
 The Vercel runtime uses publishable/anon Supabase credentials and caller sessions. Seven privileged integration-injected secrets, including service-role/secret credentials and privileged database connection values, were removed from the runtime. No service-role key is required by the application.
 
-These checks establish real hosted storage and authentication. They do not establish a working live AI model or a connected social account.
+These core checks establish real hosted storage and authentication. The direct model probe is recorded separately below; no Meta account has been connected.
 
 The Studio, access, and manual-links migrations have since been applied to the hosted database, and the private AI recording key/hash has been provisioned. The Meta migration, encryption key/capability hash, and the forward-only Studio validation migration are also applied. No Meta account is connected.
 
-## Latest local checks
+## Current local release checks
 
 | Check | Result |
 | --- | --- |
 | Full `npm run check` | PASS: TypeScript, ESLint, 336 unit/API/database tests across 24 files, production build |
 | Demo browser workflows | PASS: 20 tests on desktop and mobile |
-| Connected browser workflows | PASS: 34 desktop/mobile tests against isolated simulated Supabase, including links, Studio setup, learning, access, password, and permission recovery |
+| Connected browser workflows | PASS: 74 desktop/mobile tests against isolated simulated Supabase, including links, Studio setup, learning, access, password, draft retention, decisions, search, async recovery, and permission recovery |
 | Studio boundary tests | PASS: same-origin/body limits, roles, pending-before-model ordering, idempotency, rate limits, recorded failure, and persistence-only retry |
 | Studio SQL controls | PASS: tenant RLS, viewer denial, private recording capability, direct-write rejection, immutable final results, strict JSON/null checks, and source-excerpt checks |
 | AI provider requests during local tests | Mocked; no live model calls made |
 | Latest Meta regressions and integrated Connections/Studio browser checks | PASS: authorization replay/revocation/scope checks and Connections/Studio desktop/mobile flows |
 
-All 54 browser tests passed across the demo and connected suites. Tests use Node 24.16, Next.js 16.3.5, React 19.3, Chromium desktop, and an emulated mobile viewport. Physical Safari has not been verified.
+All 94 browser tests passed across the demo and connected suites after the final source changes. Tests use Node 24.16, Next.js 16.3.5, React 19.3, Chromium desktop, and an emulated mobile viewport. Physical Safari has not been verified.
 
 The simulated Supabase service is only browser-test infrastructure and is never imported by the application. PGlite separately executes actual SQL migrations with pgvector and emulated Auth primitives. It checks RLS, role isolation, provenance, expected versions, immutable decisions, and audit events; it does not replace a hosted provider test.
 
@@ -34,13 +34,30 @@ The curated idea shelf changes only on user input. It opens an editable brief wi
 
 Unfinished desk text survives internal navigation without entering localStorage, API writes, or review exports. Replacing existing words requires a choice. A delayed save clears only the submitted scratchpad revision. Learn & Create assembles a local blueprint from editable recipe fields, and saves only through its explicit desk action. Viewers can learn, copy, and download while server write permission remains closed.
 
-## Provider activation still pending
+## Adversarial UX changes — verification in progress
 
-Ask Raven’s runtime adapter is implemented but disabled. Gateway currently reports zero credits; Vercel asks the account owner to complete its card-verification step to unlock the displayed free allowance. The live probe returned HTTP 403. No successful live model output, cost deduction, or hosted generation completion has been verified. Keep `KIRA_AI_ENABLED=false` until funding, private recording configuration, and a controlled live test succeed.
+The review identified concrete usability issues: workshop notes could be lost on a Desk round trip, search did not actually find saved briefs, final decisions lacked an explicit confirmation, shared starter work appeared to complete personal onboarding, and several labels implied monitoring or showed mostly empty catalog sections. The implementation now addresses these flows. Independent review also identified and fixed Studio retry-identity and delayed-answer navigation issues.
+
+Dedicated browser regressions have been added for:
+
+- Saved-brief search, selecting pending/reviewed records, keyboard focus, and unavailable result handling.
+- Final-decision confirmation, safe cancel, failure/retry, and refusing a changed version.
+- Desk/workshop/question draft retention, account/session clearing, explicit sign-out confirmation, and failed-sign-out preservation.
+- Per-recipe blueprint previews, explicit AI-answer-to-Desk attribution, retained retry identity, intentional new questions, and late responses that do not steal navigation.
+- Sourced book-detail collection, collapsed future sections, protection of existing Desk drafts, and accurate shared-workspace onboarding/Raven labels.
+- Owner/editor/viewer setup guidance, unavailable-to-ready status refresh, Meta configuration versus authorization, and session-expiry recovery. Status checks make no purchases or authorization mutations.
+
+The new regressions passed in the complete 74-test connected suite. They use the isolated fixture and mocked AI/Meta responses. The live hosted checks remain a separate release step. Two initial failures were test-harness issues (awaiting a canceled reload and querying a dialog-hidden heading); both were corrected before the successful complete rerun.
+
+## AI funding and model probe — verified; production activation pending
+
+The owner has funded AI Gateway. The observed balance was $15, and a direct connectivity probe against `google/gemini-3.8-flash` succeeded. This replaces the earlier zero-credit/HTTP 403 finding. It verifies funded provider connectivity, not the full deployed application workflow or the final post-probe balance.
+
+Production activation and a controlled in-app question/result/save/reload check remain pending. The release step will enable the configured adapter, redeploy, and verify that a real answer is recorded with its request ID, model, actor, token/cost metadata, and private retrieval. Do not claim the hosted AI workflow is verified until those checks finish. No autonomous agent or background research process is activated by this switch.
 
 Meta app credentials are missing. OAuth, encrypted credential storage, account verification, and disconnection code still require actual provider configuration and consent testing. Manual saved links and the NotebookLM copy bridge are separate from authorization or synchronization. Private uploads, embeddings, social metrics ingestion, and external publishing remain unimplemented.
 
-The integrated feature release (`8a823da`, Vercel deployment `dpl_E4HMzprKX6T6TyZNhSdXcxfbgLHT`) reached READY in production. Its hosted checks passed: owner access, saved Instagram shortcut persistence, a Michael agent blueprint saved/reloaded through the real database, password-settings visibility, honest disabled-AI and pending-Meta states, desktop accessibility on four new pages, mobile overflow checks on six pages, and zero browser runtime errors. No real user password was changed by the test. The initial deployment error-log query returned no entries; no external log drain or ongoing monitor was configured. The GitHub Actions template remains inactive because the connected GitHub authorization lacks workflow scope; remote CI has not run.
+The prior integrated feature release (`8a823da`, Vercel deployment `dpl_E4HMzprKX6T6TyZNhSdXcxfbgLHT`) reached READY in production. Its hosted checks passed: owner access, saved Instagram shortcut persistence, a Michael agent blueprint saved/reloaded through the real database, password-settings visibility, then-disabled AI and pending-Meta states, desktop accessibility on four new pages, mobile overflow checks on six pages, and zero browser runtime errors. No real user password was changed by the test. The initial deployment error-log query returned no entries; no external log drain or ongoing monitor was configured. The GitHub Actions template remains inactive because the connected GitHub authorization lacks workflow scope; remote CI has not run.
 
 ## Hosted security advisor
 

@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, BookOpen, Check, ChevronDown, Clipboard, Download, Lightbulb, PencilRuler, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useWorkspace } from "@/lib/db/demo-store";
-import { agentRecipes, buildAgentBlueprint, michaelAgentStarter, starterForRecipe, type AgentBlueprint, type AgentBlueprintInput, type AgentRecipeId } from "@/lib/data/agent-recipes";
+import { agentRecipes, buildAgentBlueprint, michaelAgentStarter, starterForRecipe, type AgentBlueprintInput, type AgentRecipeId } from "@/lib/data/agent-recipes";
 
 const lessons = [
   { title: "Give it a clear job and some context", text: "Start with the outcome you want, the facts it can use, and your limits. An agent is an assistant set up for a particular job; it still needs good information and your judgment.", example: "Help me explore one way to reintroduce this published book. Here is its approved description. I have two hours this week and no advertising budget." },
@@ -18,15 +18,11 @@ const lessons = [
   { title: "Share access with the right role", text: "An owner manages who has access. An editor can save and change workspace items. A viewer can read them. Give each person their own account and ask your workspace owner to arrange access.", example: "Copying or downloading a blueprint gives you something to share yourself. It does not invite anyone or change workspace access." },
 ];
 
-type BuiltPreview = AgentBlueprint & { signature: string };
-
 export function LearnPage() {
-  const { createManualReview, mode, ready, busy, canEdit, roleError } = useWorkspace();
-  const [recipeId, setRecipeId] = useState<AgentRecipeId>("brainstorm-partner");
-  const [drafts, setDrafts] = useState(() => Object.fromEntries(agentRecipes.map((recipe) => [recipe.id, starterForRecipe(recipe)])) as Record<AgentRecipeId, AgentBlueprintInput>);
-  const [preview, setPreview] = useState<BuiltPreview | null>(null);
-  const [savedSignatures, setSavedSignatures] = useState<Partial<Record<AgentRecipeId, string>>>({});
-  const [downloadedSignatures, setDownloadedSignatures] = useState<Partial<Record<AgentRecipeId, string>>>({});
+  const { createManualReview, mode, ready, busy, canEdit, roleError, learnScratchpad, updateLearnScratchpad } = useWorkspace();
+  const { recipeId, drafts, savedSignatures } = learnScratchpad;
+  const preview = learnScratchpad.previews[recipeId] ?? null;
+  const setRecipeId = (next: AgentRecipeId) => updateLearnScratchpad((previous) => ({ ...previous, recipeId: next }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -45,29 +41,21 @@ export function LearnPage() {
   const currentPreview = preview?.signature === signature ? preview : null;
   const alreadySaved = Boolean(currentPreview && savedSignatures[recipeId] === signature);
   const hasBrainstormNotes = JSON.stringify(drafts["brainstorm-partner"]) !== JSON.stringify(starterForRecipe(agentRecipes[0]));
-  const hasUnsavedNotes = agentRecipes.some((item) => {
-    const itemSignature = JSON.stringify({ recipeId: item.id, input: drafts[item.id] });
-    return JSON.stringify(drafts[item.id]) !== JSON.stringify(starterForRecipe(item)) && savedSignatures[item.id] !== itemSignature && downloadedSignatures[item.id] !== itemSignature;
-  });
   const pending = busy || saving;
 
-  useEffect(() => {
-    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
-      if (hasUnsavedNotes) { event.preventDefault(); event.returnValue = ""; }
-    };
-    window.addEventListener("beforeunload", warnBeforeLeaving);
-    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
-  }, [hasUnsavedNotes]);
+  function jumpToForm() {
+    nameRef.current?.focus();
+    nameRef.current?.scrollIntoView({ block: "center" });
+  }
 
   function updateField(field: keyof AgentBlueprintInput, value: string) {
-    setDrafts((previous) => ({ ...previous, [recipeId]: { ...previous[recipeId], [field]: value } }));
+    updateLearnScratchpad((previous) => ({ ...previous, drafts: { ...previous.drafts, [recipeId]: { ...previous.drafts[recipeId], [field]: value } } }));
     setNotice(null);
     setError(null);
   }
 
   function applyMichaelStarter() {
-    setDrafts((previous) => ({ ...previous, "brainstorm-partner": { ...michaelAgentStarter } }));
-    setRecipeId("brainstorm-partner");
+    updateLearnScratchpad((previous) => ({ ...previous, recipeId: "brainstorm-partner", drafts: { ...previous.drafts, "brainstorm-partner": { ...michaelAgentStarter } } }));
     setMichaelChoice(false);
     setNotice("A starting point for Michael is ready to edit. Nothing has been sent.");
     setError(null);
@@ -78,7 +66,8 @@ export function LearnPage() {
     event.preventDefault();
     if (pending) return;
     try {
-      setPreview({ ...buildAgentBlueprint(recipeId, input), signature });
+      const built = { ...buildAgentBlueprint(recipeId, input), signature };
+      updateLearnScratchpad((previous) => ({ ...previous, previews: { ...previous.previews, [recipeId]: built } }));
       setError(null);
       setNotice("Your blueprint is ready to review. No agent has been started.");
       requestAnimationFrame(() => outputRef.current?.focus());
@@ -97,7 +86,7 @@ export function LearnPage() {
     const submitted = currentPreview;
     try {
       if (await createManualReview(submitted.title, submitted.brief)) {
-        setSavedSignatures((previous) => ({ ...previous, [recipeId]: submitted.signature }));
+        updateLearnScratchpad((previous) => ({ ...previous, savedSignatures: { ...previous.savedSignatures, [recipeId]: submitted.signature } }));
         setNotice(mode === "demo" ? "Blueprint saved to your desk in this browser. It remains an idea for review." : "Blueprint saved to your private desk. It remains an idea for review.");
         requestAnimationFrame(() => deskLinkRef.current?.focus());
       } else {
@@ -137,7 +126,7 @@ export function LearnPage() {
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      setDownloadedSignatures((previous) => ({ ...previous, [recipeId]: currentPreview.signature }));
+      updateLearnScratchpad((previous) => ({ ...previous, downloadedSignatures: { ...previous.downloadedSignatures, [recipeId]: currentPreview.signature } }));
       setNotice("Blueprint download started. Sharing it is a separate choice you make.");
       setError(null);
     } catch {
@@ -153,12 +142,14 @@ export function LearnPage() {
         <BookOpen size={29} strokeWidth={1.3} aria-hidden="true" />
       </div>
 
-      <section className="learn-lessons" aria-labelledby="learn-lessons-title">
+      <div className="learn-start-actions"><Button type="button" onClick={jumpToForm}>Start my blueprint <ArrowRight size={15} aria-hidden="true" /></Button><p className="learn-field-hint">Start with an example, then make it yours. Your notes stay with you as you move around this workspace.</p></div>
+      <details className="learn-lessons learn-lessons-panel">
+        <summary><span>Five quick lessons, when you need them</span><ChevronDown size={16} aria-hidden="true" /></summary>
         <div className="learn-section-heading"><span className="eyebrow">A FEW THINGS THAT MAKE A DIFFERENCE</span><h2 id="learn-lessons-title">Learn one thing. <em>Try it below.</em></h2></div>
         <div className="learn-lesson-list">
           {lessons.map((lesson, index) => <details className="learn-lesson" key={lesson.title}><summary><span className="learn-lesson-number">0{index + 1}</span><span>{lesson.title}</span><ChevronDown size={15} aria-hidden="true" /></summary><div className="learn-lesson-body"><p>{lesson.text}</p><blockquote>{lesson.example}</blockquote></div></details>)}
         </div>
-      </section>
+      </details>
 
       <section className="learn-workshop" aria-labelledby={workshopId}>
         <div className="learn-section-heading"><span className="eyebrow"><PencilRuler size={15} aria-hidden="true" /> YOUR AGENT-IDEA WORKSHOP</span><h2 id={workshopId}>Give an idea <em>a clear job.</em></h2><p>Build a blueprint: a purpose, some context, and a prompt you can use with another assistant. This workshop assembles your notes locally; it does not run an AI agent.</p></div>
@@ -168,7 +159,7 @@ export function LearnPage() {
 
         <fieldset className="learn-recipes" disabled={pending}>
           <legend>1. Choose a starting role</legend>
-          <p className="learn-field-hint">Each recipe keeps its own notes while this page is open.</p>
+          <p className="learn-field-hint">Each recipe keeps its own notes while you move around this workspace.</p>
           <div className="learn-recipe-grid">{agentRecipes.map((item) => <label key={item.id} className={`learn-recipe${item.id === recipeId ? " learn-recipe-selected" : ""}`}><input type="radio" name="agent-recipe" value={item.id} checked={item.id === recipeId} onChange={() => { setRecipeId(item.id); setMichaelChoice(false); setError(null); setNotice(null); }} /><span><strong>{item.name}</strong><span>{item.description}</span></span></label>)}</div>
         </fieldset>
 
@@ -181,7 +172,7 @@ export function LearnPage() {
               <div className="learn-field"><label htmlFor="agent-blueprint-context">What should it know first? <span>Optional</span></label><Textarea id="agent-blueprint-context" value={input.context} onChange={(event) => updateField("context", event.target.value)} maxLength={3000} rows={4} disabled={pending} aria-describedby="agent-context-help" placeholder={recipe.contextHint} /><p id="agent-context-help" className="learn-field-hint">Use approved facts or source references. Include only information you want in the final prompt.</p></div>
               <div className="learn-field"><label htmlFor="agent-blueprint-success">What would a useful result look like?</label><Textarea id="agent-blueprint-success" value={input.success} onChange={(event) => updateField("success", event.target.value)} maxLength={1000} required rows={3} disabled={pending} /></div>
               <Button type="submit" disabled={pending}><PencilRuler size={15} aria-hidden="true" />{preview ? "Update my blueprint" : "Build my blueprint"}</Button>
-              <p className="learn-field-hint">These notes stay on this page only. Save or download your blueprint before leaving.</p>
+              <p className="learn-field-hint">Your notes survive workspace navigation in this tab. Save or download before reloading, closing the tab, or signing out; unfinished notes are not saved to your account.</p>
             </form>
           </Card>
 

@@ -70,9 +70,11 @@ test("Ask Raven stays disabled before AI setup and does not submit a question", 
   await page.goto("/studio");
   await expect(page.getByText("Ask Raven is not available yet", { exact: true })).toBeVisible();
   await expect(page.getByText(/Ask Raven is waiting for the workspace owner/)).toBeVisible();
-  await page.getByRole("button", { name: "Try a starting question", exact: true }).click();
-  await expect(page.getByLabel("Your question and useful context")).not.toHaveValue("");
-  await expect(page.getByRole("button", { name: "Ask Raven", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Try a starting question", exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Your question and useful context")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Ask Raven", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Explore Learn & Create", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Finish workspace setup", exact: true })).toHaveAttribute("href", "/settings#setup");
   expect(mutations).toEqual([]);
   await expect(page.getByRole("heading", { name: "Recent questions", exact: true })).toBeVisible();
   await expect(page.getByText("Your first question will appear here when you ask. Nothing runs in the background.", { exact: true })).toBeVisible();
@@ -95,7 +97,7 @@ test("viewers can see saved links but cannot manage links, Meta authorization, o
     await expect(viewer.getByRole("button", { name: /^Remove / })).toHaveCount(0);
     await viewer.goto("/studio");
     await expect(viewer.getByText("Your viewer access lets you read saved answers. An owner or editor can ask a new question.", { exact: true })).toBeVisible();
-    await expect(viewer.getByRole("button", { name: "Ask Raven", exact: true })).toBeDisabled();
+    await expect(viewer.getByRole("button", { name: "Ask Raven", exact: true })).toHaveCount(0);
   } finally { await viewerContext.close(); }
 });
 

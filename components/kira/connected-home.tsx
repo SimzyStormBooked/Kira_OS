@@ -121,7 +121,7 @@ export function ConnectedHome({ dateKey }: { dateKey?: string }) {
           )}
           <Button asChild variant="outline">
             <Link href="/desk">
-              {!canEdit ? "Read workspace briefs" : pending.length ? "Review your briefs" : "Add your first brief"}
+              {!canEdit ? "Read workspace briefs" : pending.length ? "Review shared briefs" : "Add a business brief"}
               <ArrowRight size={15} />
             </Link>
           </Button>
@@ -155,8 +155,8 @@ export function ConnectedHome({ dateKey }: { dateKey?: string }) {
             </h2>
             <p>
               {series.length} series and collections, with titles and order
-              sourced from your author website. The details grow with your
-              verified materials.
+              sourced from your author website. Open a title to collect approved
+              descriptions and source links in a review brief.
             </p>
           </div>
           <Link

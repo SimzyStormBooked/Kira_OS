@@ -14,7 +14,7 @@ export function ContextHelp({ kind }: { kind: HelpKind }) {
         mode === "connected"
           ? "Save a business idea as a brief, then come back to read it with fresh eyes. Your saved briefs and decisions are available when you sign in on another device."
           : "Try the example briefs here. Your edits and decisions stay in this browser while you explore the demo.",
-        "Edit adjusts the draft. Approve or Reject records your decision and keeps it in Reviewed. Approving does not publish, send, or purchase anything.",
+        "Edit adjusts the draft. Approve or Reject asks you to confirm a final decision, then keeps the read-only brief in Reviewed. You can still add a lesson. Approving does not publish, send, or purchase anything.",
         "Teach Raven saves what mattered to you with that brief, so the reason behind your decision stays with it.",
       ],
     },
@@ -39,7 +39,7 @@ export function ContextHelp({ kind }: { kind: HelpKind }) {
       paragraphs: [
         "See which services are connected, review the boundaries that keep your writing yours, and export a copy of your saved workspace.",
         mode === "connected"
-          ? "Your saved briefs, decisions, and lessons belong to your private workspace. Live AI and social connections are still to come. Ask your workspace owner for help with account access."
+          ? "Your saved briefs, decisions, and lessons belong to your private workspace. Your workspace connections shows the current AI and social status, with a next step when setup is needed. Ask your workspace owner for help with account access."
           : "This demo saves changes in this browser. Export first if you want to keep them before resetting the examples.",
       ],
     },
