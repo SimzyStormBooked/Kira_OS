@@ -12,7 +12,12 @@ import { connectionInputSchema, type ConnectionLink } from "../../lib/connection
 import { fixture } from "./fixture-data";
 
 const signingSecret = "local-test-fixture-signing-secret-not-for-production";
-const sessions = new Map<string, { user: User; refreshToken: string }>();
+type AuthenticationMethod = "password" | "otp";
+const sessions = new Map<string, { user: User; refreshToken: string; method: AuthenticationMethod; authenticatedAt: number }>();
+const passwords = new Map<string, string>([
+  [fixture.memberEmail, fixture.password],
+  [fixture.outsiderEmail, fixture.password],
+]);
 const welcomeTokens = new Map([
   ["fixture-welcome-member-token", fixture.memberEmail],
   ["fixture-welcome-outsider-token", fixture.outsiderEmail],
@@ -31,18 +36,19 @@ const userFor = (email: string): User => ({
   app_metadata: { provider: "email", providers: ["email"] },
   user_metadata: {}, identities: [], created_at: "2026-01-01T00:00:00.000Z", is_anonymous: false,
 });
-function issueSession(user: User) {
+function issueSession(user: User, method: AuthenticationMethod = "password", authenticatedAt = Math.floor(Date.now() / 1000)) {
   const now = Math.floor(Date.now() / 1000);
   const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
   const payload = Buffer.from(JSON.stringify({
     sub: user.id, email: user.email, aud: "authenticated", role: "authenticated",
     iss: `${fixture.supabaseUrl}/auth/v1`, iat: now, exp: now + 3600,
     session_id: randomUUID(), aal: "aal1", is_anonymous: false,
+    amr: [{ method, timestamp: authenticatedAt }],
   })).toString("base64url");
   const signature = createHmac("sha256", signingSecret).update(`${header}.${payload}`).digest("base64url");
   const accessToken = `${header}.${payload}.${signature}`;
   const refreshToken = randomUUID();
-  sessions.set(accessToken, { user, refreshToken });
+  sessions.set(accessToken, { user, refreshToken, method, authenticatedAt });
   return { access_token: accessToken, token_type: "bearer", expires_in: 3600, expires_at: now + 3600, refresh_token: refreshToken, user };
 }
 function authenticated(request: IncomingMessage) {
@@ -76,6 +82,7 @@ const server = createServer(async (request, response) => {
     if (url.pathname === "/__test/reset" && request.method === "POST") {
       approvals = []; feedback = []; members = []; links = []; sessions.clear();
       consumedWelcomeTokens.clear(); welcomeVerificationRequests = 0;
+      passwords.set(fixture.memberEmail, fixture.password); passwords.set(fixture.outsiderEmail, fixture.password);
       return respond(response, 200, { simulated: true, reset: true });
     }
     if (url.pathname === "/auth/v1/verify" && request.method === "POST") {
@@ -87,16 +94,17 @@ const server = createServer(async (request, response) => {
         return respond(response, 400, { code: "otp_expired", message: "The simulated welcome link is invalid or has expired." });
       }
       consumedWelcomeTokens.add(token);
-      return respond(response, 200, issueSession(userFor(email)));
+      return respond(response, 200, issueSession(userFor(email), "otp"));
     }
     if (url.pathname === "/auth/v1/token" && request.method === "POST") {
       const body = await jsonBody(request);
       if (url.searchParams.get("grant_type") === "refresh_token") {
         const session = [...sessions.values()].find((value) => value.refreshToken === body.refresh_token);
-        return session ? respond(response, 200, issueSession(session.user))
+        // Refresh must not make old authentication proof recent again.
+        return session ? respond(response, 200, issueSession(session.user, session.method, session.authenticatedAt))
           : respond(response, 400, { code: "refresh_token_not_found", message: "Invalid fixture refresh token" });
       }
-      if ((body.email !== fixture.memberEmail && body.email !== fixture.outsiderEmail) || body.password !== fixture.password) {
+      if ((body.email !== fixture.memberEmail && body.email !== fixture.outsiderEmail) || body.password !== passwords.get(String(body.email))) {
         return respond(response, 400, { code: "invalid_credentials", message: "Invalid login credentials" });
       }
       return respond(response, 200, issueSession(userFor(String(body.email))));
@@ -104,6 +112,14 @@ const server = createServer(async (request, response) => {
     if (url.pathname === "/auth/v1/.well-known/jwks.json") return respond(response, 200, { keys: [] });
     const session = authenticated(request);
     if (!session) return respond(response, 401, { code: "bad_jwt", message: "Invalid fixture session" });
+    if (url.pathname === "/auth/v1/user" && request.method === "PUT") {
+      const body = await jsonBody(request);
+      if (!session.user.email || typeof body.password !== "string" || body.password.length < 12 || body.password.length > 128) {
+        return respond(response, 400, { code: "weak_password", message: "Invalid simulated password update" });
+      }
+      passwords.set(session.user.email, body.password);
+      return respond(response, 200, session.user);
+    }
     if (url.pathname === "/auth/v1/user") return respond(response, 200, session.user);
     if (url.pathname === "/auth/v1/logout" && request.method === "POST") {
       sessions.delete(request.headers.authorization!.replace(/^Bearer /, ""));

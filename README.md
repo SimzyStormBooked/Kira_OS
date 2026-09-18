@@ -25,7 +25,7 @@ Connected mode never substitutes demo data after a connection failure. Its home 
 - Authenticated shared storage with tenant isolation, version checks, immutable approval provenance, and database audit events.
 - Learn & Create: short lessons, four business-agent recipes, editable local blueprints, copying/downloading, and explicit saving to the desk. A blueprint is a plan, not a running agent.
 - Ask Raven: live business brainstorming, agent design, and learning with saved questions/results at private addressable URLs. Completed answers can be explicitly copied into attributed Desk briefs. Real production generation, persistence, reload, and Desk-copy checks have passed.
-- Owner-managed access for existing confirmed accounts, viewer-aware controls, and password changes that require the current password.
+- Owner-managed access for existing confirmed accounts, viewer-aware controls, and password changes that require the current password or a server-verified private-link sign-in within the previous 15 minutes.
 - Saved social/notebook shortcuts and an explicit copy bridge to NotebookLM. Meta authorization code is implemented but awaits app credentials and provider verification; a shortcut does not sync an account.
 - Demo-only Raven prioritization, recommendations, metrics, and tactic examples, separated from the private workspace.
 - Server-side creative policy, a Settings connection checklist with current status and role-appropriate next steps, and a browser reset available only in demo mode. Status refreshes do not connect accounts or purchase credits.
@@ -116,6 +116,7 @@ Sources: [My Alpha Team](https://www.kirastanleyauthor.com/myalphateam), [Fantas
 | `GET/POST /api/studio` | Authenticated history and bounded, persisted AI requests |
 | `GET/PATCH /api/access` | Role-aware reads and owner-only membership management |
 | `POST /api/account/password` | Current-password verification followed by same-account password update |
+| `POST /api/account/password/setup` | Same-account password choice after a server-verified private-link sign-in within 15 minutes |
 | `POST /auth/login`, `POST /auth/logout` | Existing-account sign-in and sign-out |
 | `POST /auth/welcome` | Supabase magic-link verification followed by existing workspace membership verification; same-origin only |
 

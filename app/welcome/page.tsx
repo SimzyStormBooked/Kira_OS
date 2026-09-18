@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Feather, ShieldCheck } from "lucide-react";
 import { OneTimeSignIn } from "@/components/kira/one-time-sign-in";
+import { getWorkspaceSession } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
   title: "Your private welcome",
@@ -12,7 +13,9 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 /** Opening or previewing this page never verifies or consumes a sign-in link. */
-export default function WelcomePage() {
+export default async function WelcomePage() {
+  const session = await getWorkspaceSession();
+  const authorizedEmail = session.authorization === "authorized" ? session.user?.email ?? null : undefined;
   return (
     <main id="main-content" className="login-stage">
       <div className="login-intro">
@@ -28,9 +31,9 @@ export default function WelcomePage() {
       <section className="login-card" aria-labelledby="welcome-title">
         <ShieldCheck size={25} strokeWidth={1.4} aria-hidden="true" />
         <span className="eyebrow">WELCOME TO KIRA OS</span>
-        <h2 id="welcome-title">Your space is waiting.</h2>
-        <p>Use your private link to sign in. No password is needed for this visit.</p>
-        <OneTimeSignIn />
+        <h2 id="welcome-title">{authorizedEmail !== undefined ? "Welcome back." : "Your space is waiting."}</h2>
+        <p>{authorizedEmail !== undefined ? "Choose how you would like to continue." : "Use your private link to sign in. No password is needed for this visit."}</p>
+        <OneTimeSignIn authorizedEmail={authorizedEmail} />
       </section>
     </main>
   );

@@ -185,3 +185,53 @@ test("a temporary failure retains the same private link and an explicit retry op
   expect(await readWorkspace(page)).toEqual({ status: 200, role: "owner" });
   expect(await (await request.get(`${fixture.supabaseUrl}/__test/welcome`)).json()).toEqual({ verificationRequests: 1, consumedTokens: 1 });
 });
+
+test("an already signed-in member can revisit the welcome page and used link without another OTP attempt", async ({ page, request }) => {
+  await openWelcome(page, memberToken);
+  await enterWelcome(page);
+  await expect(page.locator(".app-shell")).toBeVisible();
+
+  await page.goto("/welcome");
+  const card = page.locator(".login-card");
+  await expect(card).toContainText(fixture.memberEmail);
+  await expect(card.getByRole("link", { name: /^Continue.*workspace$/ })).toHaveAttribute("href", "/");
+  await expect(card.getByRole("button", { name: "Enter my workspace", exact: true })).toHaveCount(0);
+  await expect(card).not.toContainText("Open the full private link");
+
+  // Reopening the original fragment may be a same-document navigation.
+  await page.goto(welcomeLink(memberToken));
+  await expect(page).toHaveURL(`${fixture.appUrl}/welcome`);
+  await expect(card).toContainText(fixture.memberEmail);
+  await expect(card).not.toContainText("expired or already been used");
+  expect(await (await request.get(`${fixture.supabaseUrl}/__test/welcome`)).json()).toEqual({ verificationRequests: 1, consumedTokens: 1 });
+  await card.getByRole("link", { name: /^Continue.*workspace$/ }).click();
+  await expect(page.locator(".app-shell")).toBeVisible();
+  expect(await readWorkspace(page)).toEqual({ status: 200, role: "owner" });
+  expect(await (await request.get(`${fixture.supabaseUrl}/__test/welcome`)).json()).toEqual({ verificationRequests: 1, consumedTokens: 1 });
+
+  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await expect(page).toHaveURL(`${fixture.appUrl}/login`);
+  await page.goto("/welcome");
+  await expect(page.locator(".login-form").getByRole("status")).toContainText("Open the full private link");
+  await expect(card.getByRole("link", { name: /^Continue.*workspace$/ })).toHaveCount(0);
+  await expect(card).not.toContainText(fixture.memberEmail);
+  await expect(card.getByRole("link", { name: "Sign in with email and password" })).toHaveAttribute("href", "/login");
+  expect((await readWorkspace(page)).status).toBe(401);
+});
+
+test("a signed-in welcome page identifies the current account without consuming a different account's link", async ({ page, request }) => {
+  await openWelcome(page, memberToken);
+  await enterWelcome(page);
+  await expect(page.locator(".app-shell")).toBeVisible();
+  await page.goto(welcomeLink(outsiderToken));
+  await expect(page).toHaveURL(`${fixture.appUrl}/welcome`);
+  const card = page.locator(".login-card");
+  await expect(card).toContainText(fixture.memberEmail);
+  await expect(card).not.toContainText(fixture.outsiderEmail);
+  await expect(card.getByRole("button", { name: "Enter my workspace", exact: true })).toHaveCount(0);
+  expect(await (await request.get(`${fixture.supabaseUrl}/__test/welcome`)).json()).toEqual({ verificationRequests: 1, consumedTokens: 1 });
+  await card.getByRole("link", { name: /^Continue.*workspace$/ }).click();
+  await expect(page.locator(".app-shell")).toBeVisible();
+  expect(await page.evaluate(async () => (await fetch("/api/access")).json())).toMatchObject({ role: "owner", owner: { userId: fixture.memberId } });
+  expect(await (await request.get(`${fixture.supabaseUrl}/__test/welcome`)).json()).toEqual({ verificationRequests: 1, consumedTokens: 1 });
+});

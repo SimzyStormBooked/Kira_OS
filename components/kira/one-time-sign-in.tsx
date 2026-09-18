@@ -7,13 +7,16 @@ import { Button } from "@/components/ui/button";
 
 type EntryState = "reading" | "ready" | "missing" | "invalid" | "opening" | "complete";
 
-export function OneTimeSignIn() {
+export function OneTimeSignIn({ authorizedEmail }: { authorizedEmail?: string | null }) {
   const token = useRef<string | null>(null);
   const captured = useRef(false);
   const requestLock = useRef(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const [state, setState] = useState<EntryState>("reading");
   const [error, setError] = useState<string | null>(null);
+  const [linkAttempted, setLinkAttempted] = useState(false);
+  // A deliberate account-switch attempt may replace or clear the old session.
+  const canContinue = authorizedEmail !== undefined && !linkAttempted;
 
   useEffect(() => {
     // Hash navigation can reopen a link without remounting this page. Every
@@ -49,6 +52,7 @@ export function OneTimeSignIn() {
     event.preventDefault();
     if (requestLock.current || !token.current || state !== "ready") return;
     requestLock.current = true;
+    setLinkAttempted(true);
     setState("opening");
     setError(null);
     try {
@@ -98,14 +102,23 @@ export function OneTimeSignIn() {
 
   return (
     <form className="login-form" onSubmit={(event) => void enter(event)} aria-busy={state === "reading" || state === "opening"}>
-      {state === "missing" && <p role="status">Open the full private link you received to continue. If you refreshed this page, reopen that original link.</p>}
+      {canContinue && <>
+        <p role="status">Signed in as <strong>{authorizedEmail ?? "your workspace account"}</strong>.</p>
+        {/* Crossing the public/private layout boundary needs a full document load. */}
+        <Button asChild className="login-submit"><Link href="/" prefetch={false} onNavigate={(event) => { event.preventDefault(); window.location.replace("/"); }}>Continue to my workspace <ArrowUpRight size={16} aria-hidden="true" /></Link></Button>
+        <Link href="/settings#account-password" className="text-link" prefetch={false} onNavigate={(event) => { event.preventDefault(); window.location.replace("/settings#account-password"); }}>Set my password <ArrowUpRight size={14} aria-hidden="true" /></Link>
+      </>}
+      {state === "missing" && !canContinue && <p role="status">Open the full private link you received to continue. If you refreshed this page, reopen that original link.</p>}
       {error && <p className="form-error" role="alert" tabIndex={-1} ref={errorRef}>{error}</p>}
-      {state !== "missing" && state !== "invalid" && <Button type="submit" className="login-submit" disabled={state !== "ready"}>
-        {state === "reading" ? "Preparing your welcome…" : state === "opening" || state === "complete" ? "Opening your workspace…" : "Enter my workspace"}
+      {canContinue && state === "ready" && <p className="quiet-note">You also opened a private sign-in link. Use it only if you want to sign in with that link instead of continuing with the account above.</p>}
+      {state !== "missing" && state !== "invalid" && (!canContinue || state === "ready") && <Button type="submit" className={canContinue ? undefined : "login-submit"} variant={canContinue ? "outline" : "default"} disabled={state !== "ready"}>
+        {state === "reading" ? "Preparing your welcome…" : state === "opening" || state === "complete" ? "Opening your workspace…" : canContinue ? "Use this private link" : "Enter my workspace"}
         <ArrowUpRight size={16} aria-hidden="true" />
       </Button>}
-      <p className="quiet-note login-privacy"><LockKeyhole size={13} aria-hidden="true" />This private link works once. Keep it for the person it was made for. Sign-in starts only when you choose Enter my workspace.</p>
-      <Link href="/login" className="text-link" prefetch={false}>Sign in with email and password <ArrowUpRight size={14} aria-hidden="true" /></Link>
+      <p className="quiet-note login-privacy"><LockKeyhole size={13} aria-hidden="true" />{canContinue && state !== "ready"
+        ? "Your sign-in is already active. You can return to your workspace without using another private link."
+        : `This private link works once. Keep it for the person it was made for. Sign-in starts only when you choose ${canContinue ? "Use this private link" : "Enter my workspace"}.`}</p>
+      {!canContinue && <Link href="/login" className="text-link" prefetch={false}>Sign in with email and password <ArrowUpRight size={14} aria-hidden="true" /></Link>}
     </form>
   );
 }

@@ -36,7 +36,7 @@ const capabilityLabels: Record<keyof typeof creativeFirewall, string> = {
   ALLOW_CHAPTER_GENERATION: "Chapter generation",
   ALLOW_FICTION_GENERATION: "Fiction generation",
 };
-export function SettingsPage() {
+export function SettingsPage({ canChoosePasswordAfterLink = false }: { canChoosePasswordAfterLink?: boolean }) {
   const [confirm, setConfirm] = useState(false);
   const { ready, mode, viewerEmail, role } = useWorkspace();
   const { exportWorkspace, resetWorkspace, showError } = useWorkspace();
@@ -119,7 +119,7 @@ export function SettingsPage() {
             <p>Give a collaborator a clear role: viewing, editing, or reviewing decisions. Your workspace owner controls access.</p>
             <div className="settings-actions"><Button asChild variant="outline"><Link href="/access">{role === "owner" ? "Manage workspace access" : "View my workspace access"}</Link></Button></div>
           </Card>
-          {mode === "connected" && <PasswordSettings />}
+          {mode === "connected" && <PasswordSettings canChoosePasswordAfterLink={canChoosePasswordAfterLink} />}
           <Card className="settings-card">
             <div className="section-heading">
               <h2>
