@@ -11,6 +11,7 @@ const inputSchema = z.object({ token_hash: z.string().min(16).max(512).regex(/^[
 const headers = { "Cache-Control": "private, no-store, max-age=0", "Referrer-Policy": "no-referrer" };
 const invalidLink = "This sign-in link has expired or has already been used. Ask your workspace owner for a new link.";
 const unavailable = "We could not open your private workspace. Please try again or ask your workspace owner for a new link.";
+const consumedLink = "Your sign-in link was used, but we could not finish checking workspace access. Ask your workspace owner for a fresh link, or sign in with your email and password.";
 type WorkspaceClient = Awaited<ReturnType<typeof createWorkspaceSupabaseClient>>;
 
 /** Clear browser credentials even if Auth cannot revoke the local refresh token. */
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
   let supabase: WorkspaceClient | null = null;
   let supabaseUrl: string | null = null;
   let verificationStarted = false;
+  let linkConsumed = false;
   try {
     assertSameOrigin(request);
     const config = getWorkspaceConfig();
@@ -75,16 +77,22 @@ export async function POST(request: Request) {
       await clearSession(supabase, config.supabaseUrl);
       return NextResponse.json({ error: invalidLink }, { status: 401, headers });
     }
+    linkConsumed = true;
     const access = await verifyWorkspaceAccess(supabase, config.authorId);
     if (access.authorization !== "authorized" || access.user?.id !== data.user.id) {
       await clearSession(supabase, config.supabaseUrl);
-      return NextResponse.json({ error: access.authorization === "unavailable" ? unavailable : "This sign-in link cannot open this workspace. Ask your workspace owner for help." },
+      return NextResponse.json(access.authorization === "unavailable"
+        ? { error: consumedLink, code: "link_consumed" }
+        : { error: "This sign-in link cannot open this workspace. Ask your workspace owner for help." },
         { status: access.authorization === "unavailable" ? 503 : 403, headers });
     }
     return NextResponse.json({ redirectTo: "/" }, { headers });
   } catch (error) {
     if (verificationStarted && supabase && supabaseUrl) {
       try { await clearSession(supabase, supabaseUrl); } catch { /* Never expose provider or cookie details. */ }
+    }
+    if (linkConsumed && (!(error instanceof WorkspaceAccessError) || error.status === 503)) {
+      return NextResponse.json({ error: consumedLink, code: "link_consumed" }, { status: 503, headers });
     }
     if (error instanceof WorkspaceAccessError) {
       return NextResponse.json({ error: error.message }, { status: error.status, headers });

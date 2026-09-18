@@ -143,3 +143,45 @@ test("refreshing a scrubbed welcome page explains how to reopen the unused origi
   await enterWelcome(page);
   await expect(page.locator(".app-shell")).toBeVisible();
 });
+
+test("a consumed-link failure asks for a fresh link and does not offer a misleading retry", async ({ page, request }) => {
+  await page.route("**/auth/welcome", route => route.fulfill({
+    status: 503,
+    headers: { "Content-Type": "application/json", "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer" },
+    body: JSON.stringify({ code: "link_consumed", error: "Simulated access lookup failure after verification." }),
+  }));
+  await openWelcome(page, memberToken);
+  await enterWelcome(page, 503);
+  const form = page.locator(".login-form");
+  await expect(form.getByRole("alert")).toContainText("Your sign-in link was used");
+  await expect(form.getByRole("alert")).toContainText("Ask your workspace owner for a fresh link");
+  await expect(form.getByRole("alert")).toBeFocused();
+  await expect(form.getByRole("button", { name: "Enter my workspace", exact: true })).toHaveCount(0);
+  await expect(form.getByRole("link", { name: "Sign in with email and password" })).toHaveAttribute("href", "/login");
+  await expect(page.locator(".app-shell")).toHaveCount(0);
+  expect((await readWorkspace(page)).status).toBe(401);
+  // Only the UI response is simulated; no fixture or live token was consumed.
+  expect(await (await request.get(`${fixture.supabaseUrl}/__test/welcome`)).json()).toEqual({ verificationRequests: 0, consumedTokens: 0 });
+});
+
+test("a temporary failure retains the same private link and an explicit retry opens the workspace", async ({ page, request }) => {
+  await page.route("**/auth/welcome", route => route.fulfill({
+    status: 503,
+    headers: { "Content-Type": "application/json", "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer" },
+    body: JSON.stringify({ error: "Simulated provider unavailable before verification." }),
+  }));
+  await openWelcome(page, memberToken);
+  await enterWelcome(page, 503);
+  const form = page.locator(".login-form");
+  await expect(form.getByRole("alert")).toContainText("Your link is still held in this tab; please try again");
+  await expect(form.getByRole("button", { name: "Enter my workspace", exact: true })).toBeEnabled();
+  await expect(page).toHaveURL(`${fixture.appUrl}/welcome`);
+  expect(await (await request.get(`${fixture.supabaseUrl}/__test/welcome`)).json()).toEqual({ verificationRequests: 0, consumedTokens: 0 });
+
+  await page.unroute("**/auth/welcome");
+  // Retry the retained fragment from this page, through the real app/Auth boundary.
+  await enterWelcome(page);
+  await expect(page.locator(".app-shell")).toBeVisible();
+  expect(await readWorkspace(page)).toEqual({ status: 200, role: "owner" });
+  expect(await (await request.get(`${fixture.supabaseUrl}/__test/welcome`)).json()).toEqual({ verificationRequests: 1, consumedTokens: 1 });
+});

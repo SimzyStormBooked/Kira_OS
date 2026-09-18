@@ -95,7 +95,9 @@ describe("One-time welcome sign-in", () => {
     verifyOtp.mockResolvedValue({ data: { session: null, user: null }, error: { status, message: "internal detail" } });
     const response = await POST(request());
     expect(response.status).toBe(status === 429 ? 429 : 503);
-    expect(await response.text()).not.toContain("internal detail");
+    const result = await response.json();
+    expect(result.code).toBeUndefined();
+    expect(result.error).not.toContain("internal detail");
   });
   it("cannot reuse an existing browser session when OTP supplies no new session", async () => {
     verifyOtp.mockResolvedValue({ data: { session: null, user: { id: "member" } }, error: null });
@@ -109,6 +111,10 @@ describe("One-time welcome sign-in", () => {
     if (reason === "identity-mismatch") getUser.mockResolvedValue({ data: { user: { id: "other-account" } }, error: null });
     const response = await POST(request());
     expect(response.status).toBe(reason === "unavailable" ? 503 : 403);
+    const result = await response.json();
+    expect(result.code).toBe(reason === "unavailable" ? "link_consumed" : undefined);
+    if (reason === "unavailable") expect(result.error).toContain("fresh link");
+    expect(JSON.stringify(result)).not.toContain("private outage detail");
     expect(signOut).toHaveBeenCalledWith({ scope: "local" });
     expect(setCookie).toHaveBeenCalledWith("sb-test-project-auth-token", "", expect.objectContaining({ maxAge: 0, httpOnly: true, sameSite: "lax", path: "/" }));
     expect(setCookie).toHaveBeenCalledWith("sb-test-project-auth-token.0", "", expect.objectContaining({ maxAge: 0 }));
@@ -128,6 +134,21 @@ describe("One-time welcome sign-in", () => {
     expect(response.status).toBe(503);
     expect(signOut).toHaveBeenCalledWith({ scope: "local" });
     expect(setCookie).toHaveBeenCalled();
-    expect(await response.text()).not.toContain(token);
+    const result = await response.json();
+    expect(result.code).toBeUndefined();
+    expect(JSON.stringify(result)).not.toContain(token);
+  });
+  it("reports the consumed link if cleanup throws after verified sign-in", async () => {
+    maybeSingle.mockResolvedValue({ data: null, error: { message: "private outage detail" } });
+    vi.mocked(cookies).mockRejectedValueOnce(new Error(`private cookie failure ${token}`));
+    const response = await POST(request());
+    expect(response.status).toBe(503);
+    const result = await response.json();
+    expect(result.code).toBe("link_consumed");
+    expect(result.error).toContain("fresh link");
+    expect(JSON.stringify(result)).not.toContain(token);
+    expect(JSON.stringify(result)).not.toContain("private");
+    expect(signOut).toHaveBeenCalledWith({ scope: "local" });
+    expect(setCookie).toHaveBeenCalled();
   });
 });

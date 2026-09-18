@@ -61,7 +61,13 @@ export function OneTimeSignIn() {
         body: JSON.stringify({ token_hash: token.current }),
       });
       if (!response.ok) {
-        if ([400, 401, 403, 410, 422].includes(response.status)) {
+        const failure: unknown = await response.json().catch(() => null);
+        const linkConsumed = Boolean(failure && typeof failure === "object" && "code" in failure && failure.code === "link_consumed");
+        if (linkConsumed) {
+          token.current = null;
+          setState("invalid");
+          showError("Your sign-in link was used, but we could not finish checking workspace access. Ask your workspace owner for a fresh link, or sign in with your email and password.");
+        } else if ([400, 401, 403, 410, 422].includes(response.status)) {
           token.current = null;
           setState("invalid");
           showError(response.status === 403
