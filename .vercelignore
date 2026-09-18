@@ -1,0 +1,13 @@
+.env*
+.git/
+.next/
+.vercel/
+node_modules/
+test-results/
+test-results-connected/
+playwright-report/
+coverage/
+work/
+supabase/.temp/
+*.tsbuildinfo
+.DS_Store

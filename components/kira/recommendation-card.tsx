@@ -4,11 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EvidenceDrawer } from "./evidence-drawer";
 import { DemoBadge } from "./origin-badge";
-import {
-  queueRecommendation,
-  showError,
-  useWorkspace,
-} from "@/lib/db/demo-store";
+import { useWorkspace } from "@/lib/db/demo-store";
 import type { AgentRecommendation } from "@/types/domain";
 export function RecommendationCard({
   recommendation: rec,
@@ -18,6 +14,7 @@ export function RecommendationCard({
   index: number;
 }) {
   const { approvals, ready } = useWorkspace();
+  const { queueRecommendation, showError } = useWorkspace();
   const queued = approvals.some((a) => a.recommendation_id === rec.id);
   return (
     <Card className="recommendation-card">

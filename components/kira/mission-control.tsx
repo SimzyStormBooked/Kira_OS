@@ -18,12 +18,14 @@ import { RavenBriefing } from "./raven-briefing";
 import { RecommendationCard } from "./recommendation-card";
 import { AgentStatus } from "./agent-status";
 import { DemoBadge } from "./origin-badge";
+import { ConnectedHome } from "./connected-home";
 export function MissionControl() {
   const state = useWorkspace();
   const pending = state.approvals.filter((a) => a.status === "pending");
   const recommendations = state.recommendations.filter(
     (r) => !state.dismissed.includes(r.id),
   );
+  if (state.mode === "connected") return <ConnectedHome />;
   return (
     <>
       <div className="page-heading">

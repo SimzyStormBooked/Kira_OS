@@ -1,48 +1,39 @@
-# Phase One verification
+# KIRA OS verification
 
-Verified locally on 2026-09-17 with Node 24.16.0, Next.js 16.3.5, React 19.3.0, and Chromium 153 via Playwright.
+Verified locally on 2026-09-17 using Node 24.16, Next.js 16.3.5, React 19.3 and Chromium.
 
 | Check | Result |
 | --- | --- |
-| `npm run typecheck` | PASS — generated route types + strict TypeScript |
-| `npm run lint` | PASS — zero errors/warnings |
-| `npm test` | PASS — 41 tests in 3 suites |
-| `npm run build` | PASS — optimized production output, 24 generated pages |
-| `npm run test:e2e` | PASS — 16 cases across desktop and mobile |
-| Automated accessibility | PASS — axe WCAG 2 A/AA and 2.1 AA tags on Mission Control, Universe, Desk and Settings at both sizes |
-| Production dependency audit | PASS — zero reported vulnerabilities |
-| SQL migrations | PASS — both unmodified migrations + seed executed in PGlite with pgvector |
-| Production browser smoke | PASS — content/controls render; no reported browser errors |
-| Production HTTP smoke | PASS — home 200, unknown route 404, Raven POST 200 with 3 demo recommendations |
+| TypeScript and ESLint | PASS, no warnings |
+| Unit, API, auth, setup and embedded database tests | PASS, 157 tests across 9 suites |
+| Production build | PASS |
+| Demo browser suite | PASS, 16 desktop/mobile cases |
+| Connected browser suite | PASS, 8 desktop/mobile cases against a local simulated Supabase service |
+| Automated accessibility | PASS on demo primary pages, private login and connected home |
+| Production dependency audit | Zero reported vulnerabilities |
+| Deployment upload inspection | Environment files and test recordings excluded |
+| Vercel production build | READY |
+| Public hosted access check | PASS: home redirects to login; setup screen loads; private API returns 503 while unconfigured; no private shell or shared caching |
 
-## Verified stories
+## Verified private workflow
 
-- Mission Control labels all six synthetic metrics DEMO and separates the supplied manual Instagram snapshot.
-- Evidence drawer exposes the exact synthetic sample and its provenance; it closes normally.
-- Prepare campaign → edit brief → teach Raven → approve → reload → reviewed history retains edited text and human guidance. JSON export downloads successfully.
-- Rejection persists. Setting aside a Raven recommendation removes it; restore makes it available again.
-- Refresh reaches `POST /api/raven`, passes the server provider gate, and returns a completed demo run plus three source-backed recommendations.
-- Book search and series filters work; detail tabs preserve NEEDS VERIFICATION for unknown characters and other unimported information.
-- Official purchase/source links point to the checked author collection pages.
-- Global search and mobile navigation work. Tested mobile pages do not overflow horizontally.
-- Every future module clearly states that it is a roadmap preview. Unknown URLs return HTTP 404.
+The production Next app exercised its normal Supabase SDK, session, repository and API paths against an isolated loopback service. Sign-in rejects invalid credentials and nonmembers. An authorized user can create a manual business brief, edit it, attach guidance, approve it, reload, export and sign out. Private pages then require sign-in. Cookies are HttpOnly with SameSite=Lax, responses disallow shared caching, and private state is absent from localStorage. Both desktop and mobile views fit the viewport and render without reported page errors.
 
-## Business and database invariants
+The simulated service is only browser-test infrastructure; it is never imported by the application. It proves browser-to-API wiring, not hosted Supabase availability or security. PGlite independently executes all three SQL migrations with real pgvector, RLS, role isolation, tenant foreign keys, source provenance, optimistic versions, immutable final decisions and audit history. These tests also check direct table updates cannot rewrite an approval's original evidence or approve a changed draft without a separate review.
 
-Ranking is deterministic, source-age aware and excludes dismissed/reviewed findings. Missing evidence, undeclared sources and origin laundering fail validation. Fiction capabilities are denied before provider invocation. Provider output cannot replace source excerpts or relabel demo intelligence. Approval edits remain pending; final decisions are immutable and versioned. Feedback is required, length-limited, retained and scoped. No external executor exists.
+## Verified demo workflow
 
-Database roles prove owner/editor/viewer behavior and outsider isolation. Tenant foreign keys block cross-author references. SQL provenance rejects missing sources and null source fields. Approval history and sources cannot be deleted by authenticated users. Feedback attribution rejects another user's UUID. Manual snapshot capture time remains null, and social accounts are explicitly not live.
+Demo dashboard data stays labeled. Prepare, edit, teach, approve/reject, dismiss, restore, export and reload work. Raven refresh crosses the server provider boundary and returns only sourced demo output. Catalog search, filters, fourteen detail sections, global search, mobile navigation and unknown-route handling work. Unknown book details remain unverified.
 
-## Issues found and fixed
+## Issues found and resolved
 
-- A removed Lucide brand icon was replaced with a consistent camera icon.
-- Vitest 5 compatibility was corrected during the initial test setup.
-- Cassandra's Desk tab triggers were connected to real tab panels, resolving an ARIA control-target violation.
-- Unknown dynamic routes were constrained to generated parameters, resolving a streamed not-found page with an incorrect HTTP 200.
-- Modal edits capture the version they opened with, preventing an already-refreshed approval version from masking a stale editor draft.
+- Next normalizes loopback Request URLs to localhost. Same-origin validation now uses the configured canonical origin or a validated actual Host, without trusting forwarded-host input; logout redirects preserve the current origin.
+- Pending approval evidence could previously be changed by direct table updates. Migration 003 makes original evidence and review context immutable and separates draft edits from approval.
+- Expired or revoked sessions now clear private client state and return to sign-in after an authorization failure.
+- Deployment inspection found local browser recordings among upload candidates. `.vercelignore` now excludes them and environment files.
 
-## Scope of verification
+## Hosted verification remains pending
 
-Tests ran against the local application and embedded PostgreSQL, not a hosted Supabase project. PGlite uses actual Postgres and pgvector but emulates Supabase's auth roles, users and UID helper; this does not verify hosted Auth, PostgREST, Storage or OAuth. Browser tests use Chromium desktop and a mobile viewport/device profile, not physical iOS Safari. Automated accessibility checks do not replace a complete assistive-technology review.
+The Vercel production deployment is ready at https://kira-os-dusky.vercel.app. Supabase provisioning requires marketplace terms acceptance. No hosted Supabase database, administrator or real cross-device save has been verified. A deployed setup screen is not a working private database. Finish provisioning, apply migrations and the non-demo bootstrap, assign the confirmed administrator, and test a real save/reload and sign-out before inviting Cassie.
 
-No live model, social API, manuscript ingestion, external publishing or remote deployment was enabled. Those capabilities are outside Phase One. An inactive GitHub Actions template is included at `scripts/ci.yml.example`. The current OAuth connection lacks `workflow` scope, so GitHub rejected the first push with an active workflow. The application was pushed with the template outside the workflows directory; an administrator can activate it later. Remote CI has not run.
+Live AI providers, social APIs, private document ingestion and external publishing remain unconnected. Browser coverage uses Chromium desktop and an emulated mobile viewport, not physical Safari. The GitHub Actions template remains inactive because the current GitHub OAuth connection lacks workflow scope; remote CI has not run.

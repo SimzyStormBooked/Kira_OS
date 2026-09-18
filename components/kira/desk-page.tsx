@@ -4,10 +4,12 @@ import { CheckCheck, Download, Lightbulb, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { exportWorkspace, showError, useWorkspace } from "@/lib/db/demo-store";
+import { useWorkspace } from "@/lib/db/demo-store";
+import { ManualReviewForm } from "./manual-review-form";
 import { ApprovalCard } from "./approval-card";
 export function DeskPage() {
-  const { approvals, feedback, ready } = useWorkspace();
+  const { approvals, feedback, ready, mode } = useWorkspace();
+  const { exportWorkspace, showError } = useWorkspace();
   const [tab, setTab] = useState("pending");
   const pending = approvals.filter((a) => a.status === "pending");
   return (
@@ -42,10 +44,12 @@ export function DeskPage() {
       <div className="inline-notice">
         <ShieldCheck size={17} />
         <span>
-          Approvals record decisions in this browser. Nothing is posted, sent,
-          purchased, or applied to the live catalog.
+          Approvals record decisions{" "}
+          {mode === "demo" ? "in this browser" : "in your private workspace"}.
+          Nothing is posted, sent, purchased, or applied to the live catalog.
         </span>
       </div>
+      {mode === "connected" && <ManualReviewForm />}
       <div className="desk-layout">
         <section>
           <Tabs value={tab} onValueChange={setTab}>
@@ -79,7 +83,9 @@ export function DeskPage() {
                         </h2>
                         <p>
                           {panel === "pending"
-                            ? "The minions are working. Go write. 🖤"
+                            ? mode === "demo"
+                              ? "The minions are working. Go write. 🖤"
+                              : "Add a business brief above when you have a decision to make."
                             : "Your reviewed requests will stay here, along with your decisions."}
                         </p>
                       </div>
@@ -109,12 +115,12 @@ export function DeskPage() {
               <span>
                 lessons saved
                 <br />
-                in this browser
+                {mode === "demo" ? "in this browser" : "in your workspace"}
               </span>
             </div>
             <span className="quiet-note">
               Feedback is persistable, exportable, and designed for future
-              retrieval. Demo synthesis does not yet use these lessons.
+              retrieval. No live synthesis is connected yet.
             </span>
           </Card>
         </aside>

@@ -100,7 +100,8 @@ export const feedbackSchema = z.object({
   feedback: z.string().trim().min(1).max(4000),
   created_at: z.iso.datetime(),
   data_origin: z.literal("manual"),
-  scope: z.literal("demo_workspace"),
+  scope: z.enum(["demo_workspace", "author_workspace"]),
+  user_id: z.uuid().optional(),
 });
 export type HumanFeedback = z.infer<typeof feedbackSchema>;
 export interface Book {

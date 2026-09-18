@@ -1,0 +1,358 @@
+"use client";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import type { AgentRecommendation, ApprovalRequest } from "@/types/domain";
+import {
+  createFeedback,
+  transitionApproval,
+  type ApprovalAction,
+} from "@/lib/agents/approvals";
+import {
+  freshWorkspace,
+  emptyWorkspace,
+  parseWorkspace,
+  workspaceSchema,
+  type WorkspaceState,
+} from "./workspace-state";
+export {
+  freshWorkspace,
+  parseWorkspace,
+  workspaceSchema,
+} from "./workspace-state";
+export type { DemoWorkspace } from "./workspace-state";
+export const storageKey = "kira-os:phase-one:v1";
+type Mode = "demo" | "connected";
+type Snapshot = WorkspaceState & {
+  ready: boolean;
+  busy: boolean;
+  notice: string | null;
+  error: string | null;
+  mode: Mode;
+  viewerEmail: string | null;
+};
+function createStore(
+  mode: Mode,
+  initial: WorkspaceState,
+  viewerEmail: string | null,
+) {
+  const server: Snapshot = {
+    ...initial,
+    mode,
+    viewerEmail,
+    ready: mode === "connected",
+    busy: false,
+    notice: null,
+    error: null,
+  };
+  let snapshot = server;
+  const listeners = new Set<() => void>();
+  const update = (patch: Partial<Snapshot>) => {
+    snapshot = { ...snapshot, ...patch };
+    listeners.forEach((fn) => fn());
+  };
+  const showError = (error: unknown) =>
+    update({
+      notice: null,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Could not save. Please try again.",
+    });
+  const saveLocal = (next: WorkspaceState) => {
+    const parsed = workspaceSchema.parse(next);
+    localStorage.setItem(storageKey, JSON.stringify(parsed));
+    return parsed;
+  };
+  const readResponse = async (response: Response, isRefresh = false) => {
+    if (response.status === 401 || (isRefresh && response.status === 403)) {
+      update({ ...emptyWorkspace(), ready: false });
+      window.location.replace("/login");
+      throw new Error("Your workspace session ended. Please sign in again.");
+    }
+    const data = await response.json();
+    if (!response.ok)
+      throw new Error(
+        data.error || "The workspace is unavailable. Please try again.",
+      );
+    return workspaceSchema.parse(data);
+  };
+  async function refresh() {
+    if (snapshot.busy) return;
+    if (mode === "demo") {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        update({
+          ...(raw ? parseWorkspace(raw) : freshWorkspace()),
+          ready: true,
+        });
+      } catch {
+        showError(
+          new Error(
+            "Browser storage is unavailable or contains an incompatible workspace. Export any existing data before resetting.",
+          ),
+        );
+        update({ ready: true });
+      }
+    } else {
+      update({ busy: true });
+      try {
+        update(
+          await readResponse(
+            await fetch("/api/workspace", { cache: "no-store" }),
+            true,
+          ),
+        );
+      } catch (error) {
+        showError(error);
+      } finally {
+        update({ busy: false });
+      }
+    }
+  }
+  async function perform(
+    body: Record<string, unknown>,
+    local: () => WorkspaceState,
+    notice: string,
+  ): Promise<boolean> {
+    if (snapshot.busy) return false;
+    update({ busy: true, error: null, notice: null });
+    try {
+      const next =
+        mode === "connected"
+          ? await readResponse(
+              await fetch("/api/workspace", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+              }),
+            )
+          : saveLocal(local());
+      update({ ...next, notice, ready: true });
+      return true;
+    } catch (error) {
+      // Reconcile stale versions after a rejected concurrent change; never substitute demo state.
+      if (mode === "connected") {
+        try {
+          update(
+            await readResponse(
+              await fetch("/api/workspace", { cache: "no-store" }),
+              true,
+            ),
+          );
+        } catch {
+          /* Keep last known private state with the visible error. */
+        }
+      }
+      showError(error);
+      return false;
+    } finally {
+      update({ busy: false });
+    }
+  }
+  const actions = {
+    showError,
+    dismissNotice: () => update({ notice: null, error: null }),
+    refresh,
+    decideApproval: (id: string, action: ApprovalAction, version: number) =>
+      perform(
+        { action: "decide", id, decision: action, version },
+        () => {
+          const current = snapshot.approvals.find((a) => a.id === id);
+          if (!current) throw new Error("Approval request not found");
+          const updated = transitionApproval(
+            current,
+            action,
+            new Date().toISOString(),
+            version,
+          );
+          return {
+            ...snapshot,
+            approvals: snapshot.approvals.map((a) =>
+              a.id === id ? updated : a,
+            ),
+          };
+        },
+        action.type === "edit"
+          ? "Draft saved. It still needs your approval."
+          : action.type === "approve"
+            ? "Approval recorded. Nothing has been published or sent."
+            : "Rejected. Your decision is saved.",
+      ),
+    teachRaven: (id: string, text: string) =>
+      perform(
+        { action: "teach", id, text },
+        () => {
+          const request = snapshot.approvals.find((a) => a.id === id);
+          if (!request) throw new Error("Approval request not found");
+          return {
+            ...snapshot,
+            feedback: [
+              ...snapshot.feedback,
+              createFeedback(
+                request,
+                text,
+                new Date().toISOString(),
+                crypto.randomUUID(),
+              ),
+            ],
+          };
+        },
+        mode === "demo"
+          ? "Lesson saved to your local memory. Future agent runs can use it; demo ranking is unchanged."
+          : "Lesson saved to your private workspace for future use. No model was retrained.",
+      ),
+    queueRecommendation: (rec: AgentRecommendation) =>
+      perform(
+        { action: "queue", id: rec.id },
+        () => {
+          if (snapshot.approvals.some((a) => a.recommendation_id === rec.id))
+            return snapshot;
+          const now = new Date().toISOString();
+          const approval: ApprovalRequest = {
+            id: crypto.randomUUID(),
+            recommendation_id: rec.id,
+            type: "campaign",
+            title: rec.title,
+            description: rec.description,
+            draft: `DEMO CAMPAIGN BRIEF\n\nObjective: ${rec.objective}\n\nDirection: ${rec.description}\n\nWhy: ${rec.reason}\n\nNext: Cassandra verifies book relevance and audience fit, then selects approved assets. This brief authorizes no external action.`,
+            status: "pending",
+            evidence: rec.evidence,
+            created_at: now,
+            updated_at: now,
+            data_origin: "demo",
+            version: 0,
+          };
+          return {
+            ...snapshot,
+            approvals: [...snapshot.approvals, approval],
+            dismissed: snapshot.dismissed.filter((id) => id !== rec.id),
+          };
+        },
+        "Campaign brief prepared at Cassandra’s Desk.",
+      ),
+    dismissRecommendation: (id: string) =>
+      perform(
+        { action: "dismiss", id },
+        () => ({
+          ...snapshot,
+          dismissed: [...new Set([...snapshot.dismissed, id])],
+        }),
+        "Set aside. Restore it from The Raven whenever you’re ready.",
+      ),
+    restoreRecommendations: () =>
+      perform(
+        { action: "restore" },
+        () => ({ ...snapshot, dismissed: [] }),
+        "Recommendations restored.",
+      ),
+    saveRavenRun: (recommendations: AgentRecommendation[], at: string) => {
+      if (mode !== "demo")
+        throw new Error("Demo runs cannot be saved to a private workspace.");
+      update({
+        ...saveLocal({ ...snapshot, recommendations, last_run_at: at }),
+        notice:
+          "Demo briefing refreshed from 3 seeded findings. No live sources were queried.",
+      });
+    },
+    resetWorkspace: () => {
+      if (mode !== "demo")
+        throw new Error("Private workspaces cannot be reset here.");
+      update({
+        ...saveLocal(freshWorkspace()),
+        notice: "Local demo workspace reset.",
+      });
+    },
+    createManualReview: (title: string, draft: string) =>
+      perform(
+        { action: "create", title, draft },
+        () => {
+          throw new Error(
+            "Connect your private workspace to save a real brief.",
+          );
+        },
+        "Your brief is saved at Cassandra’s Desk.",
+      ),
+    exportWorkspace: () => {
+      const blob = new Blob(
+        [JSON.stringify(workspaceSchema.parse(snapshot), null, 2)],
+        { type: "application/json" },
+      );
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download =
+        mode === "demo"
+          ? "kira-os-demo-workspace.json"
+          : "kira-os-workspace.json";
+      link.click();
+      URL.revokeObjectURL(url);
+    },
+  };
+  return {
+    actions,
+    getSnapshot: () => snapshot,
+    getServerSnapshot: () => server,
+    subscribe: (fn: () => void) => {
+      listeners.add(fn);
+      return () => {
+        listeners.delete(fn);
+      };
+    },
+  };
+}
+const WorkspaceContext = createContext<ReturnType<typeof createStore> | null>(
+  null,
+);
+export function WorkspaceProvider({
+  mode,
+  initialWorkspace,
+  viewerEmail = null,
+  children,
+}: {
+  mode: Mode;
+  initialWorkspace: WorkspaceState;
+  viewerEmail?: string | null;
+  children: React.ReactNode;
+}) {
+  const [store] = useState(() =>
+    createStore(mode, initialWorkspace, viewerEmail),
+  );
+  useEffect(() => {
+    if (mode === "demo") void store.actions.refresh();
+    const storage = (event: StorageEvent) => {
+      if (mode === "demo" && event.key === storageKey)
+        void store.actions.refresh();
+    };
+    const focus = () => {
+      void store.actions.refresh();
+    };
+    window.addEventListener("storage", storage);
+    window.addEventListener("focus", focus);
+    return () => {
+      window.removeEventListener("storage", storage);
+      window.removeEventListener("focus", focus);
+    };
+  }, [store, mode]);
+  return (
+    <WorkspaceContext.Provider value={store}>
+      {children}
+    </WorkspaceContext.Provider>
+  );
+}
+export function useWorkspace() {
+  const store = useContext(WorkspaceContext);
+  if (!store) throw new Error("Workspace provider is missing");
+  return {
+    ...useSyncExternalStore(
+      store.subscribe,
+      store.getSnapshot,
+      store.getServerSnapshot,
+    ),
+    ...store.actions,
+  };
+}

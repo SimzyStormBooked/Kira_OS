@@ -41,7 +41,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import { useWorkspace, dismissNotice } from "@/lib/db/demo-store";
+import { useWorkspace } from "@/lib/db/demo-store";
 import { books } from "@/lib/data/seed";
 import { cn } from "@/lib/utils";
 
@@ -59,7 +59,7 @@ const navigation = [
 ];
 function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const path = usePathname();
-  const { approvals } = useWorkspace();
+  const { approvals, mode, viewerEmail } = useWorkspace();
   const count = approvals.filter((a) => a.status === "pending").length;
   return (
     <>
@@ -130,7 +130,8 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
       <div className="user-profile">
         <span className="user-avatar">C</span>
         <span>
-          Cassandra<small>Human in command</small>
+          {mode === "connected" ? viewerEmail : "Cassandra"}
+          <small>Human in command</small>
         </span>
         <ShieldCheck size={16} />
       </div>
@@ -224,7 +225,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Command size={10} />K
               </kbd>
             </Button>
-            <span className="topbar-avatar">C</span>
+            {state.mode === "connected" ? (
+              <form action="/auth/logout" method="post">
+                <Button variant="ghost" size="sm" type="submit">
+                  Sign out
+                </Button>
+              </form>
+            ) : (
+              <span className="topbar-avatar">C</span>
+            )}
           </div>
         </header>
         <main id="main-content" className="page-container">
@@ -235,7 +244,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             KIRA OS <span className="footer-cross">✦</span> BUILT AROUND YOUR
             WORLD.
           </span>
-          <span>Demo workspace · Changes saved in this browser</span>
+          <span>
+            {state.mode === "demo"
+              ? "Demo workspace · Changes saved in this browser"
+              : "Private workspace · Saved securely in Supabase"}
+          </span>
         </footer>
       </div>
       {(state.notice || state.error) && (
@@ -248,7 +261,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Button
             variant="ghost"
             size="icon"
-            onClick={dismissNotice}
+            onClick={state.dismissNotice}
             aria-label="Dismiss notification"
           >
             <X size={15} />

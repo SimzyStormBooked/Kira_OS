@@ -1,9 +1,41 @@
+import { getWorkspaceConfig } from "@/lib/config";
+import {
+  requireWorkspaceSession,
+  WorkspaceAccessError,
+} from "@/lib/auth/session";
+import { assertSameOrigin } from "@/lib/auth/security";
 import { NextResponse } from "next/server";
 import { findings, seedId } from "@/lib/data/seed";
 import { demoProvider } from "@/lib/agents/demo-provider";
 import { runProvider } from "@/lib/ai/provider";
 import type { AgentRun } from "@/types/domain";
-export async function POST() {
+export async function POST(request: Request) {
+  if (getWorkspaceConfig().mode === "connected") {
+    try {
+      assertSameOrigin(request);
+      await requireWorkspaceSession();
+    } catch (error) {
+      return NextResponse.json(
+        {
+          error:
+            error instanceof WorkspaceAccessError
+              ? error.message
+              : "Workspace unavailable.",
+        },
+        {
+          status: error instanceof WorkspaceAccessError ? error.status : 503,
+          headers: { "Cache-Control": "private, no-store" },
+        },
+      );
+    }
+    return NextResponse.json(
+      {
+        error:
+          "Live intelligence is not connected yet. You can save business briefs at Cassandra’s Desk.",
+      },
+      { status: 409, headers: { "Cache-Control": "private, no-store" } },
+    );
+  }
   // No user prompts, paid model calls, external writes, or untrusted URLs in Phase One.
   const started_at = new Date().toISOString();
   try {

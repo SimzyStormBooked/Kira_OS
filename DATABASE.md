@@ -1,62 +1,69 @@
-# Database — Phase One
+# KIRA OS database
 
-Two migrations establish 24 UUID-keyed tenant tables. Every application table enables RLS. Every record has timestamps; domain data carries origin. Tenant foreign keys include `author_id` to prevent cross-author links. Supabase owns `auth.users` and `auth.uid()`.
+Three migrations define 25 UUID-keyed, tenant-scoped tables. Every application table enables RLS. Tenant foreign keys include `author_id` to prevent cross-author references. Supabase supplies `auth.users` and `auth.uid()`. The connected app uses the signed-in user’s client, never a service-role key.
 
-## Applied schema design
+## Schema
 
-| Group                      | Tables                                                                          | Purpose                                                                                      |
-| -------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Workspace                  | `authors`, `author_members`                                                     | Owner, editor, viewer access                                                                 |
-| Provenance                 | `sources`                                                                       | Immutable source identity, URL, retrieval/capture timestamps, origin, metadata               |
-| Catalog                    | `universes`, `series`, `books`                                                  | Author → organizational universe → collection → title, sourced fields and verification state |
-| Knowledge graph foundation | `characters`, `relationships`, `tropes`, `themes`, `book_tropes`, `book_themes` | Source-backed future knowledge; no invented characters/tropes seeded                         |
-| Assets / commerce          | `products`, `content_assets`                                                    | Product references, rights status, read-only asset references                                |
-| Context                    | `social_accounts`, `campaigns`                                                  | Manual social snapshot and draft/reviewed campaign foundation                                |
-| Agents                     | `agent_definitions`, `agent_runs`, `agent_findings`, `agent_recommendations`    | Agent identity, execution provenance, evidence-backed conclusions and priorities             |
-| Human control              | `approval_requests`, `human_feedback`                                           | Versioned decisions, append-only lessons, writer identity                                    |
-| Learning                   | `tactic_memory`                                                                 | Historical/recent observations, context, trend, confidence, status                           |
-| Read-only retrieval        | `knowledge_chunks`                                                              | Sourced reference text, content hash, optional 1536-dimensional pgvector, embedding model    |
+| Group | Tables | Purpose |
+| --- | --- | --- |
+| Workspace | `authors`, `author_members` | Owner/editor/viewer access |
+| Provenance | `sources` | Identity, URL, timestamps, origin, metadata |
+| Catalog | `universes`, `series`, `books` | Collections and sourced title/order fields |
+| Knowledge | `characters`, `relationships`, `tropes`, `themes`, `book_tropes`, `book_themes` | Source-backed foundation; no invented fictional details |
+| Assets/commerce | `products`, `content_assets` | References, rights, read-only assets |
+| Context | `social_accounts`, `campaigns` | Manual snapshots and campaign foundation |
+| Agents | `agent_definitions`, `agent_runs`, `agent_findings`, `agent_recommendations` | Execution and evidence-backed intelligence |
+| Human control | `approval_requests`, `human_feedback`, `approval_events` | Versioned decisions, attributed lessons, audit events |
+| Learning | `tactic_memory` | Observations, context, trend, evidence |
+| Retrieval | `knowledge_chunks` | Sourced text, hash, optional 1536-dimensional vector, model version |
 
-The second migration enables `vector` in `extensions`. Embeddings are nullable. There is no ingestion, similarity API, or ANN index yet. An index should be justified by corpus size and the selected embedding model.
+`202609170001_foundation.sql` establishes the core schema. `202609170002_knowledge_vectors.sql` enables pgvector in `extensions`. `202609170003_connected_workspace.sql` adds audited review operations and manual briefs. Embeddings remain nullable; no ingestion, similarity endpoint, or ANN index is implemented.
 
-## Relationships and provenance
+## Provenance
 
-The seed catalog links each book and series to its official source. `verified_fields` identifies the sourced subset; status remains partial. Descriptions and fictional knowledge remain null/empty. A source’s capture date may be unknown even when the time it was recorded is known.
+Catalog rows identify sourced fields and retain partial verification status. Descriptions and fictional knowledge stay null/empty. Unknown capture dates remain unknown even if recording time is known.
 
-Finding/recommendation/approval/tactic evidence is a nonempty JSONB array matching the TypeScript Evidence shape. Every item includes UUID, source UUID, source type/name, retrieval timestamp, excerpt/metric, metadata and origin. A trigger rejects missing/null provenance, cross-author/missing sources, mismatched origins, and non-demo conclusions built from demo sources. Finding source IDs must declare every evidence source. Evidence snapshots are embedded to preserve exactly what a decision used; `sources` is retained without authenticated UPDATE/DELETE policies. Future large raw payloads belong in private Storage, referenced by source hashes.
+Finding/recommendation/approval/tactic evidence is a nonempty JSONB array with source UUID, type/name, retrieval timestamp, excerpt/metric, metadata, and origin. Triggers reject absent provenance, missing/cross-author sources, origin mismatches, and non-demo conclusions built from demo evidence. Findings must declare every evidence source.
 
-## Access control
+Manual briefs create a source attributed to `auth.uid()` and embed the original text as evidence. Later draft edits preserve that snapshot. Authenticated callers cannot update or delete source identities. Large future payloads belong in private Storage with hashes and approval/rights records.
 
-- Owners can read/edit their author workspace and manage members.
-- Editors can read/write domain data, but cannot grant access or change author ownership.
-- Viewers can read only.
-- Anonymous callers have no table grants or policies.
-- RLS helpers are stable SECURITY DEFINER functions in a non-exposed `private` schema with an empty search path. Only authenticated callers have execution grants. This avoids recursive membership policies.
-- Human feedback is append-only and insert policy binds `user_id` to `auth.uid()`.
-- Sources, agent history and approvals have no authenticated DELETE policies.
-- Closed approvals are immutable. New approvals must start pending at version zero; updates must increment version by one.
-- The web application never uses a service-role key.
+## Authorization and audit
 
-Approval updates must also use an expected-version predicate; the trigger alone cannot detect a client's stale full-record read when a caller supplies the latest version. Browser persistence is an isolated demonstration; live database integration is not yet wired.
+- Owners can read/edit and manage members. Editors can read/write domain data. Viewers can read only.
+- Anonymous callers have no application-table grants or policies.
+- RLS membership helpers are stable SECURITY DEFINER functions in a private schema with an empty search path.
+- Feedback is append-only and binds `user_id` to `auth.uid()`.
+- Sources, agent history, and approvals have no authenticated delete policies.
+- Approvals start pending at version zero. Updates increment version once. Closed decisions, identity, evidence, and review context are immutable.
+- `approval_events` grants authenticated SELECT only, scoped by RLS. A private trigger records actor, action, prior/new version, and timestamp; clients cannot forge or mutate events.
 
-## Seed
+Audit events retain creation, edit, approval, and rejection metadata in SQL. A dedicated audit viewer/export is not implemented. Administrative bootstrap has no authenticated actor and does not invent one.
 
-`npm run db:seed:generate` creates deterministic SQL from `lib/data/seed.ts`. The seed includes one manually supplied author, one organizational collection, six sources, three collections, eight verified title/order records, one manual Instagram snapshot, six demo agent definitions, three demo findings/recommendations, three pending approval examples and one empty-performance tactic memory sample. No auth users, credentials, embeddings, fictional details, review bodies, sales, or actual performance are invented.
+## Connected RPCs
 
-The owner UUID is deliberately null. Claim the local seed author using an existing auth user only after explicit local setup (README). Seed statements use conflict-do-nothing for their deterministic primary IDs. Do not treat the seed as a production data migration.
+Mutation RPCs are SECURITY INVOKER, use an empty search path, require an authenticated owner/editor, and preserve RLS:
 
-## Deferred entities
+| Function | Behavior |
+| --- | --- |
+| `create_manual_review` | Atomically creates a manual source, original-text evidence, and pending brief; title 1–200 characters, draft 1–10,000 |
+| `decide_approval` | Locks a non-demo request, checks expected version, edits/approves/rejects; edits stay pending for separate review |
+| `teach_raven` | Adds an attributed 1–4,000 character lesson with `scope=author_workspace` |
+| `queue_recommendation` | Locks a stored non-demo recommendation and creates at most one linked review with its stored provenance |
+| `dismiss_recommendation` | Persists non-demo recommendation dismissal |
+| `restore_recommendations` | Restores dismissed non-demo recommendations, preserving queued relationships |
 
-These are intentionally not empty production tables yet; their ingestion and consent rules need real inputs:
+`lib/db/connected-repository.ts` uses explicit tenant filters and the session’s author ID. It excludes synthetic business records and reloads after mutation. The API validates commands independently and reports conflicts/access errors instead of silently saving stale data.
 
-- `social_posts`, `social_metrics`: Phase 4; author/account/source, observation time, metric definitions.
-- `reader_reviews`, `reader_feedback`, `reader_segments`: Phase 3; book/source, collection permission, deduplication, consent for personal information.
-- `campaign_actions`, `campaign_results`: Phase 6; campaign/approval, channel, measured outcomes and measurement window.
-- `keywords`, `search_queries`, `seo_pages`: Phase 5; source/search-console property, page, capture time and verified metrics.
-- `creators`, `media_contacts`, `outreach_targets`, `outreach_interactions`, `opportunities`: Phase 7; provenance, relationship history, human approvals, contact preferences.
+## Bootstrap versus demo seed
 
-All future entities inherit author scoping, UUIDs, timestamps, origin and provenance. This avoids brittle speculative columns while preserving clean core relationships.
+`supabase/bootstrap.sql`, generated by `npm run db:bootstrap:generate`, contains the author, official sources, organizational universe, three collections, eight sourced titles, and the explicitly manual Instagram snapshot. It contains no demo intelligence, auth users, or credentials. Reapplication uses conflict-do-nothing and preserves assigned ownership.
 
-## Validation
+After migrations and bootstrap, an administrator creates an **email-confirmed existing Auth user** with a password, disables public signup, and assigns its UUID to `authors.owner_user_id`. Further members use `author_members`. The web app cannot self-claim an author. See [SETUP.md](SETUP.md).
 
-`tests/database.test.ts` executes both migrations and the generated seed in PGlite with real pgvector support. Supabase auth roles/functions are emulated locally. It checks owner/editor/viewer/outsider behavior, cross-author foreign keys, null and fabricated provenance, approval history, feedback attribution, and snapshot truth. Hosted Supabase/PostgREST/Auth/Storage verification remains part of the next connected slice.
+`supabase/seed.sql`, generated by `npm run db:seed:generate`, is for disposable local demo databases. It additionally includes synthetic findings, recommendations, review examples, and tactics. Do not load it into Cassie’s real workspace. Both files initially leave the owner null; neither creates users.
+
+## Verification and future data
+
+Tests execute the migrations in PGlite with actual pgvector and emulated Supabase auth primitives. They cover tenant access, direct-table constraints, provenance, stale versions, atomic manual briefs, lessons, queues, and unforgeable audit events. Bootstrap tests assert that demo intelligence stays out. Hosted Supabase/PostgREST/Auth verification remains necessary before claiming production readiness.
+
+Private uploads, reader reviews, observed social metrics, campaign outcomes, search data, outreach history, and opportunities remain future work. Their ingestion rules should follow real inputs, permission, author scoping, and measured timestamps. Do not invent fictional metadata or business performance to populate them.

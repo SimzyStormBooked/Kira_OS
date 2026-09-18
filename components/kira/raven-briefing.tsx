@@ -6,14 +6,11 @@ import { Card } from "@/components/ui/card";
 import { DemoBadge } from "./origin-badge";
 import { EvidenceDrawer } from "./evidence-drawer";
 import { RavenArt } from "./raven-art";
-import {
-  dismissRecommendation,
-  queueRecommendation,
-  showError,
-  useWorkspace,
-} from "@/lib/db/demo-store";
+import { useWorkspace } from "@/lib/db/demo-store";
 export function RavenBriefing() {
   const state = useWorkspace();
+  const { dismissRecommendation, queueRecommendation, showError } =
+    useWorkspace();
   const rec = state.recommendations.find(
     (r) => !state.dismissed.includes(r.id),
   );
@@ -30,9 +27,13 @@ export function RavenBriefing() {
             <Feather size={14} /> THE RAVEN
           </span>
           <span className="briefing-edition">DAILY BRIEFING / 001</span>
-          <DemoBadge />
+          {state.mode === "demo" && <DemoBadge />}
         </div>
-        <p className="raven-intro">I connected the dots. You make the call.</p>
+        <p className="raven-intro">
+          {state.mode === "demo"
+            ? "I connected the dots. You make the call."
+            : "Your evidence. Your judgment. A clear next step."}
+        </p>
         <span className="eyebrow signal-label">
           {rec ? "TODAY’S SIGNAL" : "ALL CLEAR, CASSANDRA"}
         </span>
@@ -55,7 +56,9 @@ export function RavenBriefing() {
         </h2>
         <p className="raven-summary">
           {rec?.description ??
-            "You’ve set the demo recommendations aside. Restore them from The Raven whenever you’re ready."}
+            (state.mode === "demo"
+              ? "You’ve set the demo recommendations aside. Restore them from The Raven whenever you’re ready."
+              : "No live findings yet. Start by capturing a business brief at Cassandra’s Desk; your decisions and guidance will stay together.")}
         </p>
         {rec && (
           <p className="raven-reason">
@@ -96,16 +99,21 @@ export function RavenBriefing() {
             </>
           ) : (
             <Button asChild>
-              <Link href="/raven">
-                Visit The Raven <ArrowUpRight size={14} />
+              <Link href={state.mode === "demo" ? "/raven" : "/desk"}>
+                {state.mode === "demo"
+                  ? "Visit The Raven"
+                  : "Open Cassandra’s Desk"}{" "}
+                <ArrowUpRight size={14} />
               </Link>
             </Button>
           )}
         </div>
       </div>
       <div className="raven-footnote">
-        <span className="tiny-diamond">✦</span> Demo synthesis · Seeded findings
-        · Your judgment, always.
+        <span className="tiny-diamond">✦</span>{" "}
+        {state.mode === "demo"
+          ? "Demo synthesis · Seeded findings · Your judgment, always."
+          : "Private workspace · Live synthesis not connected"}
       </div>
     </Card>
   );

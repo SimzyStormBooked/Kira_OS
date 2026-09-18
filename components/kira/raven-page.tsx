@@ -5,12 +5,7 @@ import { Feather, RefreshCw, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { recommendationSchema } from "@/types/domain";
-import {
-  useWorkspace,
-  restoreRecommendations,
-  saveRavenRun,
-  showError,
-} from "@/lib/db/demo-store";
+import { useWorkspace } from "@/lib/db/demo-store";
 import { tactics } from "@/lib/data/seed";
 import { RavenBriefing } from "./raven-briefing";
 import { RecommendationCard } from "./recommendation-card";
@@ -18,6 +13,7 @@ import { DemoBadge } from "./origin-badge";
 import { AgentStatus } from "./agent-status";
 export function RavenPage() {
   const state = useWorkspace();
+  const { restoreRecommendations, saveRavenRun, showError } = useWorkspace();
   const [running, setRunning] = useState(false);
   async function run() {
     setRunning(true);
@@ -54,21 +50,29 @@ export function RavenPage() {
             Evidence first. Instinct always. A business team with a paper trail.
           </p>
         </div>
-        <Button onClick={run} disabled={running || !state.ready}>
+        <Button
+          onClick={run}
+          disabled={running || !state.ready || state.mode === "connected"}
+        >
           <RefreshCw size={15} className={running ? "animate-spin" : ""} />
-          {running ? "Synthesizing…" : "Refresh demo briefing"}
+          {state.mode === "connected"
+            ? "Live synthesis not connected"
+            : running
+              ? "Synthesizing…"
+              : "Refresh demo briefing"}
         </Button>
       </div>
       <div className="inline-notice">
         <Feather size={16} />
         <span>
-          Deterministic demo engine · 3 seeded findings · No model or live
-          connector running
+          {state.mode === "demo"
+            ? "Deterministic demo engine · 3 seeded findings · No model or live connector running"
+            : "Your private workspace is ready. Live intelligence needs an approved source connection and a model provider."}
           {state.last_run_at
             ? ` · Last run ${new Date(state.last_run_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
             : ""}
         </span>
-        <DemoBadge />
+        {state.mode === "demo" && <DemoBadge />}
       </div>
       <RavenBriefing />
       <section className="moves-section">
@@ -98,28 +102,30 @@ export function RavenPage() {
             ))}
         </div>
       </section>
-      <div className="bottom-grid">
-        <AgentStatus />
-        <Card className="tactic-card">
-          <div className="section-heading">
-            <span className="eyebrow">TACTIC MEMORY</span>
-            <DemoBadge />
-          </div>
-          <h2>
-            Good advice has
-            <br />
-            an expiration date.
-          </h2>
-          {tactics.map((t) => (
-            <div key={t.id}>
-              <h3>{t.tactic}</h3>
-              <span className="status-pill">{t.status}</span>
-              <p>{t.context}</p>
-              <small>Trend: unknown · No comparable measurements</small>
+      {state.mode === "demo" && (
+        <div className="bottom-grid">
+          <AgentStatus />
+          <Card className="tactic-card">
+            <div className="section-heading">
+              <span className="eyebrow">TACTIC MEMORY</span>
+              {state.mode === "demo" && <DemoBadge />}
             </div>
-          ))}
-        </Card>
-      </div>
+            <h2>
+              Good advice has
+              <br />
+              an expiration date.
+            </h2>
+            {tactics.map((t) => (
+              <div key={t.id}>
+                <h3>{t.tactic}</h3>
+                <span className="status-pill">{t.status}</span>
+                <p>{t.context}</p>
+                <small>Trend: unknown · No comparable measurements</small>
+              </div>
+            ))}
+          </Card>
+        </div>
+      )}
     </>
   );
 }

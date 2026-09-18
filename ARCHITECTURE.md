@@ -1,70 +1,71 @@
-# Architecture — implemented Phase One
+# KIRA OS architecture
 
-## Repository inspection
+## Runtime
 
-The supplied repository `SimzyStormBooked/Kira_OS` was inspected before changes: no commits, no package.json, no files, no existing configuration or documentation. It was cloned and scaffolded without replacing infrastructure. Work is limited to Phase One. Future-module routes are honest roadmap previews.
-
-## Runtime and boundaries
-
-Next.js 16 App Router + React 19 + strict TypeScript. Tailwind 4 and locally owned shadcn/ui Radix components provide accessible dialogs, sheets, tabs, forms, and actions. Manrope and Cormorant Garamond are bundled with the app. Lucide provides the icon system. The visual tokens use charcoal, ivory, aged gold, and wine.
+Next.js 16 App Router, React 19, strict TypeScript, Tailwind 4, and locally owned shadcn/Radix primitives. Manrope and Cormorant Garamond are bundled locally. The interface uses charcoal, ivory, aged gold, and wine.
 
 ```text
-Server route pages → client interactive KIRA components
-                         ├── versioned browser demo store → localStorage
-                         │     approvals / feedback / dismissed moves / recommendations
-                         └── POST /api/raven
-                                  → policy gate (server-only)
-                                  → IntelligenceProvider (demo implementation)
-                                  → validate provenance → deterministic prioritizer
-                                  → AgentRun + recommendations → validated client store
+Server layout → validated mode + verified workspace session
+  ├─ demo → fresh demo snapshot
+  └─ connected → user-scoped Supabase client → RLS-protected repository snapshot
+                  ↓
+          request-local WorkspaceProvider
+          ├─ demo mutations → validated localStorage
+          └─ connected mutations → PATCH /api/workspace
+                                    → session + tenant authorization
+                                    → validated command → caller-scoped SQL RPC
+                                    → source / approval / feedback / audit event
+                                    → freshly loaded private snapshot
 ```
 
-Server-only `lib/ai/provider.ts` is the model integration boundary. `models.ts` defines per-job model configuration. No provider call exists inside a React component; the client calls the Raven route. A future adapter must validate model outputs against the domain schemas and carry source evidence forward. It must not bypass the creative firewall.
+The provider is instantiated per application tree; private mutable state is not held in a process-wide singleton. It uses `useSyncExternalStore` with a stable initial server snapshot. Demo mode hydrates localStorage and listens for cross-tab updates. Connected mode receives its initial server snapshot, refreshes on focus, and reloads after mutations. It never writes private state to the demo storage key or falls back to demo records after an error.
+
+## Authentication and authorization
+
+`lib/config.ts` validates mode, Supabase URL/key, and author UUID. The default is demo only when mode is absent. Invalid mode or incomplete connected configuration closes private access. Production must explicitly set `KIRA_WORKSPACE_MODE=connected`.
+
+`proxy.ts` refreshes cookie-backed Supabase sessions and marks connected responses private/no-store. Server access then verifies the user with Supabase Auth and requires the configured author record to be visible under RLS. Anonymous, unauthorized, unavailable, and unconfigured states are distinct. The proxy supplies the path header used to select the public sign-in surface; clients cannot choose that authorization bypass themselves.
+
+`POST /auth/login` signs in existing email/password accounts. There is no public signup, OTP flow, or automatic invitation. Initial accounts must be created/confirmed by an administrator, with public signup disabled in Supabase. Cookie handling is server-side. Sign-in, sign-out, and workspace mutations enforce same-origin requests. Auth clients are session-bound and created per request; the app has no service-role key.
+
+The server layout and `/api/workspace` each enforce access. RLS and caller-scoped SQL RPCs provide the final tenant boundary. Owner/editor/viewer permissions remain effective if a member calls PostgREST directly.
 
 ## Directory map
 
-- `app/`: routes, global design tokens, error/loading/not-found states, API boundary.
-- `components/ui/`: generated and owned shadcn primitives.
-- `components/kira/`: shell, metric cards, Raven briefing/art, recommendation cards, evidence drawer, agent status, universe/catalog, book details, approval desk, settings.
-- `types/domain.ts`: Agent, AgentRun, AgentFinding, AgentRecommendation, Evidence, ApprovalRequest, HumanFeedback, Book, Series, Universe, TacticMemory; Zod schemas at mutation/persistence boundaries.
-- `lib/data/seed.ts`: canonical seed shared by UI and SQL generation.
-- `lib/agents/`: prioritizer, provider implementation and approval state machine.
+- `app/`: pages, auth routes, workspace/Raven APIs, layout boundary, error states.
+- `components/kira/`: shell, private home, login, manual brief form, catalog, approval desk, evidence drawers, demo intelligence, settings.
+- `components/ui/`: owned shadcn primitives.
+- `lib/auth/`: session verification, user-scoped client, same-origin/redirect checks, access errors.
+- `lib/config.ts`: pure connection validation.
+- `lib/db/`: per-provider demo/connected state, shared schemas, connected repository, compatibility contracts.
+- `lib/ai/`: creative policy, job-model configuration, server-only intelligence provider interface.
+- `lib/agents/`: demo provider, prioritization, approval state machine.
 - `lib/knowledge/`: provenance validation, origin propagation, safe evidence URLs.
-- `lib/ai/`: policy, job-model configuration and server-only provider contract.
-- `lib/db/`: browser demo store, server-only Supabase factory, future repository contract.
-- `lib/analytics/`, `lib/connectors/`, `lib/seo/`: small extension contracts, without fake integrations.
-- `supabase/`: two migrations, generated seed, local configuration.
-- `tests/`: business invariants, SQL security/constraints, browser workflows and accessibility.
-- `scripts/ci.yml.example`: inactive GitHub Actions template; activation awaits repository workflow permission.
+- `lib/data/seed.ts`: sourced catalog and separately labeled demo/manual records.
+- `supabase/`: three migrations, demo seed, production catalog bootstrap, local configuration.
+- `scripts/`: private local setup/check, seed/bootstrap generators, inactive CI template.
+- `tests/`: business rules, SQL/RLS/RPC behavior, auth/API boundaries, browser workflows.
 
-## Raven ranking
+## Shared decisions and provenance
 
-The seed contains three specialist findings. Raven accepts only validated findings with evidence and declared source IDs, filters out reviewed/dismissed findings, and calculates review priority:
+The connected repository uses explicit author filters in addition to RLS and excludes demo business records. It validates returned data and canonicalizes Postgres timestamp offsets to UTC. The API validates command shapes, limits body size, and derives author scope from the verified session.
 
-`priority = round(objective_weight × confidence × freshness)`
+`pending → approved` or `pending → rejected`. Editing increments version and remains pending. The decision RPC locks the row, checks the caller’s expected version, and rejects stale changes. Closed approvals cannot reopen. Approval identity, evidence, title, and review context remain immutable even through direct authenticated table updates.
 
-Weights are 90 (audience), 75 (catalog), 65 (tactic). Freshness decreases linearly from 1 with evidence age over 120 days, floored at 0.25; evidence freshness uses the oldest supporting source. UUID ordering breaks ties deterministically. This is an inspectable demonstration, not learned prioritization, market analysis, ROI, or outcome prediction. Confidence values are synthetic seed values. Demo output is always marked demo, including when one source is publicly verified.
+Creating a manual brief atomically creates a member-attributed source, an evidence snapshot of the original text, and a pending approval. Later edits retain that source evidence. Triggers append actor/action/version audit events; members cannot forge or edit them. Lessons are append-only, tied to an approval, and attributed to the authenticated user. They do not train a model.
 
-The refresh endpoint uses fixed seed inputs, no request prompts, no paid APIs, and no external writes. It returns the actual completed run object. It does not pretend that disconnected specialists are working.
+Queueing a stored recommendation copies its database provenance; clients cannot submit replacement evidence. Row locking prevents simultaneous queues from creating duplicate reviews. Approval records a decision only. No external executor exists.
 
-## Approval lifecycle
+## Raven and the creative boundary
 
-`pending → approved` or `pending → rejected`. Editing increments version and keeps `pending`. Reviewed decisions cannot be edited/reopened. Feedback can be appended before or after a decision and stays attached to the approval. “Prepare campaign” creates one review brief per recommendation, not a scheduled campaign. Approval does not verify unknown book fields or authorize a downstream executor. No executor exists.
+The only implemented intelligence provider is deterministic demo synthesis. `POST /api/raven` accepts no freeform prompt, reads seeded findings, enforces `lib/ai/policy.ts`, validates provenance, and returns a demo run plus recommendations. Connected mode does not execute or save demo Raven runs.
 
-The UI uses `useSyncExternalStore` with a stable server snapshot to avoid hydration mismatches. Saved state is schema-validated and versioned. Reload and cross-tab storage events rehydrate it. Saves fail visibly when browser storage is unavailable. Optimistic request versions guard sequential stale decisions; this local demo is not a transactional multi-user store. A future SQL adapter must update approvals with `WHERE version = expected_version` and detect zero updated rows. SQL also enforces version increments and final-state immutability.
+The prioritizer ranks three findings by `round(objective_weight × confidence × freshness)`. Weights are 90 for audience, 75 for catalog, and 65 for tactic. Freshness uses the oldest evidence timestamp, decays over 120 days, and is floored at 0.25; UUID ordering breaks ties. Confidence and examples are synthetic, not measured outcomes.
 
-## Provenance and origin
+Future models belong behind `lib/ai/provider.ts`; no model SDK call belongs in a React component. Business analysis and approved-content repurposing are allowed capabilities, not claims that adapters exist. Fiction generation remains prohibited. Imported material is data, never agent instructions; future manuscripts are read-only references.
 
-Every synthetic business record has `data_origin = demo`. Public catalog data carries a URL and verification date. Manual follower counts retain an unknown capture date. Unknown book facts stay null and render NEEDS VERIFICATION. Source excerpts distinguish synthetic examples from actual observations. No demo trope is attached to a real title. Decorative covers are explicitly placeholders.
+## Current limits
 
-## Creative firewall
+Catalog UI records are bundled sourced metadata; bootstrap carries the matching database catalog. Field editing, private uploads, retrieval, embeddings, social connectors, and live model adapters remain future work. Covers are placeholders and unknown details remain unverified.
 
-`lib/ai/policy.ts` exports frozen default capabilities. Business analysis, approved-content repurposing, metadata, and outreach drafting are allowed by policy. Manuscript, chapter, scene, and fiction generation are prohibited. Repurposing requires approved source context. The policy gate runs at the server provider boundary; tests enforce every blocked capability. Allowed capabilities are architectural permission, not claims that all those features are implemented.
-
-Future manuscript storage is read-only reference knowledge. `content_assets` and `knowledge_chunks` retain read-only constraints. Untrusted documents must never become agent instructions. The design has no fiction editor or creative generation route.
-
-## Persistence decision
-
-No Supabase credentials were provided. To make the full decision workflow usable immediately, the shipped UI explicitly uses browser-local demo persistence. The database schema is executed in automated tests, but no hosted database or authentication is enabled. We do not silently fall back from a claimed live mode. Settings always tells the truth: connections are not connected.
-
-This is a deliberate vertical-slice boundary, not a simulation of cloud writes. The next slice replaces the store behind the repository contract after authenticated author scoping is implemented and tested.
+Connected code and local tests are implemented. Hosted Supabase provisioning, ownership, and deployed sign-in/save/reload still require verification. [SETUP.md](SETUP.md) provides the launch path; [VERIFICATION.md](VERIFICATION.md) records actual checks.

@@ -4,7 +4,7 @@ import type {
   Book,
   HumanFeedback,
 } from "@/types/domain";
-/** Contract for the future authenticated Supabase adapter; the UI currently uses demo-store. */
+/** Future catalog/knowledge adapter contract. The active decision repository is connected-repository.ts. */
 export interface AuthorRepository {
   listBooks(authorId: string): Promise<Book[]>;
   listFindings(authorId: string): Promise<AgentFinding[]>;

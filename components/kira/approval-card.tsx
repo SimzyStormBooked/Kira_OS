@@ -19,12 +19,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  decideApproval,
-  showError,
-  teachRaven,
-  useWorkspace,
-} from "@/lib/db/demo-store";
+import { useWorkspace } from "@/lib/db/demo-store";
 import type { ApprovalRequest } from "@/types/domain";
 import { DemoBadge } from "./origin-badge";
 import { EvidenceDrawer } from "./evidence-drawer";
@@ -34,26 +29,31 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
   const [editVersion, setEditVersion] = useState(approval.version);
   const [lesson, setLesson] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
-  const { ready, feedback } = useWorkspace();
+  const { ready, feedback, mode, busy } = useWorkspace();
+  const { decideApproval, showError, teachRaven } = useWorkspace();
   const lessons = feedback.filter((f) => f.approval_request_id === approval.id);
-  function decide(type: "approve" | "reject") {
+  async function decide(type: "approve" | "reject") {
     try {
-      decideApproval(approval.id, { type }, approval.version);
+      await decideApproval(approval.id, { type }, approval.version);
     } catch (e) {
       showError(e);
     }
   }
-  function save() {
-    try {
-      if (modal === "edit")
-        decideApproval(approval.id, { type: "edit", draft }, editVersion);
-      else teachRaven(approval.id, lesson);
+  async function save() {
+    const saved =
+      modal === "edit"
+        ? await decideApproval(
+            approval.id,
+            { type: "edit", draft },
+            editVersion,
+          )
+        : await teachRaven(approval.id, lesson);
+    if (saved) {
       setModal(null);
       setLesson("");
       setFormError(null);
-    } catch (e) {
-      setFormError(e instanceof Error ? e.message : "Could not save");
-    }
+    } else
+      setFormError("Could not save. Check the workspace notice and try again.");
   }
   return (
     <Card className="approval-card">
@@ -78,13 +78,13 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
       <div className="approval-actions">
         {approval.status === "pending" ? (
           <>
-            <Button disabled={!ready} onClick={() => decide("approve")}>
+            <Button disabled={!ready || busy} onClick={() => decide("approve")}>
               <Check size={15} />
               Approve
             </Button>
             <Button
               variant="outline"
-              disabled={!ready}
+              disabled={!ready || busy}
               onClick={() => {
                 setDraft(approval.draft);
                 setEditVersion(approval.version);
@@ -97,7 +97,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
             </Button>
             <Button
               variant="ghost"
-              disabled={!ready}
+              disabled={!ready || busy}
               onClick={() => decide("reject")}
             >
               <X size={15} />
@@ -115,7 +115,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
         <Button
           variant="outline"
           className="teach-button"
-          disabled={!ready}
+          disabled={!ready || busy}
           onClick={() => {
             setFormError(null);
             setModal("teach");
@@ -135,7 +135,8 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
             <p key={l.id}>
               “{l.feedback}”
               <small>
-                Human feedback · {l.created_at.slice(0, 10)} · Stored locally
+                Human feedback · {l.created_at.slice(0, 10)} ·{" "}
+                {mode === "demo" ? "Stored locally" : "Saved to workspace"}
               </small>
             </p>
           ))}
@@ -158,7 +159,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
             <DialogDescription>
               {modal === "edit"
                 ? "Save an edited brief for review. Editing does not approve it."
-                : "Tell Raven what the numbers missed. Your guidance is saved locally for future integration; it does not retrain a model."}
+                : "Tell Raven what the numbers missed. Your guidance is saved for future use; it does not retrain a model."}
             </DialogDescription>
           </DialogHeader>
           <label
@@ -191,7 +192,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
               Cancel
             </Button>
             <Button
-              disabled={!(modal === "edit" ? draft : lesson).trim()}
+              disabled={busy || !(modal === "edit" ? draft : lesson).trim()}
               onClick={save}
             >
               {modal === "edit" ? "Save draft" : "Save lesson"}

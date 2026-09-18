@@ -20,12 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { creativeFirewall } from "@/lib/ai/policy";
-import {
-  exportWorkspace,
-  resetWorkspace,
-  showError,
-  useWorkspace,
-} from "@/lib/db/demo-store";
+import { useWorkspace } from "@/lib/db/demo-store";
 import { DemoBadge } from "./origin-badge";
 const capabilityLabels: Record<keyof typeof creativeFirewall, string> = {
   ALLOW_MARKETING_ANALYSIS: "Marketing analysis",
@@ -39,7 +34,8 @@ const capabilityLabels: Record<keyof typeof creativeFirewall, string> = {
 };
 export function SettingsPage() {
   const [confirm, setConfirm] = useState(false);
-  const { ready } = useWorkspace();
+  const { ready, mode, viewerEmail } = useWorkspace();
+  const { exportWorkspace, resetWorkspace, showError } = useWorkspace();
   return (
     <>
       <div className="page-heading">
@@ -96,23 +92,30 @@ export function SettingsPage() {
             ].map((c) => (
               <div className="connection-row" key={c}>
                 <span>{c}</span>
-                <span className="status-pill">NOT CONNECTED</span>
+                <span className="status-pill">
+                  {c.startsWith("Supabase") && mode === "connected"
+                    ? "CONNECTED"
+                    : "NOT CONNECTED"}
+                </span>
               </div>
             ))}
             <p className="quiet-note">
-              Phase One runs entirely in demo mode. Adding environment variables
-              alone does not enable live storage or agents.
+              {mode === "demo"
+                ? "Demo mode stores decisions in this browser. Follow SETUP.md to activate a private workspace."
+                : `Signed in as ${viewerEmail}. Decisions and lessons are shared securely across your workspace. Live intelligence still needs source and provider connections.`}
             </p>
           </Card>
           <Card className="settings-card">
             <div className="section-heading">
-              <h2>Demo workspace</h2>
-              <DemoBadge />
+              <h2>
+                {mode === "demo" ? "Demo workspace" : "Private workspace"}
+              </h2>
+              {mode === "demo" && <DemoBadge />}
             </div>
             <p>
-              Approvals, edits, feedback, and set-aside moves are saved in this
-              browser. Export them before switching devices or clearing site
-              data.
+              {mode === "demo"
+                ? "Approvals, edits, feedback, and set-aside moves are saved in this browser. Export them before switching devices or clearing site data."
+                : "Your decisions and lessons are stored in Supabase. Export a copy of your workspace whenever you need it."}
             </p>
             <div className="settings-actions">
               <Button
@@ -129,14 +132,16 @@ export function SettingsPage() {
                 <Download size={14} />
                 Export workspace
               </Button>
-              <Button
-                variant="ghost"
-                disabled={!ready}
-                onClick={() => setConfirm(true)}
-              >
-                <RotateCcw size={14} />
-                Reset demo
-              </Button>
+              {mode === "demo" && (
+                <Button
+                  variant="ghost"
+                  disabled={!ready}
+                  onClick={() => setConfirm(true)}
+                >
+                  <RotateCcw size={14} />
+                  Reset demo
+                </Button>
+              )}
             </div>
           </Card>
         </div>

@@ -12,7 +12,11 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check": "npm run typecheck && npm run lint && npm test && npm run build",
-    "db:seed:generate": "tsx scripts/generate-seed.ts"
+    "db:seed:generate": "tsx scripts/generate-seed.ts",
+    "setup:local": "node scripts/configure-local.mjs",
+    "setup:check": "node scripts/setup-check.mjs",
+    "db:bootstrap:generate": "tsx scripts/generate-live-bootstrap.ts",
+    "test:e2e:connected": "playwright test --config playwright.connected.config.ts"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.3.0",
