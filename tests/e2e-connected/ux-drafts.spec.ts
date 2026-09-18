@@ -37,6 +37,10 @@ test("workshop fields, recipe previews and explicit saved state survive Desk nav
   await page.getByLabel("What would a useful result look like?", { exact: true }).fill("Three choices with effort and next steps.");
   await page.getByRole("button", { name: "Build my blueprint", exact: true }).click();
   const built = await page.getByLabel("Prompt to copy or adapt", { exact: true }).inputValue();
+  if ((page.viewportSize()?.width ?? 1440) <= 760) {
+    const smallFields = await page.locator('input:not([type="radio"]):not([type="checkbox"]), textarea, select').evaluateAll(fields => fields.filter(field => field.getClientRects().length > 0 && parseFloat(getComputedStyle(field).fontSize) < 16).map(field => field.id));
+    expect(smallFields, "Mobile workshop controls stay readable without input zoom").toEqual([]);
+  }
   await page.getByRole("radio", { name: /^Reader listening partner/ }).check();
   await name.fill("My second recipe marker");
   await page.getByRole("button", { name: "Build my blueprint", exact: true }).click();

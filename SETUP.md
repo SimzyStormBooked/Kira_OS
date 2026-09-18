@@ -24,7 +24,7 @@ Search finds books, saved brief titles, and pages. Desk, workshop, and unsent qu
 
 Open **Settings → Your workspace connections** for current status and the next step. **Refresh connection status** checks existing setup; it does not purchase credits or connect accounts. Setup account links are shown only to the workspace owner.
 
-**Ask Raven:** Gateway funding is complete and a direct Gemini 3.8 Flash connectivity probe has succeeded. Production activation and a controlled in-app answer/save/reload check are still pending. No further card-setup request is needed for this activation. The release helper will enable the configured adapter, redeploy, and verify private generation persistence. After verification, use Ask Raven for a business question, revisit the saved answer, and optionally save an attributed copy to the Desk. No offline/demo answer substitutes for the model, and no background agent starts automatically.
+**Ask Raven is ready:** funding and production activation are complete. A real Gemini 3.8 Flash answer passed the deployed question/save/reload flow and was explicitly copied into a pending Desk brief. Open Ask Raven, choose a business task, add the context you want to share, and submit. Revisit the saved answer or choose **Save answer to my desk** for a separate review brief. It remains an unverified AI proposal for your judgment. No additional credit-setup step is needed now, and no background agent starts automatically.
 
 **Social accounts:** profile shortcuts and the NotebookLM copy bridge can be used independently. Real Meta authorization needs an app, configured callbacks/permissions, and consent from the account owner. Meta app credentials are not configured yet. Follow the [Instagram and Facebook setup guide](lib/connections/SETUP.md). Account authorization does not yet import social metrics or publish content.
 
@@ -37,14 +37,14 @@ Open **Settings → Your workspace connections** for current status and the next
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key or legacy **anon** key |
 | `KIRA_AUTHOR_ID` | `10000000-0000-4000-8000-000000000001` |
 | `NEXT_PUBLIC_APP_URL` | `https://kira-os-dusky.vercel.app` or the verified custom domain |
-| `KIRA_AI_ENABLED` | Default `false`; controlled activation enables it after provider/recording setup, followed by hosted verification before handoff |
+| `KIRA_AI_ENABLED` | `true` in the current verified production deployment; use `false` in new environments until their provider/recording setup is ready |
 | `KIRA_AI_RECORDING_KEY` | Server-only 32 random bytes encoded as 64 hexadecimal characters |
 
 The AI recording key's SHA-256 hex hash belongs in `private.workspace_generation_config` with `singleton=true`; only the literal key belongs in the server environment. The Studio/access/links migrations and the recording key/hash are now provisioned in the hosted workspace. For a new installation, a helper provisions them through the administrative setup connection. Never put the key in a public environment variable or send it in browser props.
 
 Seven privileged integration-injected Supabase secrets were removed from Vercel runtime. The web app uses a publishable/anon key and the signed-in session, never a service-role key, database password, or privileged database URL. Keep administrative credentials out of runtime and source control. Use a separate database for previews and redeploy after environment changes.
 
-The core hosted flow and prior integrated learning/access/link release passed their production checks. The current UX revision and activated AI workflow still need their final deployed checks. Direct model connectivity is now verified; Meta account consent remains pending. Supabase Free does not include its Pro-only leaked-password protection; no Supabase upgrade was purchased. Use unique account passwords. See [Supabase password security](https://supabase.com/docs/guides/auth/password-security) and [VERIFICATION.md](VERIFICATION.md).
+The UX revision is deployed. The core private workflow and real AI generation, reload, attributed Desk copy, and sign-out protection have passed hosted checks. Meta account consent remains pending. Supabase Free does not include its Pro-only leaked-password protection; no Supabase upgrade was purchased. Use unique account passwords. See [Supabase password security](https://supabase.com/docs/guides/auth/password-security) and [VERIFICATION.md](VERIFICATION.md).
 
 ## Local setup and the standalone fallback
 
