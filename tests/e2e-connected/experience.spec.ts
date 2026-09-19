@@ -56,7 +56,7 @@ test("a curated idea opens an unsaved brief and saves only after Cassy chooses",
   await ideas.getByRole("link", { name: "Use this idea", exact: true }).click();
   await expect(page).toHaveURL(/\/desk\?idea=return-to-a-title$/);
   const title = page.getByLabel("Give it a title");
-  const brief = page.getByLabel("Your brief", { exact: true });
+  const brief = page.getByLabel("Your idea", { exact: true });
   await expect(title).toHaveValue("Reintroduce a title I love");
   await expect(title).toBeFocused();
   await expect(brief).toHaveValue(/CURATED REFLECTION/);
@@ -92,7 +92,7 @@ test("a slow save preserves the submitted brief and leaves a newly chosen idea u
   const firstIdea = await openIdeas(page);
   await firstIdea.getByRole("link", { name: "Use this idea", exact: true }).click();
   const title = page.getByLabel("Give it a title");
-  const brief = page.getByLabel("Your brief", { exact: true });
+  const brief = page.getByLabel("Your idea", { exact: true });
   await expect(title).toHaveValue("Reintroduce a title I love");
   await title.fill("My first idea, saved deliberately");
   await brief.fill("This is the exact brief I chose to save before exploring a different idea.");
@@ -109,12 +109,12 @@ test("a slow save preserves the submitted brief and leaves a newly chosen idea u
   });
   try {
     await page.getByRole("button", { name: "Save for review", exact: true }).click();
-    await expect(page.getByRole("button", { name: "Saving your brief…", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Saving your idea…", exact: true })).toBeVisible();
     const nextIdea = await openIdeas(page);
     await nextIdea.getByRole("button", { name: "Next idea", exact: true }).click();
     await nextIdea.getByRole("link", { name: "Use this idea", exact: true }).click();
     await expect(page).toHaveURL(/\/desk\?idea=rediscover-an-asset$/);
-    const choice = page.getByRole("region", { name: "Keep your unfinished brief" });
+    const choice = page.getByRole("region", { name: "Keep your unfinished idea" });
     await expect(choice).toBeVisible();
     await expect(choice.getByRole("button", { name: "Replace with this idea", exact: true })).toBeDisabled();
     await expect(choice.getByRole("button", { name: "Keep my draft", exact: true })).toBeDisabled();
@@ -134,10 +134,10 @@ test("a slow save preserves the submitted brief and leaves a newly chosen idea u
   }
 });
 
-test("an unfinished brief survives exploring and a second idea asks before replacing it", async ({ page }) => {
+test("an unfinished idea survives exploring and a second idea asks before replacing it", async ({ page }) => {
   await guideTo(page, "/desk");
   const title = page.getByLabel("Give it a title");
-  const brief = page.getByLabel("Your brief", { exact: true });
+  const brief = page.getByLabel("Your idea", { exact: true });
   await title.fill("My unfinished thought");
   await brief.fill("These are my own words, still in progress.");
   await guideTo(page, "/universe");
@@ -148,7 +148,7 @@ test("an unfinished brief survives exploring and a second idea asks before repla
 
   const ideas = await openIdeas(page);
   await ideas.getByRole("link", { name: "Use this idea", exact: true }).click();
-  const choice = page.getByRole("region", { name: "Keep your unfinished brief" });
+  const choice = page.getByRole("region", { name: "Keep your unfinished idea" });
   await expect(choice).toBeVisible();
   await expect(title).toHaveValue("My unfinished thought");
   await choice.getByRole("button", { name: "Keep my draft", exact: true }).click();

@@ -5,6 +5,8 @@ export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts"],
     environment: "node",
+    // PGlite workers each allocate a full database runtime; bound local memory use.
+    maxWorkers: 2,
     testTimeout: 15000,
     hookTimeout: 30000,
   },

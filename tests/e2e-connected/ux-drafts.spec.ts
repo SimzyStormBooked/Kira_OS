@@ -12,7 +12,7 @@ async function login(page: Page) {
 }
 async function navigate(page: Page, href: string) {
   const menu = page.getByRole("button", { name: "Open navigation", exact: true });
-  if (await menu.isVisible()) await menu.click();
+  if (await menu.isVisible() && await menu.getAttribute("aria-expanded") !== "true") await menu.click();
   await page.locator(`a.nav-item[href="${href}"]:visible`).first().click();
   await expect.poll(() => new URL(page.url()).pathname).toBe(href);
 }
@@ -102,7 +102,7 @@ test("session loss clears every private scratchpad without preventing sign-out",
   await navigate(page, "/studio");
   await page.getByLabel("Your question and useful context", { exact: true }).fill("Private unsent question must disappear after session loss.");
   await navigate(page, "/desk");
-  await page.getByLabel("Give it a title", { exact: true }).fill("Private unfinished brief must disappear");
+  await page.getByLabel("Give it a title", { exact: true }).fill("Private unfinished idea must disappear");
   const otherTab = await context.newPage();
   await otherTab.goto("/");
   await otherTab.getByRole("button", { name: "Sign out", exact: true }).click();
@@ -120,7 +120,7 @@ test("session loss clears every private scratchpad without preventing sign-out",
 });
 
 test("a completed answer saves an attributed review brief only on request and avoids repeat saves", async ({ page }) => {
-  const generation: StudioGeneration = {
+  const generation: StudioGeneration = { knowledge_context:{book_ids:[],include_spoilers:false,evidence:[]},
     id: "11111111-1111-4111-8111-111111111111", author_id: fixture.authorId, created_by: fixture.memberId,
     job: "brainstorm", prompt: "Compare a small business idea for a book using verified information.", model: STUDIO_MODEL,
     status: "complete", result: { kind: "ideas", title: "One manageable next step", summary: "Start with an approved description.", options: [{ title: "Review existing copy", idea: "Read the current approved description.", tradeoff: "It takes a small amount of your time.", first_step: "Find the approved source.", verify: ["Confirm permission and source date."] }], questions: [], context_used: [] },
@@ -146,6 +146,7 @@ test("a completed answer saves an attributed review brief only on request and av
 
 function simulatedAnswer(id: string, prompt: string): StudioGeneration {
   return {
+    knowledge_context:{book_ids:[],include_spoilers:false,evidence:[]},
     id, author_id: fixture.authorId, created_by: fixture.memberId, job: "brainstorm", prompt, model: STUDIO_MODEL,
     status: "complete", result: { kind: "ideas", title: "A simulated saved answer", summary: "A browser-test answer; no provider was called.", options: [{ title: "A small first step", idea: "Review approved information.", tradeoff: "It takes some attention.", first_step: "Find the approved source.", verify: [] }], questions: [], context_used: [] },
     input_tokens: 10, output_tokens: 10, estimated_cost_usd: null, gateway_generation_id: null, error_code: null,

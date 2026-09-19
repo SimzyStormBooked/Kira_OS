@@ -15,7 +15,7 @@ import { GET, POST } from "@/app/api/studio/route";
 
 const id = "10000000-0000-4000-8000-000000000001", authorId = "20000000-0000-4000-8000-000000000001";
 const input = { id, job: "brainstorm", prompt: "Help me compare a few useful book business ideas." };
-const pending: StudioGeneration = { id, author_id: authorId, created_by: id, job: "brainstorm", prompt: input.prompt, model: STUDIO_MODEL, status: "pending", result: null, input_tokens: null, output_tokens: null, estimated_cost_usd: null, gateway_generation_id: null, error_code: null, created_at: "2026-09-17T00:00:00Z", completed_at: null };
+const pending: StudioGeneration = { knowledge_context:{book_ids:[],include_spoilers:false,evidence:[]}, id, author_id: authorId, created_by: id, job: "brainstorm", prompt: input.prompt, model: STUDIO_MODEL, status: "pending", result: null, input_tokens: null, output_tokens: null, estimated_cost_usd: null, gateway_generation_id: null, error_code: null, created_at: "2026-09-17T00:00:00Z", completed_at: null };
 const reply = { result: { kind: "ideas" as const, title: "One small idea", summary: "Something to consider.", options: [{ title: "Listen", idea: "Review comments.", tradeoff: "Small sample.", first_step: "Choose a few.", verify: [] }], questions: [], context_used: [] }, usage: studioUsage(100, 50) };
 const complete: StudioGeneration = { ...pending, status: "complete", result: reply.result, completed_at: "2026-09-17T00:00:10Z" };
 const repo = { list: vi.fn(), find: vi.fn(), begin: vi.fn(), complete: vi.fn(), fail: vi.fn() };

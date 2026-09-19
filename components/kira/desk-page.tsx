@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { ContextHelp } from "./context-help";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -93,7 +94,7 @@ export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: strin
                 <TabsContent value={panel} key={panel} {...(panel === "reviewed" ? { "aria-labelledby": "desk-reviewed-tab" } : {})}>
                   <div className="approval-list">
                     {items.map((a) => (
-                      <ApprovalCard key={a.id} approval={a} />
+                      <div key={a.id}><ApprovalCard approval={a} />{mode === "connected" && <Link className="text-link" href={`/plans?request=${a.id}`}>Turn this idea into a marketing plan →</Link>}</div>
                     ))}
                     {items.length === 0 && (
                       <div className="empty-state">
@@ -107,7 +108,7 @@ export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: strin
                           {panel === "pending"
                             ? mode === "demo"
                               ? "The minions are working. Go write. 🖤"
-                              : "Add a business brief above when you have a decision to make."
+                              : "Add an idea or request above when you have a decision to make."
                             : "Your reviewed requests will stay here, along with your decisions."}
                         </p>
                       </div>

@@ -213,7 +213,7 @@ export function BookDetail({ book }: { book: Book }) {
       </details>
       <Dialog open={replaceOpen} onOpenChange={setReplaceOpen}>
         <DialogContent onCloseAutoFocus={(event) => { event.preventDefault(); prepareButtonRef.current?.focus(); }}>
-          <DialogHeader><DialogTitle>Keep your unfinished brief?</DialogTitle><DialogDescription>You already have words at your desk. Open that brief as it is, or replace it with a book-details starter for {book.title}. Nothing has been saved or changed yet.</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>Keep your unfinished idea?</DialogTitle><DialogDescription>You already have words at your desk. Open that brief as it is, or replace it with a book-details starter for {book.title}. Nothing has been saved or changed yet.</DialogDescription></DialogHeader>
           <DialogFooter className="book-materials-choices">
             <Button type="button" variant="ghost" onClick={() => setReplaceOpen(false)}>Stay with this book</Button>
             <Button type="button" variant="outline" onClick={() => { setReplaceOpen(false); router.push("/desk"); }}>Open my current brief</Button>

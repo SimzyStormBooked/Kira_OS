@@ -1,0 +1,28 @@
+import {beforeEach,afterEach,describe,it,expect,vi} from "vitest";
+vi.mock("server-only",()=>({}));
+vi.mock("@/lib/auth/session",async()=>({WorkspaceAccessError:(await import("@/lib/auth/errors")).WorkspaceAccessError,requireWorkspaceSession:vi.fn()}));
+vi.mock("@/lib/auth/workspace-role",()=>({getWorkspaceRole:vi.fn()}));
+vi.mock("@/lib/strategy/repository",async original=>({...await original<typeof import("@/lib/strategy/repository")>(),createStrategyRepository:vi.fn()}));
+vi.mock("@/lib/ai/studio-provider",async original=>({...await original<typeof import("@/lib/ai/studio-provider")>(),getStudioAvailability:vi.fn()}));
+vi.mock("@/lib/ai/provider",()=>({runStrategyProvider:vi.fn()}));
+import { requireWorkspaceSession } from "@/lib/auth/session";
+import {getWorkspaceRole} from "@/lib/auth/workspace-role";
+import {createStrategyRepository} from "@/lib/strategy/repository";
+import {getStudioAvailability,StudioProviderError} from "@/lib/ai/studio-provider";
+import {runStrategyProvider} from "@/lib/ai/provider";
+import {POST,GET} from "@/app/api/plans/route";
+const id="10000000-0000-4000-8000-000000000001",author="20000000-0000-4000-8000-000000000001";
+const input={title:"Backlist",intent:"Help new readers find these books.",bookIds:[],seriesId:null,originApprovalId:null,mode:"evergreen",anchorDate:null,budgetUsd:0,weeklyHours:2,segments:["new_readers"],goals:[]};
+const snapshot={input,evidence:[{id:"request",kind:"request",label:"Request",text:input.intent,book_id:null,source_id:null,manuscript_id:null,chunk_id:null}],captured_at:"2026-09-18T00:00:00Z"};
+const repo={list:vi.fn(),detail:vi.fn(),save:vi.fn(),begin:vi.fn(),finish:vi.fn(),review:vi.fn(),activate:vi.fn(),task:vi.fn(),result:vi.fn()};
+const request=(body:unknown,origin="https://kira.example")=>new Request("https://kira.example/api/plans",{method:"POST",headers:{origin,"content-type":"application/json"},body:JSON.stringify(body)});
+describe("strategy API orchestration",()=>{
+ beforeEach(()=>{vi.stubEnv("NEXT_PUBLIC_APP_URL","https://kira.example");vi.mocked(requireWorkspaceSession).mockResolvedValue({authorId:author,supabase:{}} as Awaited<ReturnType<typeof requireWorkspaceSession>>);vi.mocked(getWorkspaceRole).mockResolvedValue("owner");vi.mocked(createStrategyRepository).mockReturnValue(repo);vi.mocked(getStudioAvailability).mockResolvedValue({available:true,reason:"ready",message:"Ready"});repo.detail.mockResolvedValue({plan:{input}});repo.list.mockResolvedValue([]);repo.begin.mockResolvedValue({created:true,revision:{id,input_snapshot:snapshot}});repo.finish.mockResolvedValue({id,status:"complete"});vi.mocked(runStrategyProvider).mockResolvedValue({output:{} as Awaited<ReturnType<typeof runStrategyProvider>>["output"],usage:{inputTokens:10,outputTokens:10,estimatedCostUsd:null,gatewayGenerationId:null}});});
+ afterEach(()=>{vi.resetAllMocks();vi.unstubAllEnvs();});
+ it("scopes reads to the session with private cache headers",async()=>{const r=await GET(new Request("https://kira.example/api/plans"));expect(r.status).toBe(200);expect(r.headers.get("cache-control")).toContain("no-store");expect(createStrategyRepository).toHaveBeenCalledWith({},author);});
+ it("blocks cross-origin, viewer and malformed writes before paid calls",async()=>{const body={action:"generate",id,expected:0,requestId:id};expect((await POST(request(body,"https://evil.example"))).status).toBe(403);vi.mocked(getWorkspaceRole).mockResolvedValue("viewer");expect((await POST(request(body))).status).toBe(403);vi.mocked(getWorkspaceRole).mockResolvedValue("owner");expect((await POST(request({...body,authorId:author}))).status).toBe(400);expect((await POST(request({action:"save",id,expected:null,input:{...input,intent:"x".repeat(40000)}}))).status).toBe(413);expect(runStrategyProvider).not.toHaveBeenCalled();});
+ it("reserves first and passes only the sealed evidence snapshot to the provider",async()=>{expect((await POST(request({action:"generate",id,expected:0,requestId:id}))).status).toBe(200);expect(runStrategyProvider).toHaveBeenCalledWith(snapshot);expect(repo.begin.mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(runStrategyProvider).mock.invocationCallOrder[0]);expect(repo.finish).toHaveBeenCalledTimes(1);});
+ it("never calls a paid provider again for a reused request",async()=>{repo.begin.mockResolvedValue({created:false,revision:{id,status:"pending"}});expect((await POST(request({action:"generate",id,expected:0,requestId:id}))).status).toBe(202);expect(runStrategyProvider).not.toHaveBeenCalled();});
+ it("retries only final persistence and saves sanitized provider failure",async()=>{vi.mocked(runStrategyProvider).mockRejectedValue(new StudioProviderError("timeout"));repo.finish.mockRejectedValueOnce(new Error("database temporary"));expect((await POST(request({action:"generate",id,expected:0,requestId:id}))).status).toBe(200);expect(runStrategyProvider).toHaveBeenCalledTimes(1);expect(repo.finish).toHaveBeenCalledTimes(2);expect(repo.finish.mock.calls[0][2]).toBe("timeout");});
+ it("stops for creative-boundary requests and unavailable funding",async()=>{repo.detail.mockResolvedValueOnce({plan:{input:{...input,intent:"Write a chapter for my novel"}}});expect((await POST(request({action:"generate",id,expected:0,requestId:id}))).status).toBe(422);vi.mocked(getStudioAvailability).mockResolvedValue({available:false,reason:"funding",message:"No credits"});expect((await POST(request({action:"generate",id,expected:0,requestId:id}))).status).toBe(503);expect(repo.begin).not.toHaveBeenCalled();});
+});

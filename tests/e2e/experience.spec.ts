@@ -70,7 +70,7 @@ test("the guide is optional and a demo idea becomes a saved local brief only on 
   await expect(title).toBeFocused();
   await expect(page.locator("#manual-draft-state")).toContainText("Not saved yet");
   await title.fill("My locally saved demo idea");
-  await page.getByLabel("Your brief", { exact: true }).fill("An idea I am trying in this browser, using approved materials only.");
+  await page.getByLabel("Your idea", { exact: true }).fill("An idea I am trying in this browser, using approved materials only.");
   await page.getByRole("button", { name: "Save for review", exact: true }).click();
   const card = page.locator(".approval-card").filter({ has: page.getByRole("heading", { name: "My locally saved demo idea", exact: true }) });
   await expect(card).toBeVisible();

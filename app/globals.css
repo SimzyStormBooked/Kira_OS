@@ -3684,3 +3684,5 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
   .book-materials-choices { display: grid; }
   .book-materials-choices button { white-space: normal; height: auto; min-height: 44px; }
 }
+
+.studio-book-selection{border:1px solid var(--border);border-radius:10px;padding:16px;display:grid;gap:10px}.studio-book-selection label{display:flex;gap:10px;align-items:center}.studio-book-selection input{accent-color:#d8ac6b}

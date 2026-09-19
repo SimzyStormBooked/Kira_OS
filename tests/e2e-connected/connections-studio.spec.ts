@@ -18,7 +18,7 @@ test.beforeEach(async ({ page, request }) => {
 test("profile links persist as shortcuts, never OAuth, and can be removed", async ({ page }) => {
   await page.goto("/connections?meta=authorized");
   await expect(page.getByRole("heading", { name: "Your link library" })).toBeVisible();
-  await expect(page.getByText("SETUP PENDING", { exact: true })).toBeVisible();
+  await expect(page.getByText("SETUP PENDING", { exact: true }).filter({ visible: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Connect with Meta", exact: true })).toHaveCount(0);
   await expect(page.getByText("Meta account access was verified and saved.", { exact: true })).toHaveCount(0);
   for (const [platform, label, url] of [

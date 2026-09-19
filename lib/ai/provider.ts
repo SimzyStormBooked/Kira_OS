@@ -16,11 +16,11 @@ export async function runManuscriptExtraction(chunks: ManuscriptChunk[], context
 }
 
 /** On-demand thinking uses the same creative-policy boundary as other providers. */
-export async function runStudioProvider(input: StudioRequest) {
+export async function runStudioProvider(input: StudioRequest, knowledge?: import("./studio-contract").StudioKnowledge) {
   assertCapability("ALLOW_MARKETING_ANALYSIS");
   const request = studioRequestSchema.parse(input);
   assertStudioPrompt(request.prompt);
-  return generateStudioReply(request);
+  return generateStudioReply(request, knowledge);
 }
 export interface IntelligenceProvider {
   readonly config: ModelConfig;
@@ -71,4 +71,11 @@ export async function runProvider(
     }
   }
   return recommendations;
+}
+
+export async function runStrategyProvider(snapshot: import("@/lib/strategy/contract").StrategySnapshot) {
+  assertCapability("ALLOW_MARKETING_ANALYSIS");
+  assertStudioPrompt(snapshot.input.intent);
+  const { generateStrategy } = await import("@/lib/strategy/provider");
+  return generateStrategy(snapshot);
 }

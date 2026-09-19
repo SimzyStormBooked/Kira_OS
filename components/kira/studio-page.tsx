@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useLibrary } from "./library-provider";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, Bird, Check, Clipboard, Lightbulb, RefreshCw } from "lucide-react";
@@ -10,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useWorkspace } from "@/lib/db/demo-store";
-import { studioFailureMessages, studioGenerationSchema, studioJobLabels, studioJobs, type StudioGeneration, type StudioJob } from "@/lib/ai/studio-contract";
+import { studioRequestSignature, studioFailureMessages, studioGenerationSchema, studioJobLabels, studioJobs, type StudioGeneration, type StudioJob } from "@/lib/ai/studio-contract";
 
 const responseSchema = z.object({
   role: z.enum(["owner", "editor", "viewer"]),
@@ -26,12 +27,16 @@ const starters: Record<StudioJob, string> = {
 function plainAnswer(generation: StudioGeneration) {
   const result = generation.result;
   if (!result) return "";
-  return [result.title, result.summary, ...result.options.map((option) => [option.title, option.idea, `Tradeoff: ${option.tradeoff}`, `First step: ${option.first_step}`, ...option.verify.map((check) => `Check: ${check}`)].join("\n")), ...result.questions.map((question) => `Question: ${question}`), "AI-generated thinking for human review. No sources were opened or external actions taken."].join("\n\n");
+  return [result.title, result.summary, ...result.options.map((option) => [option.title, option.idea, `Tradeoff: ${option.tradeoff}`, `First step: ${option.first_step}`, ...option.verify.map((check) => `Check: ${check}`)].join("\n")), ...result.questions.map((question) => `Question: ${question}`), "AI-generated thinking for human review. Selected book references, when present, are saved with the original answer. No external actions were taken."].join("\n\n");
 }
 
 export function StudioPage({ generationId }: { generationId?: string }) {
   const { mode, role, canEdit, ready, busy: workspaceBusy, approvals, createManualReview, studioScratchpad, updateStudioScratchpad, clearPrivateScratchpads, refresh: refreshWorkspace, markStudioQuestionSaved, finishStudioRequest } = useWorkspace();
   const router = useRouter();
+  const library=useLibrary();
+  const {bookIds,includeSpoilers}=studioScratchpad;
+  const setBookIds=(bookIds:string[])=>updateStudioScratchpad({bookIds});
+  const setIncludeSpoilers=(includeSpoilers:boolean)=>updateStudioScratchpad({includeSpoilers});
   const [view, setView] = useState<StudioView | null>(null);
   const { job, prompt, submittedId } = studioScratchpad;
   const setJob = (next: StudioJob) => updateStudioScratchpad({ job: next });
@@ -104,7 +109,7 @@ export function StudioPage({ generationId }: { generationId?: string }) {
     if (!canAsk || busy || submitLock.current) return;
     const cleanPrompt = prompt.trim();
     if (cleanPrompt.length < 10 || cleanPrompt.length > 6000) { setError("Write a question of 10 to 6,000 characters."); questionRef.current?.focus(); return; }
-    const signature = JSON.stringify({ job, prompt: cleanPrompt });
+    const signature = studioRequestSignature({job,prompt:cleanPrompt,bookIds,includeSpoilers});
     const identity = studioScratchpad.requestIdentity?.signature === signature ? studioScratchpad.requestIdentity : { signature, id: crypto.randomUUID() };
     updateStudioScratchpad({ requestIdentity: identity });
     const id = identity.id;
@@ -114,7 +119,7 @@ export function StudioPage({ generationId }: { generationId?: string }) {
     updateStudioScratchpad({ pendingRequestId: id });
     setError(null); setNotice(null); setSubmittedId(id);
     try {
-      const response = await fetch("/api/studio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, job, prompt: cleanPrompt }) });
+      const response = await fetch("/api/studio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, job, prompt: cleanPrompt, bookIds, includeSpoilers }) });
       if (response.status === 401) {
         clearPrivateScratchpads();
         window.location.replace("/login");
@@ -140,13 +145,13 @@ export function StudioPage({ generationId }: { generationId?: string }) {
   }
 
   function startNewQuestion() {
-    updateStudioScratchpad({ job: "brainstorm", prompt: "", savedSignature: null, requestIdentity: null, submittedId: null, pendingRequestId: null });
+    updateStudioScratchpad({ bookIds:[],includeSpoilers:false,job: "brainstorm", prompt: "", savedSignature: null, requestIdentity: null, submittedId: null, pendingRequestId: null });
     setConfirmNewQuestion(false);
     setError(null); setNotice(null);
     router.push("/studio");
   }
   function requestNewQuestion() {
-    const signature = JSON.stringify({ job, prompt: prompt.trim() });
+    const signature = studioRequestSignature({job,prompt,bookIds,includeSpoilers});
     if (prompt.trim() && studioScratchpad.savedSignature !== signature) setConfirmNewQuestion(true);
     else startNewQuestion();
   }
@@ -174,6 +179,7 @@ export function StudioPage({ generationId }: { generationId?: string }) {
 
     {!generationId && canAsk && <Card className="studio-question-card"><form onSubmit={ask} className="studio-form" aria-busy={busy}>
       <label htmlFor="studio-job">What would help today?</label><select id="studio-job" value={job} disabled={busy} onChange={(event) => setJob(event.target.value as StudioJob)}>{studioJobs.map((item) => <option key={item} value={item}>{studioJobLabels[item]}</option>)}</select>
+      <fieldset disabled={busy} className="studio-book-selection"><legend>Use my book knowledge (optional, up to four)</legend><p className="studio-help">Choose books to give Raven saved metadata and relevant manuscript observations. The answer will show the sources it used.</p>{library.data?.books.map(book=><label key={book.id}><input type="checkbox" checked={bookIds.includes(book.id)} disabled={!bookIds.includes(book.id)&&bookIds.length>=4} onChange={e=>setBookIds(e.target.checked?[...bookIds,book.id]:bookIds.filter(id=>id!==book.id))}/>{book.title}{!book.active_manuscript_id&&" · metadata only"}</label>)}{bookIds.length>0&&<label><input type="checkbox" checked={includeSpoilers} onChange={e=>setIncludeSpoilers(e.target.checked)}/>Include spoiler-sensitive details and matching manuscript passages</label>}</fieldset>
       <div className="studio-question-label"><label htmlFor="studio-question">Your question and useful context</label><Button type="button" variant="ghost" disabled={busy || prompt.trim().length > 0} onClick={() => { setPrompt(starters[job]); questionRef.current?.focus(); }}>Try a starting question</Button></div>
       <Textarea ref={questionRef} id="studio-question" rows={6} minLength={10} maxLength={6000} required value={prompt} disabled={busy} onChange={(event) => { setPrompt(event.target.value); setSubmittedId(null); }} aria-describedby="studio-privacy-note" placeholder="What are you working on, what do you know, and where would a second perspective help?" />
       <p id="studio-privacy-note" className="studio-help">Only this question is sent to the AI provider. Include approved facts you want to share; Raven cannot open your links or accounts. The question and answer are saved in this workspace when you submit.</p>
@@ -191,8 +197,8 @@ export function StudioPage({ generationId }: { generationId?: string }) {
       {generation.status === "pending" ? <div className="studio-pending"><p>This question has not saved a completed answer yet. It may be in progress or may have been interrupted. Refresh in a moment; it will not run again automatically.</p><Button variant="outline" type="button" disabled={loading} onClick={refresh}><RefreshCw size={14} aria-hidden="true" />Refresh saved question</Button></div> : generation.status === "failed" ? <p className="studio-failure">{studioFailureMessages[generation.error_code ?? "provider_unavailable"]}</p> : generation.result && <>
         <p className="studio-summary">{generation.result.summary}</p><div className="studio-options">{generation.result.options.map((option, index) => <section className="studio-option" key={`${index}-${option.title}`}><span className="eyebrow">OPTION {index + 1}</span><h3>{option.title}</h3><p>{option.idea}</p><p><strong>Tradeoff:</strong> {option.tradeoff}</p><p><strong>First step:</strong> {option.first_step}</p>{option.verify.length > 0 && <><h4>Before you rely on it</h4><ul>{option.verify.map((check, item) => <li key={item}>{check}</li>)}</ul></>}</section>)}</div>
         {generation.result.questions.length > 0 && <section className="studio-followups"><h3>A few useful questions</h3><ul>{generation.result.questions.map((question, index) => <li key={index}>{question}</li>)}</ul></section>}
-        {generation.result.context_used.length > 0 && <details className="studio-context"><summary>Context from your question</summary>{generation.result.context_used.map((quote, index) => <blockquote key={index}>{quote}</blockquote>)}</details>}
-        <p className="studio-help">These are ideas to check, not verified research. No sources were opened, messages sent, or accounts changed.</p><div className="studio-answer-actions"><Button type="button" variant="outline" onClick={() => void copyAnswer()}><Clipboard size={14} aria-hidden="true" />Copy this answer</Button><Button type="button" disabled={!canEdit || !ready || workspaceBusy || savingAnswer || answerSaved || answerBrief.length > 10000} onClick={() => void saveAnswer()}>{answerSaved ? "Saved to my desk" : savingAnswer ? "Saving answer…" : "Save answer to my desk"}</Button>{answerSaved && <Link href="/desk" className="text-link">Review at my desk <ArrowRight size={14} aria-hidden="true" /></Link>}</div><p className="studio-help">Saving makes a separate brief you can edit and decide on. The AI answer keeps its original source and stays unchanged.</p>{answerBrief.length > 10000 && <p className="studio-help">This answer is longer than a desk brief. Copy it and choose the parts you want to review at your desk.</p>}
+        {generation.result.context_used.length > 0 && <details className="studio-context"><summary>Sources Raven cited</summary>{generation.result.context_used.map((quote, index) => <div key={index}><blockquote>{quote}</blockquote>{generation.knowledge_context.evidence.filter(e=>e.text.includes(quote)).map(e=><p key={e.id}><strong>{e.label}</strong> · {e.kind.replaceAll("_"," ")}{e.book_id&&<>{" · "}<Link href={`/universe/${library.data?.books.find(b=>b.id===e.book_id)?.slug??""}`}>Open book & sources</Link></>}</p>)}</div>)}</details>}
+        <p className="studio-help">These are suggestions for human review. Selected book references are private, saved observations; audience fit remains a hypothesis. No messages were sent or accounts changed.</p><div className="studio-answer-actions"><Button type="button" variant="outline" onClick={() => void copyAnswer()}><Clipboard size={14} aria-hidden="true" />Copy this answer</Button><Button type="button" disabled={!canEdit || !ready || workspaceBusy || savingAnswer || answerSaved || answerBrief.length > 10000} onClick={() => void saveAnswer()}>{answerSaved ? "Saved to my desk" : savingAnswer ? "Saving answer…" : "Save answer to my desk"}</Button>{answerSaved && <Link href="/desk" className="text-link">Review at my desk <ArrowRight size={14} aria-hidden="true" /></Link>}</div><p className="studio-help">Saving makes a separate idea you can edit and decide on. The AI answer keeps its original source and stays unchanged.</p>{answerBrief.length > 10000 && <p className="studio-help">This answer is longer than a desk idea. Copy it and choose the parts you want to review at your desk.</p>}
       </>}
       <div className="studio-record"><Check size={14} aria-hidden="true" /><span>Saved privately · {generation.model}{generation.estimated_cost_usd !== null ? ` · Estimated model cost $${generation.estimated_cost_usd.toFixed(5)}` : " · Model cost unavailable"}</span></div><Button type="button" variant="link" className="studio-new-question" disabled={busy} onClick={requestNewQuestion}>Ask a new question <ArrowRight size={14} aria-hidden="true" /></Button>
     </Card>}

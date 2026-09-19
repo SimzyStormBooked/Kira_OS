@@ -16,7 +16,7 @@ async function createBrief(page: Page, title: string) {
   return data.approvals.find((approval) => approval.title === title)!;
 }
 function cardFor(page: Page, title: string) {
-  return page.locator(".approval-card").filter({ has: page.getByRole("heading", { name: title, exact: true, includeHidden: true }) });
+  return page.locator(".approval-card").filter({visible:true}).filter({ has: page.getByRole("heading", { name: title, exact: true, includeHidden: true }) });
 }
 async function search(page: Page, value: string) {
   await page.getByRole("button", { name: "Search workspace" }).click();
@@ -141,8 +141,8 @@ test("sign-out asks before discarding drafts and preserves them when sign-out fa
   const saved = await createBrief(page, "A saved brief survives sign-out");
   await page.goto("/desk");
   const title = page.getByLabel("Give it a title", { exact: true });
-  await title.fill("An unfinished brief to protect");
-  await page.getByLabel("Your brief", { exact: true }).fill("Keep these unsaved words until I choose to discard them.");
+  await title.fill("An unfinished idea to protect");
+  await page.getByLabel("Your idea", { exact: true }).fill("Keep these unsaved words until I choose to discard them.");
   let logoutPosts = 0;
   let failLogout = true;
   let nativeWarnings = 0;
@@ -165,14 +165,14 @@ test("sign-out asks before discarding drafts and preserves them when sign-out fa
   await expect(confirmation.getByRole("button", { name: "Keep working", exact: true })).toBeFocused();
   await confirmation.getByRole("button", { name: "Keep working", exact: true }).click();
   expect(logoutPosts).toBe(0);
-  await expect(title).toHaveValue("An unfinished brief to protect");
+  await expect(title).toHaveValue("An unfinished idea to protect");
   await expect(signOut).toBeFocused();
   await signOut.click();
   await confirmation.getByRole("button", { name: "Sign out and discard drafts", exact: true }).click();
   await expect(confirmation.getByRole("alert")).toContainText("unfinished work is still here");
   expect(logoutPosts).toBe(1);
   await confirmation.getByRole("button", { name: "Keep working", exact: true }).click();
-  await expect(title).toHaveValue("An unfinished brief to protect");
+  await expect(title).toHaveValue("An unfinished idea to protect");
   await signOut.click();
   await confirmation.getByRole("button", { name: "Sign out and discard drafts", exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
@@ -184,6 +184,6 @@ test("sign-out asks before discarding drafts and preserves them when sign-out fa
   await expect(page.locator(".app-shell")).toBeVisible();
   await page.goto("/desk");
   await expect(title).toHaveValue("");
-  await expect(page.getByLabel("Your brief", { exact: true })).toHaveValue("");
+  await expect(page.getByLabel("Your idea", { exact: true })).toHaveValue("");
   await expect(cardFor(page, saved.title)).toBeVisible();
 });

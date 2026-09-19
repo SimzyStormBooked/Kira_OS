@@ -42,9 +42,9 @@ test("sign in → create → edit → teach → approve persists through reload 
   expect(authCookies.length).toBeGreaterThan(0);
   expect(authCookies.every((cookie) => cookie.httpOnly && cookie.secure && cookie.sameSite === "Lax")).toBe(true);
   await expect(page.getByRole("region", { name: "Demo metrics" })).toHaveCount(0);
-  await page.getByRole("link", { name: "Add a business brief" }).click();
+  await page.getByRole("link", { name: "Add an idea or request" }).click();
   await page.getByLabel("Give it a title").fill("Simulated autumn campaign brief");
-  await page.getByLabel("Your brief", { exact: true }).fill("Use only approved book descriptions for our autumn reading-list promotion.");
+  await page.getByLabel("Your idea", { exact: true }).fill("Use only approved book descriptions for our autumn reading-list promotion.");
   await page.getByRole("button", { name: "Save for review" }).click();
   const card = page.locator(".approval-card").filter({ has: page.getByRole("heading", { name: "Simulated autumn campaign brief", exact: true }) });
   await expect(card).toBeVisible();

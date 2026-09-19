@@ -38,7 +38,7 @@ describe("bounded studio provider", () => {
     expect(options).not.toHaveProperty("tools");
     expect(options.instructions).toContain("Never write, rewrite, finish, or generate fiction");
     expect(options.instructions).not.toContain(request.prompt);
-    expect(mocks.generate).toHaveBeenCalledWith({ prompt: JSON.stringify({ job: request.job, user_context: request.prompt }), timeout: 45000 });
+    expect(mocks.generate).toHaveBeenCalledWith({ prompt: JSON.stringify({ job: request.job, user_context: request.prompt, book_reference: null }), timeout: 45000 });
   });
   it("blocks explicit fiction requests before invoking a provider", async () => {
     await expect(runStudioProvider({ ...request, prompt: "Please write a new chapter of my novel." })).rejects.toThrow(/fiction/);

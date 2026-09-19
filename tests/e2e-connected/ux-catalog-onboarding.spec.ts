@@ -35,7 +35,7 @@ test("book details lead with sources and prepare a review brief only on request"
   await page.getByRole("button", { name: "Prepare book details", exact: true }).click();
   await expect(page).toHaveURL(/\/desk$/);
   await expect(page.getByLabel("Give it a title", { exact: true })).toHaveValue("Review book details · Crazy People");
-  const brief = page.getByLabel("Your brief", { exact: true });
+  const brief = page.getByLabel("Your idea", { exact: true });
   await expect(brief).toHaveValue(/Official source: https:\/\/www.kirastanleyauthor.com\/myalphateam/);
   await expect(brief).toHaveValue(/does not change this catalog or publish anything/);
   expect(writes).toHaveLength(0);
@@ -53,19 +53,19 @@ test("book details lead with sources and prepare a review brief only on request"
 test("collecting catalog materials protects an unfinished desk brief", async ({ page }) => {
   await page.goto("/desk");
   await page.getByLabel("Give it a title", { exact: true }).fill("Keep my existing idea");
-  await page.getByLabel("Your brief", { exact: true }).fill("These words must survive exploring the catalog.");
+  await page.getByLabel("Your idea", { exact: true }).fill("These words must survive exploring the catalog.");
   await visitThroughGuide(page, "/universe");
   await page.locator('a.book-card[href="/universe/crazy-people"]').click();
   const prepare = page.getByRole("button", { name: "Prepare book details", exact: true });
   await prepare.click();
-  const choice = page.getByRole("dialog", { name: "Keep your unfinished brief?" });
+  const choice = page.getByRole("dialog", { name: "Keep your unfinished idea?" });
   await expect(choice).toBeVisible();
   await choice.getByRole("button", { name: "Stay with this book", exact: true }).click();
   await expect(prepare).toBeFocused();
   await prepare.click();
   await choice.getByRole("button", { name: "Open my current brief", exact: true }).click();
   await expect(page.getByLabel("Give it a title", { exact: true })).toHaveValue("Keep my existing idea");
-  await expect(page.getByLabel("Your brief", { exact: true })).toHaveValue("These words must survive exploring the catalog.");
+  await expect(page.getByLabel("Your idea", { exact: true })).toHaveValue("These words must survive exploring the catalog.");
   await visitThroughGuide(page, "/universe");
   await page.locator('a.book-card[href="/universe/crazy-people"]').click();
   await prepare.click();

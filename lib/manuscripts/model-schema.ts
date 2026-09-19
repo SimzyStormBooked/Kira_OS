@@ -15,12 +15,9 @@ function simplifyTransport(value: unknown): unknown {
   return value;
 }
 
-export const manuscriptModelSchema = jsonSchema<ManuscriptExtraction>(
-  simplifyTransport(z.toJSONSchema(manuscriptExtractionSchema, { target: "draft-7", io: "input", reused: "inline" })) as JSONSchema7,
-  {
-    validate(value) {
-      const parsed = manuscriptExtractionSchema.safeParse(value);
-      return parsed.success ? { success: true, value: parsed.data } : { success: false, error: parsed.error };
-    },
-  },
-);
+export function compatibleModelSchema<T>(schema: z.ZodType<T>) {
+  return jsonSchema<T>(simplifyTransport(z.toJSONSchema(schema, { target: "draft-7", io: "input", reused: "inline" })) as JSONSchema7, {
+    validate(value) { const parsed = schema.safeParse(value); return parsed.success ? { success: true, value: parsed.data } : { success: false, error: parsed.error }; },
+  });
+}
+export const manuscriptModelSchema = compatibleModelSchema<ManuscriptExtraction>(manuscriptExtractionSchema);

@@ -32,7 +32,7 @@ test("owner setup changes from Meta configuration to consent and authorized stat
   await page.route("**/api/studio", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(aiView()) }));
   await page.route("**/api/connections/meta", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ configured, isOwner: true, connection: authorized ? { status: "authorized" } : null }) }));
   await page.goto("/settings#setup");
-  const setup = page.locator("#setup");
+  const setup = page.locator("#setup").filter({visible:true});
   const meta = setup.locator('section[aria-labelledby="setup-meta-heading"]');
   await expect(setup).toHaveAttribute("aria-busy", "false");
   await expect(meta.locator(".status-pill")).toHaveText("SETUP NEEDED");
@@ -70,7 +70,7 @@ test("a failed AI status read can recover to ready through a read-only refresh",
   });
   await page.route("**/api/connections/meta", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ configured: false, isOwner: true, connection: null }) }));
   await page.goto("/settings#setup");
-  const setup = page.locator("#setup");
+  const setup = page.locator("#setup").filter({visible:true});
   const ai = setup.locator('section[aria-labelledby="setup-ai-heading"]');
   await expect(ai.locator(".status-pill")).toHaveText("CHECK AGAIN");
   await expect(ai).toContainText("The AI connection could not be confirmed");
@@ -100,7 +100,7 @@ for (const role of ["editor", "viewer"] as const) {
       await collaborator.route("**/api/connections/meta", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ configured: false, isOwner: false, connection: null }) }));
       await signIn(collaborator, fixture.outsiderEmail);
       await collaborator.goto("/settings#setup");
-      const setup = collaborator.locator("#setup");
+      const setup = collaborator.locator("#setup").filter({visible:true});
       await expect(setup).toHaveAttribute("aria-busy", "false");
       await expect(setup).toContainText("Your workspace owner is finishing the AI connection");
       await expect(setup).toContainText("Your workspace owner manages social authorization");
@@ -128,7 +128,7 @@ test("setup auth failure rechecks the real session and clears drafts before redi
   const menu = page.getByRole("button", { name: "Open navigation", exact: true });
   if (await menu.isVisible()) await menu.click();
   await page.locator('a.nav-item[href="/settings"]:visible').first().click();
-  const refresh = page.locator("#setup").getByRole("button", { name: "Refresh connection status", exact: true });
+  const refresh = page.locator("#setup").filter({visible:true}).getByRole("button", { name: "Refresh connection status", exact: true });
   await expect(refresh).toBeEnabled();
   const readsBeforeExpiry = workspaceReads;
   await context.clearCookies();

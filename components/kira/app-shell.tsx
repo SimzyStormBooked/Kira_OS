@@ -81,6 +81,8 @@ const navigation = [
   { href: "/vault", title: "The Vault", icon: FolderOpen },
 ];
 const creativeNavigation = [
+  { href: "/opportunities", title: "Catalog Opportunities", description: "Find connections between your books", icon: Telescope },
+  { href: "/plans", title: "Marketing Plans", description: "Goals, review & your next steps", icon: Target },
   { href: "/studio", title: "Ask Raven", description: "Think through your next move", icon: Lightbulb },
   { href: "/learn", title: "Learn & Create", description: "Small lessons. Your own agent ideas.", icon: GraduationCap },
   { href: "/connections", title: "Connections", description: "Your socials & useful tools", icon: Link2 },

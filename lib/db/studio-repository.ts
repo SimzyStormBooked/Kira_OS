@@ -6,7 +6,7 @@ import { studioGenerationSchema, type StudioFailureCode, type StudioReply, type 
 export class StudioRepositoryError extends Error {
   constructor(public readonly code: string) { super("The saved AI request is unavailable."); this.name = "StudioRepositoryError"; }
 }
-const columns = "id,author_id,created_by,job,prompt,model,status,result,input_tokens,output_tokens,estimated_cost_usd,gateway_generation_id,error_code,created_at,completed_at";
+const columns = "id,author_id,created_by,job,prompt,model,status,result,input_tokens,output_tokens,estimated_cost_usd,gateway_generation_id,error_code,created_at,completed_at,knowledge_context";
 export function createStudioRepository(supabase: SupabaseClient, authorId: string) {
   function recordingKey() {
     const value = process.env.KIRA_AI_RECORDING_KEY;
@@ -35,7 +35,7 @@ export function createStudioRepository(supabase: SupabaseClient, authorId: strin
       return data ? studioGenerationSchema.parse(data) : null;
     },
     async begin(input: StudioRequest) {
-      const { data, error } = await supabase.rpc("workspace_generation_begin", { p_author_id: authorId, p_id: input.id, p_job: input.job, p_prompt: input.prompt, p_recording_key: recordingKey() });
+      const { data, error } = await supabase.rpc(input.bookIds?.length ? "workspace_generation_begin_context" : "workspace_generation_begin", { ...(input.bookIds?.length ? {p_books:input.bookIds,p_spoilers:input.includeSpoilers??false} : {}), p_author_id: authorId, p_id: input.id, p_job: input.job, p_prompt: input.prompt, p_recording_key: recordingKey() });
       if (error) throw new StudioRepositoryError(error.code ?? "unavailable");
       return z.object({ created: z.boolean(), generation: studioGenerationSchema }).parse(data);
     },

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { strategyEvidenceSchema } from "@/lib/strategy/contract";
 
 export const STUDIO_MODEL = "google/gemini-3.8-flash";
 export const STUDIO_DAILY_LIMIT = 20;
@@ -9,6 +10,7 @@ export const studioJobLabels: Record<StudioJob, string> = {
 };
 export const studioRequestSchema = z.object({
   id: z.uuid(), job: z.enum(studioJobs), prompt: z.string().trim().min(10).max(6000),
+  bookIds: z.array(z.uuid()).max(4).optional(), includeSpoilers: z.boolean().optional(),
 }).strict();
 export type StudioRequest = z.infer<typeof studioRequestSchema>;
 const shortText = z.string().trim().min(1).max(600);
@@ -35,6 +37,8 @@ export const studioFailureMessages: Record<StudioFailureCode, string> = {
   policy_blocked: "Raven helps with the business around your books. Your fiction and manuscripts stay yours to write.",
   interrupted: "This request was interrupted before a completed answer was saved. It will not restart automatically.",
 };
+export const studioKnowledgeSchema = z.object({book_ids:z.array(z.uuid()).max(4),include_spoilers:z.boolean(),evidence:strategyEvidenceSchema.array()});
+export type StudioKnowledge = z.infer<typeof studioKnowledgeSchema>;
 export const studioGenerationSchema = z.object({
   id: z.uuid(), author_id: z.uuid(), created_by: z.uuid(), job: z.enum(studioJobs),
   prompt: z.string(), model: z.literal(STUDIO_MODEL),
@@ -42,6 +46,7 @@ export const studioGenerationSchema = z.object({
   input_tokens: z.number().int().nonnegative().nullable(), output_tokens: z.number().int().nonnegative().nullable(),
   estimated_cost_usd: z.number().nonnegative().nullable(),
   gateway_generation_id: z.string().nullable(), error_code: z.enum(studioFailureCodes).nullable(),
+  knowledge_context: studioKnowledgeSchema.default({book_ids:[],include_spoilers:false,evidence:[]}),
   created_at: z.string(), completed_at: z.string().nullable(),
 });
 export type StudioGeneration = z.infer<typeof studioGenerationSchema>;
@@ -80,4 +85,8 @@ export function studioUsage(input: number | undefined, output: number | undefine
     estimatedCostUsd: inputTokens === null || outputTokens === null ? null : Math.round((inputTokens * 0.00000075 + outputTokens * 0.00000375) * 1e8) / 1e8,
     gatewayGenerationId: typeof gatewayId === "string" && /^[a-zA-Z0-9_-]{1,200}$/.test(gatewayId) ? gatewayId : null,
   };
+}
+
+export function studioRequestSignature(value: Pick<StudioRequest,"job"|"prompt"|"bookIds"|"includeSpoilers">) {
+  return JSON.stringify({job:value.job,prompt:value.prompt.trim(),...(value.bookIds?.length?{bookIds:value.bookIds,includeSpoilers:value.includeSpoilers??false}:{})});
 }

@@ -1,4 +1,5 @@
 "use client";
+import { studioRequestSignature } from "@/lib/ai/studio-contract";
 import {
   createContext,
   useContext,
@@ -39,6 +40,8 @@ export interface LearnScratchpad {
   downloadedSignatures: Partial<Record<AgentRecipeId, string>>;
 }
 export interface StudioScratchpad {
+  bookIds: string[];
+  includeSpoilers: boolean;
   job: StudioJob;
   prompt: string;
   savedSignature: string | null;
@@ -54,7 +57,7 @@ function freshPrivateScratchpads() {
       drafts: Object.fromEntries(agentRecipes.map((recipe) => [recipe.id, starterForRecipe(recipe)])) as Record<AgentRecipeId, AgentBlueprintInput>,
       previews: {}, savedSignatures: {}, downloadedSignatures: {},
     } satisfies LearnScratchpad,
-    studioScratchpad: { job: "brainstorm" as StudioJob, prompt: "", savedSignature: null, requestIdentity: null, submittedId: null, pendingRequestId: null } as StudioScratchpad,
+    studioScratchpad: { bookIds: [], includeSpoilers: false, job: "brainstorm" as StudioJob, prompt: "", savedSignature: null, requestIdentity: null, submittedId: null, pendingRequestId: null } as StudioScratchpad,
   };
 }
 function hasPrivateDrafts(snapshot: Snapshot) {
@@ -64,7 +67,7 @@ function hasPrivateDrafts(snapshot: Snapshot) {
     const signature = JSON.stringify({ recipeId: recipe.id, input });
     return JSON.stringify(input) !== JSON.stringify(starterForRecipe(recipe)) && learnScratchpad.savedSignatures[recipe.id] !== signature && learnScratchpad.downloadedSignatures[recipe.id] !== signature;
   });
-  const questionSignature = JSON.stringify({ job: studioScratchpad.job, prompt: studioScratchpad.prompt.trim() });
+  const questionSignature = studioRequestSignature(studioScratchpad);
   return Boolean(scratchpad.title.trim() || scratchpad.draft.trim() || changedRecipe || (studioScratchpad.prompt.trim() && studioScratchpad.savedSignature !== questionSignature));
 }
 type Snapshot = WorkspaceState & {

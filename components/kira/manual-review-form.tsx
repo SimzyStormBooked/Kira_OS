@@ -79,7 +79,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
     if (submission.current || busy || !ready || !canEdit) return;
     setSaved(false);
     if (!title.trim() || !draft.trim()) {
-      setError("Give your brief a title and add the idea you want to review.");
+      setError("Give your idea a title and add the idea you want to review.");
       requestAnimationFrame(() => errorRef.current?.focus());
       return;
     }
@@ -96,7 +96,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
           router.replace("/desk", { scroll: false });
       } else {
         setError(
-          "Your brief could not be saved. Your text is still here; please try again.",
+          "Your idea could not be saved. Your text is still here; please try again.",
         );
         requestAnimationFrame(() => errorRef.current?.focus());
       }
@@ -119,24 +119,24 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
         <div>
           <span className="eyebrow">A PLACE FOR YOUR NEXT GOOD IDEA</span>
           <h2>
-            Add a <em>business brief.</em>
+            Add an <em>idea or request.</em>
           </h2>
         </div>
       </div>
       <p className="manual-review-intro">
-        A brief is simply an idea with a little context. Capture a promotion,
+        This is a place to save an idea or request with a little context. Capture a promotion,
         reader question, or book update. You can refine it before deciding.
       </p>
-      {!canEdit && <p className="quiet-note" role="status">{roleError ? "Saving is paused until your permissions can be checked. Your unfinished draft stays here while you explore." : "You have viewer access. You can read briefs and evidence; an owner or editor can save changes. Any unfinished draft stays here while you explore."}</p>}
+      {!canEdit && <p className="quiet-note" role="status">{roleError ? "Saving is paused until your permissions can be checked. Your unfinished draft stays here while you explore." : "You have viewer access. You can read ideas and evidence; an owner or editor can save changes. Any unfinished draft stays here while you explore."}</p>}
       {needsChoice && (
         <div
           className="idea-draft-choice"
           role="region"
-          aria-label="Keep your unfinished brief"
+          aria-label="Keep your unfinished idea"
         >
           <Lightbulb size={18} aria-hidden="true" />
           <div>
-            <strong>You already have an unfinished brief.</strong>
+            <strong>You already have an unfinished idea.</strong>
             <p>
               Keep your words, or replace them with “{idea.title}”. Nothing
               changes until you choose.
@@ -192,7 +192,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
         <div className="manual-review-field">
           <div className="manual-review-label">
             <label className="form-label" htmlFor="manual-brief-draft">
-              Your brief
+              Your idea
             </label>
             <span>{draft.length.toLocaleString("en-US")} / 10,000</span>
           </div>
@@ -212,7 +212,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
             placeholder="What would you like to try? Which book is it for? What needs checking first?"
           />
           <p id="manual-brief-help" className="manual-review-help">
-            A few sentences are enough. You can edit the saved brief before
+            A few sentences are enough. You can edit the saved idea before
             approving it.
           </p>
         </div>
@@ -227,11 +227,11 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
             {hasDraft
               ? "Not saved yet · Kept while you explore. Save before reloading or signing out."
               : mode === "demo"
-                ? "Saving keeps this brief in this browser."
-                : "Saving keeps this brief in your private workspace."}
+                ? "Saving keeps this idea in this browser."
+                : "Saving keeps this idea in your private workspace."}
           </span>
           <Button type="submit" disabled={pending || !ready || !canEdit}>
-            {pending ? "Saving your brief…" : "Save for review"}
+            {pending ? "Saving your idea…" : "Save for review"}
             <ArrowRight size={15} />
           </Button>
         </div>

@@ -12,7 +12,7 @@ export function ContextHelp({ kind }: { kind: HelpKind }) {
       title: "How does my desk work?",
       paragraphs: [
         mode === "connected"
-          ? "Save a business idea as a brief, then come back to read it with fresh eyes. Your saved briefs and decisions are available when you sign in on another device."
+          ? "Save an idea or request here. Choose Turn this idea into a marketing plan to connect it to books, goals, owner review and dated tasks. Saved ideas and decisions follow you across devices."
           : "Try the example briefs here. Your edits and decisions stay in this browser while you explore the demo.",
         "Edit adjusts the draft. Approve or Reject asks you to confirm a final decision, then keeps the read-only brief in Reviewed. You can still add a lesson. Approving does not publish, send, or purchase anything.",
         "Teach Raven saves what mattered to you with that brief, so the reason behind your decision stays with it.",

@@ -76,7 +76,7 @@ export async function POST(request: Request) {
     if (!started.created) return NextResponse.json({ generation: started.generation }, { status: started.generation.status === "pending" ? 202 : 200, headers });
     pendingId = input.id;
     let reply;
-    try { reply = await runStudioProvider(input); }
+    try { reply = await runStudioProvider(input, started.generation.knowledge_context); }
     catch (error) {
       const code = error instanceof StudioProviderError ? error.code : error instanceof StudioPolicyError ? "policy_blocked" : "provider_unavailable";
       const usage = error instanceof StudioProviderError ? error.usage : studioUsage(undefined, undefined);
