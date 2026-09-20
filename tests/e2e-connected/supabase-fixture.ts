@@ -183,7 +183,7 @@ const server = createServer(async (request, response) => {
           { category: "marketing_hook", statement: "Synthetic marketing possibility; requires author review.", kind: "inference", spoiler: false, citations: [citation] },
           { category: "plot", statement: "Synthetic spoiler detail for reveal-control verification.", kind: "supported", spoiler: true, citations: [citation] },
         ],
-        characters: [{ name: "Rowan", aliases: [], role: "Synthetic reference character", description: "Simulated character observation for the browser fixture.", personality: "", relationships: "", arc: "", marketing_description: "", spoiler: false, citations: [citation] }],
+        characters: [{ name: "Rowan", aliases: ["Coordinator"], role: "Synthetic reference character", description: "Simulated character observation for the browser fixture.", personality: "", relationships: "", arc: "", marketing_description: "", spoiler: false, citations: [citation] }, { name: "Rowan", aliases: [], role: "Coordinator", description: "A second synthetic observation of the same character.", personality: "Careful", relationships: "", arc: "", marketing_description: "", spoiler: false, citations: [citation] }],
       }, chunks);
       const record = completeManuscript(manuscript, profile, "simulated-browser-fixture");
       return respond(response, 200, { book, manuscript, chunks, intelligence: record });
