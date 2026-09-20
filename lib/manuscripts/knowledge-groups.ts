@@ -24,11 +24,18 @@ export function groupCharacters(characters: ManuscriptCharacter[], spoilers: boo
   }
   // Only a unique explicit alias that is itself a saved character name can join names.
   // Shared nicknames, fuzzy spelling and similar roles are not identity evidence.
-  for (const [alias, sources] of owners) {
-    if (!names.has(alias) || sources.size !== 1) continue;
-    const source = [...sources][0];
-    const a = root(alias); const b = root(source);
-    if (a !== b) parents.set(a, b);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const [alias, sources] of owners) {
+      if (!names.has(alias)) continue;
+      const target = root(alias);
+      // Resolve already-linked spellings before judging whether an alias is ambiguous.
+      const candidates = new Set([...sources].map(root).filter(key => key !== target));
+      if (candidates.size !== 1) continue;
+      parents.set(target, [...candidates][0]);
+      changed = true;
+    }
   }
   const groups = new Map<string, ManuscriptCharacter[]>();
   for (const [name, items] of names) {

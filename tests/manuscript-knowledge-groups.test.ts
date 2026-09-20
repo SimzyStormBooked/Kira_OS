@@ -13,6 +13,12 @@ describe("manuscript knowledge presentation", () => {
     expect(searchCharacters(groups, "BRICKS")).toHaveLength(1);
     expect(items[0].name).toBe("Bricks");
   });
+  it("resolves an alias chain after equivalent spellings are linked", () => {
+    const items = [character("Bricks", { aliases: ["Brick"] }), character("Brick", { aliases: ["Bricks"] }), character("Synthetic Full Name", { aliases: ["Bricks"], spoiler: true })];
+    expect(groupCharacters(items, true)).toHaveLength(1);
+    expect(groupCharacters(items, true)[0].observations).toHaveLength(3);
+    expect(searchCharacters(groupCharacters(items, false), "Synthetic Full Name")).toHaveLength(0);
+  });
   it("does not merge fuzzy names, shared aliases, or ambiguous aliases", () => {
     expect(groupCharacters([character("Glen"), character("Glenn")], false)).toHaveLength(2);
     expect(groupCharacters([character("A", { aliases: ["Captain"] }), character("B", { aliases: ["Captain"] }), character("Captain")], false)).toHaveLength(3);
