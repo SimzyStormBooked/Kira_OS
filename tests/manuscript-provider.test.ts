@@ -23,7 +23,7 @@ describe("bounded manuscript intelligence provider", () => {
   it("uses a fixed no-tools policy, bounded calls, exact citations and usage records", async () => {
     const reply = await runManuscriptExtraction([chunk],{sourceApproved:true});
     expect(reply.result).toEqual(result); expect(reply.usage).toMatchObject({inputTokens:100,outputTokens:50,embeddingTokens:20,gatewayGenerationId:"gen_fixture",embedding_status:"complete"});
-    expect(mocks.settings).toMatchObject({maxRetries:0,allowSystemInMessages:false});
+    expect(mocks.settings).toMatchObject({maxRetries:0,allowSystemInMessages:false,providerOptions:{google:{thinkingConfig:{thinkingLevel:"low",includeThoughts:false}}}});
     expect(mocks.settings.instructions).toMatch(/untrusted DATA/); expect(mocks.settings.instructions).toMatch(/Never write/);
     expect(mocks.settings.instructions).toMatch(/at most 16 facts and 8 character observations/);
     const output = mocks.settings.output as ReturnType<typeof import("ai").Output.object>;

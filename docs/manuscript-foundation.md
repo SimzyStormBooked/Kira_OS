@@ -18,9 +18,9 @@ Existing publicly sourced titles retain their author-site source links until you
 1. Open the book and choose its manuscript file. Supported formats are **DOCX, text-based PDF, EPUB, UTF-8 TXT, and Markdown (.md)**.
 2. Confirm that you have permission to upload the manuscript and let Kira's AI services analyze it privately for book knowledge. This permission does **not** authorize publishing excerpts.
 3. Choose **Upload & let Kira read**. The file is parsed and saved privately before paid reading starts.
-4. Leave the book page open while it reads. Progress counts completed passages. **Pause after this step** stops additional steps after the current group is saved. **Resume reading** continues from the passages that still need processing.
+4. After the file is saved and background reading starts, leave the page or close the tab. Progress counts completed passages. **Pause reading** prevents additional groups from starting; up to two in-flight groups can still finish. **Resume reading** continues only unfinished passages.
 
-Each reading step uses workspace AI credits. There is no unattended worker: closing or leaving the page stops it from requesting later steps. A request already sent may still finish on the server. Reopen the book to inspect its saved state and resume. Do not assume processing has completed merely because the upload finished.
+Each reading step uses workspace AI credits. A durable Vercel Workflow continues after the page closes. Reopen the book to see saved progress or completed findings. Errors pause the job for an explicit retry; progress is retained. Do not assume processing has completed merely because the upload finished.
 
 The screen says “4 MB”; the enforced file limit is **4 MiB (4,194,304 bytes)**. Scans without embedded text, encrypted/protected documents, unsupported encodings, and oversized or malformed archives need a clean text export. Kira does not run OCR or remove document protection.
 

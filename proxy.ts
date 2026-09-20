@@ -39,5 +39,5 @@ export async function proxy(request: NextRequest) {
 export const config = {
   // Do not skip arbitrary file suffixes: dynamic workspace slugs must always overwrite
   // x-kira-pathname before a layout uses it to select the public sign-in screen.
-  matcher: ["/((?!_next/|favicon\\.ico$|icon\\.svg$).*)"],
+  matcher: ["/((?!\\.well-known/workflow/|_next/|favicon\\.ico$|icon\\.svg$).*)"],
 };

@@ -11,3 +11,7 @@ coverage/
 supabase/.temp/
 work/
 test-results-connected/
+/.swc
+
+app/.well-known/workflow/
+.workflow-data/

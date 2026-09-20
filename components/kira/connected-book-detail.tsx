@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { bookDetailSchema, sourceResponseSchema, searchResponseSchema, type BookDetailResponse, type LibrarySearchResult } from "@/lib/manuscripts/library-contract";
 import { MANUSCRIPT_MAX_BYTES, manuscriptFormat, type ManuscriptFact, type ManuscriptCharacter } from "@/lib/manuscripts/contract";
+import { readingJobSchema, type ReadingJob } from "@/lib/manuscripts/reading-job";
 import { LibraryRequestError, useLibrary } from "./library-provider";
 import { BookMetadataForm } from "./connected-library";
 import { BookDetailsBrief } from "./book-details-brief";
@@ -16,6 +17,8 @@ const statusLabels = { uploading: "Upload needs to finish", queued: "Ready to re
 export function ConnectedBookDetail({ initial }: { initial: BookDetailResponse }) {
   const library = useLibrary(); const { request } = library;
   const [data, setData] = useState(initial); const [editing, setEditing] = useState(false);
+  const [polledAt, setPolledAt] = useState(0);
+  const [job, setJob] = useState<ReadingJob | null>(null);
   const [uploading, setUploading] = useState(false); const [reading, setReading] = useState(false);
   const [error, setError] = useState(""); const [message, setMessage] = useState(""); const [spoilers, setSpoilers] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false); const [source, setSource] = useState<{ location: string; text: string } | null>(null); const [sourceError, setSourceError] = useState("");
@@ -30,22 +33,45 @@ export function ConnectedBookDetail({ initial }: { initial: BookDetailResponse }
     if (mounted.current) setData(detail); return detail;
   }, [initial.book.id, request]);
   const describeError = (failure: unknown) => failure instanceof LibraryRequestError ? failure.message : "That step could not finish. Your saved work is still here.";
+  const loadJob = useCallback(async (id: string) => {
+    const result = await request(`/api/manuscripts/${id}/reading`) as { job: unknown };
+    const saved = readingJobSchema.nullable().parse(result.job);
+    if (mounted.current) { setJob(saved); setPolledAt(Date.now()); }
+    return saved;
+  }, [request]);
+  useEffect(() => {
+    if (!latest?.id || latest.status === "ready") return;
+    let cancelled = false;
+    async function poll() {
+      try {
+        const saved = await loadJob(latest.id);
+        if (!cancelled && saved) await refresh();
+      } catch { /* A temporary connection failure must not stop the server reader. */ }
+    }
+    void poll();
+    const timer = setInterval(() => void poll(), 5000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [latest?.id, latest?.status, loadJob, refresh]);
   async function readManuscript(id: string, retry: boolean) {
     if (readingRef.current) return;
     readingRef.current = true; setReading(true); setError(""); setMessage("");
     try {
-      for (let step = 0; step < 150 && mounted.current && readingRef.current; step++) {
-        const result = await request(`/api/manuscripts/${id}/process`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ requestId: crypto.randomUUID(), retry: step === 0 && retry }) }) as { status: string; pending?: boolean; completedChunks: number; chunkCount: number };
-        await refresh();
-        if (!mounted.current) break;
-        if (result.pending) { setMessage("A reading step is already running. Give it a moment, then resume here."); break; }
-        if (result.status === "ready") { setMessage("Kira’s reading is saved. Explore what it learned and check the sources below."); await library.reload(); break; }
-        if (result.status === "failed") break;
-        // The API is sequential; a new request only starts after the last batch is durable.
-      }
+      const response = await request(`/api/manuscripts/${id}/reading`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "start", retry }) }) as { job: unknown };
+      if (mounted.current) { setJob(readingJobSchema.nullable().parse(response.job)); setMessage("Your manuscript is saved. Kira will keep reading in the background. You can explore another page or close this tab."); }
+      await refresh();
     } catch (failure) { if (mounted.current) { setError(describeError(failure)); await refresh().catch(() => {}); } }
     finally { readingRef.current = false; if (mounted.current) setReading(false); }
   }
+  async function pauseReading(id: string) {
+    setReading(true); setError("");
+    try {
+      const response = await request(`/api/manuscripts/${id}/reading`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "pause" }) }) as { job: unknown };
+      setJob(readingJobSchema.nullable().parse(response.job)); setMessage("Reading paused. Any passages already being read will finish and stay saved. Resume whenever you are ready.");
+    } catch (failure) { setError(describeError(failure)); }
+    finally { setReading(false); }
+  }
+  const activeJob = job?.manuscript_id === latest?.id && (job?.state === "queued" || job?.state === "running");
+  const stalledJob = activeJob && polledAt - Date.parse(job.updated_at) > 180000;
   async function upload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (uploading || reading) return;
     const formElement = event.currentTarget; const form = new FormData(formElement); const file = form.get("file");
@@ -89,15 +115,17 @@ export function ConnectedBookDetail({ initial }: { initial: BookDetailResponse }
       {book.source_url && <a href={book.source_url} className="text-link" target="_blank" rel="noreferrer">View author source</a>}
       {book.metadata.audiobook_available && <div className="library-audio"><h3>Audiobook</h3><p>{book.metadata.narrator ? `Narrated by ${book.metadata.narrator}` : "Narrator not added yet"}{book.metadata.runtime_minutes ? ` · ${book.metadata.runtime_minutes} minutes` : ""}</p>{book.metadata.audio_notes && <p>{book.metadata.audio_notes}</p>}</div>}
     </Card><Card className="library-panel"><LockKeyhole size={21} /><h2>{latest ? "Bring the next version." : "Let Kira get to know this book."}</h2><p>Add your manuscript once. Kira saves reference passages, character details, and ideas you can trace back to your words.</p>
-      {canEdit ? <form className="library-form" onSubmit={upload} aria-busy={uploading}><label>Manuscript file<Input type="file" name="file" accept=".docx,.pdf,.epub,.txt,.md" required disabled={uploading || reading} /></label><p className="quiet-note">DOCX, text-based PDF, EPUB, TXT or Markdown · up to 4 MB. Scanned or protected files need a text export.</p><label className="library-check"><input type="checkbox" name="permission" value="true" required disabled={uploading || reading} />I have permission to upload this manuscript and have Kira’s AI services analyze it privately for book knowledge. This does not approve publishing excerpts.</label><Button disabled={uploading || reading}><BookOpen size={16} />{uploading ? "Saving and reading…" : "Upload & let Kira read"}</Button><p className="quiet-note">Reading uses workspace AI credits. It continues while this page is open. You can pause and resume; completed passages stay saved.</p></form> : <p className="quiet-note">An owner or editor can add or update manuscripts.</p>}
+      {canEdit ? <form className="library-form" onSubmit={upload} aria-busy={uploading}><label>Manuscript file<Input type="file" name="file" accept=".docx,.pdf,.epub,.txt,.md" required disabled={uploading || reading} /></label><p className="quiet-note">DOCX, text-based PDF, EPUB, TXT or Markdown · up to 4 MB. Scanned or protected files need a text export.</p><label className="library-check"><input type="checkbox" name="permission" value="true" required disabled={uploading || reading} />I have permission to upload this manuscript and have Kira’s AI services analyze it privately for book knowledge. This does not approve publishing excerpts.</label><Button disabled={uploading || reading}><BookOpen size={16} />{uploading ? "Saving manuscript…" : "Upload & let Kira read"}</Button><p className="quiet-note">Reading uses workspace AI credits. Once your manuscript is saved and background reading starts, you can leave this page or close the tab. Completed passages stay saved.</p></form> : <p className="quiet-note">An owner or editor can add or update manuscripts.</p>}
     </Card></div>
     <Card className="library-panel"><h2>Bring a business question to your desk.</h2><p>Collect approved details, source links and questions in a review brief. Your existing unfinished brief stays protected.</p><BookDetailsBrief book={book} seriesName={data.series.find(item => item.id === book.series_id)?.name ?? "Standalone"} /></Card>
     {error && <p role="alert" className="library-error">{error}</p>}{message && <p role="status" className="library-success">{message}</p>}
-    {latest && <Card className="library-panel library-progress" aria-live="polite"><div><span className="eyebrow">MANUSCRIPT VERSION {latest.version}</span><h2>{statusLabels[latest.status]}</h2><p>{latest.filename} · {latest.completed_chunks} of {latest.chunk_count} passages read</p>{latest.chunk_count > 0 && <progress aria-label="Manuscript reading progress" max={latest.chunk_count} value={latest.completed_chunks} />}
+    {latest && <Card className="library-panel library-progress" aria-live="polite"><div><span className="eyebrow">MANUSCRIPT VERSION {latest.version}</span><h2>{latest.status === "ready" ? statusLabels.ready : job?.state === "paused" ? "Reading paused" : job?.state === "needs_attention" || stalledJob ? "Reading needs attention" : activeJob ? "Reading in the background" : statusLabels[latest.status]}</h2><p>{latest.filename} · {latest.completed_chunks} of {latest.chunk_count} passages read</p>{latest.chunk_count > 0 && <progress aria-label="Manuscript reading progress" max={latest.chunk_count} value={latest.completed_chunks} />}
       {knowledge && latest.id !== knowledge.manuscript_id && <p className="quiet-note">The previous completed version remains available below until this version is ready.</p>}
       {latest.error_code && <p className="quiet-note">{latest.error_code === "storage_error" ? "Select the same file above to finish the upload." : latest.error_code === "invalid_output" ? "Your upload is saved. Kira could not verify the last AI response against your manuscript. Retry unfinished reading below; you do not need to upload again. Retrying can use AI credits." : "The last step did not complete. Retrying can use AI credits; finished passages will not be repeated."}</p>}
-      {!reading && latest.status === "processing" && <p className="quiet-note">A step may still be finishing. Resume when ready. If it was interrupted, wait two minutes, then retry the unfinished step.</p>}
-    </div><div className="library-actions">{canEdit && latest.chunk_count > 0 && latest.status !== "ready" && !reading && <Button disabled={uploading} onClick={() => void readManuscript(latest.id, latest.status === "failed" || latest.status === "processing")}>{latest.status === "failed" ? "Retry unfinished reading" : "Resume reading"}</Button>}{reading && <Button variant="outline" onClick={() => { readingRef.current = false; setMessage("Pausing after the current passage group is saved."); }}>Pause after this step</Button>}</div></Card>}
+      {activeJob && !stalledJob && <p className="quiet-note">Your upload is saved. You can leave this screen or close the tab. Kira is reading up to two passage groups at a time; progress is saved as each finishes.</p>}
+      {job?.state === "paused" && <p className="quiet-note">Paused. A group already in progress may still finish. Resume below when ready.</p>}
+      {(job?.state === "needs_attention" || stalledJob) && <p className="quiet-note">{job?.error_code === "daily_limit" ? "Today’s workspace reading limit has been reached. Resume tomorrow." : "Reading needs a retry. Your file and completed passages are safe. Retrying unfinished work can use AI credits."}</p>}
+    </div><div className="library-actions">{canEdit && latest.chunk_count > 0 && latest.status !== "ready" && (!activeJob || stalledJob) && <Button disabled={uploading || reading} onClick={() => void readManuscript(latest.id, true)}>{reading ? "Starting background reading…" : latest.status === "failed" || job?.state === "needs_attention" || stalledJob ? "Retry unfinished reading" : "Resume reading"}</Button>}{canEdit && activeJob && !stalledJob && <Button variant="outline" disabled={reading} onClick={() => void pauseReading(latest.id)}>Pause reading</Button>}</div></Card>}
     <section className="library-knowledge"><div className="section-heading"><div><span className="eyebrow">YOUR BOOK, WITH SOURCES</span><h2>What Kira learned</h2></div><Sparkles size={23} /></div>
       {knowledge ? <><p>These are AI-extracted findings for your review. Findings with quotations that cannot be matched exactly to the manuscript are omitted. A matching quotation does not guarantee that the interpretation is correct or that every detail was found. Marketing inferences need your judgment.</p><p className="quiet-note">Read on {new Date(knowledge.created_at).toLocaleDateString()} · {knowledge.model} · {data.manuscripts.find(item => item.id === knowledge.manuscript_id)?.version ? `Manuscript version ${data.manuscripts.find(item => item.id === knowledge.manuscript_id)!.version}` : "Saved manuscript"}</p>
         <label className="library-check library-spoilers"><input type="checkbox" checked={spoilers} onChange={event => setSpoilers(event.target.checked)} />Reveal plot details and potential spoilers</label>

@@ -37,6 +37,7 @@
     "server-only": "latest",
     "tailwind-merge": "latest",
     "unpdf": "^1.8.1",
+    "workflow": "^4.8.9",
     "yauzl": "^3.4.0",
     "zod": "latest"
   },
@@ -63,5 +64,16 @@
   "engines": {
     "node": ">=22.0.0"
   },
-  "type": "module"
+  "type": "module",
+  "overrides": {
+    "@workflow/core": {
+      "nanoid": "5.1.16"
+    },
+    "@workflow/world-local": {
+      "undici": "7.29.1"
+    },
+    "@workflow/world-vercel": {
+      "undici": "7.29.1"
+    }
+  }
 }

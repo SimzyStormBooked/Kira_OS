@@ -78,7 +78,7 @@ beforeAll(async () => {
     grant usage on schema storage to authenticated,anon;
     grant select,insert,update,delete on storage.objects to authenticated,anon;
     create policy unrelated_permissive_storage_policy on storage.objects for all to authenticated,anon using(true) with check(true);`);
-  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence"]) {
+  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609200001_background_reading"]) {
     await db.exec(readFileSync(`supabase/migrations/${name}.sql`, "utf8"));
   }
   await db.query("insert into private.workspace_generation_config(singleton,recording_key_hash) values(true,encode(sha256(convert_to($1,'UTF8')),'hex'))", [recordingKey]);
@@ -283,5 +283,63 @@ describe("private versioned manuscript knowledge", () => {
     expect((await search()).rows.map(row => row.manuscript_id)).toEqual([newer.id]);
     expect((await db.query<{ active_manuscript_id: string }>("select active_manuscript_id from public.books where id=$1", [target.id])).rows[0].active_manuscript_id).toBe(newer.id);
     expect((await db.query("select id from public.characters")).rows).toHaveLength(1);
+  });
+});
+
+type Job = { id: string; state: string };
+async function control(m: Manuscript, action = "start", retry = false) {
+  return scalar<Job>("select public.manuscript_reading_control($1,$2,$3,$4,$5) as value", [m.author_id, m.id, action, retry, recordingKey]);
+}
+async function worker(job: Job, batch: string, action = "claim", payload: unknown = {}, run = "run_test", key = recordingKey) {
+  await db.exec("reset role; set role anon");
+  return scalar<{ state: string; created: boolean; chunks: Chunk[] }>("select public.manuscript_reading_worker($1,$2,$3,$4,$5,$6) as value", [job.id, run, action, batch, JSON.stringify(payload), key]);
+}
+describe("durable manuscript jobs", () => {
+  it("binds one run, reserves disjoint groups with a cap of two, and finishes out of order", async () => {
+    const m = await register((await book()).id); await store(m, chunks(9)); const j = await control(m);
+    expect((await control(m)).id).toBe(j.id);
+    const a = randomUUID(), b = randomUUID(), c = randomUUID();
+    const first = await worker(j, a), second = await worker(j, b);
+    expect(first.chunks).toHaveLength(4); expect(second.chunks).toHaveLength(4);
+    expect(first.chunks.some(x => second.chunks.some(y => y.id === x.id))).toBe(false);
+    expect((await worker(j, c)).created).toBe(false);
+    expect((await worker(j, randomUUID(), "claim", {}, "another_run")).state).toBe("superseded");
+    const finishPayload = (part: Chunk) => ({ result: result(part), usage, embeddings: [], errorCode: null });
+    await worker(j, b, "finish", finishPayload(second.chunks[0]));
+    const third = await worker(j, c); expect(third.chunks).toHaveLength(1);
+    await worker(j, a, "finish", finishPayload(first.chunks[0]));
+    expect((await worker(j, c, "finish", finishPayload(third.chunks[0]))).state).toBe("complete");
+    expect((await worker(j, c, "finish", finishPayload(third.chunks[0]))).state).toBe("complete");
+    await asUser(owner);
+    expect((await scalar<Manuscript>("select m as value from public.manuscripts m where id=$1", [m.id])).completed_chunks).toBe(9);
+  });
+  it("requires the server capability and current editor permission even without a user session", async () => {
+    const m = await register((await book()).id); await store(m, chunks(5)); const j = await control(m);
+    await expect(worker(j, randomUUID(), "claim", {}, "run_test", "b".repeat(64))).rejects.toThrow();
+    await asUser(outsider); expect((await db.query("select * from public.manuscript_reading_jobs")).rows).toHaveLength(0);
+    await expect(control(m)).rejects.toThrow();
+    await asUser(viewer); await expect(control(m)).rejects.toThrow();
+    await asUser(editor); const m2 = await register((await book()).id); await store(m2, chunks()); const j2 = await control(m2);
+    await db.exec("reset role"); await db.query("delete from public.author_members where user_id=$1", [editor]);
+    expect((await worker(j2, randomUUID())).state).toBe("needs_attention");
+    await db.exec("reset role"); await db.query("insert into public.author_members(author_id,user_id,role) values($1,$2,'editor')", [author, editor]);
+    expect((await worker(j, randomUUID())).created).toBe(true);
+  });
+  it("persists pause, permits the in-flight result, and resumes only remaining passages", async () => {
+    const m = await register((await book()).id); await store(m, chunks(5)); const j = await control(m); const id = randomUUID();
+    const claim = await worker(j, id); await asUser(owner); await control(m, "pause");
+    expect((await worker(j, randomUUID())).state).toBe("paused");
+    await worker(j, id, "finish", { result: result(claim.chunks[0]), usage, embeddings: [], errorCode: null });
+    await asUser(owner); const resumed = await control(m); expect(resumed.id).not.toBe(j.id);
+    expect((await worker(resumed, randomUUID())).chunks).toHaveLength(1);
+  });
+  it("does not resubmit an uncertain paid request and persists provider failures without retrying", async () => {
+    const m = await register((await book()).id); await store(m, chunks(5)); const j = await control(m); const id = randomUUID();
+    await worker(j, id); expect((await worker(j, id)).state).toBe("needs_attention");
+    expect((await worker(j, randomUUID())).created).toBe(false);
+    expect((await worker(j, id, "finish", { result: null, usage, embeddings: [], errorCode: "timeout" })).state).toBe("needs_attention");
+    await asUser(owner); await expect(control(m)).rejects.toThrow();
+    const retry = await control(m, "start", true); expect(retry.id).not.toBe(j.id);
+    expect((await worker(retry, randomUUID())).chunks).toHaveLength(4);
   });
 });
