@@ -40,6 +40,25 @@ describe("bounded manuscript intelligence provider", () => {
     mocks.generate.mockResolvedValueOnce({output:{...result,facts:[{...result.facts[0],citations:[{chunk_id:chunk.id,quote:"not present"}]}]},totalUsage:{inputTokens:100,outputTokens:50}});
     await expect(runManuscriptExtraction([chunk],{sourceApproved:true})).rejects.toMatchObject({code:"invalid_output",usage:{inputTokens:100}}); expect(mocks.embedMany).not.toHaveBeenCalled();
   });
+  it("saves independently verified findings without repeating a paid call when another quote is unsupported", async () => {
+    const unsupported = { ...result.facts[0], statement: "An unsupported observation.", citations: [{ chunk_id: chunk.id, quote: "not present" }] };
+    mocks.generate.mockResolvedValueOnce({ output: { facts: [...result.facts, unsupported], characters: [] }, totalUsage: { inputTokens: 100, outputTokens: 50 } });
+    const reply = await runManuscriptExtraction([chunk], { sourceApproved: true });
+    expect(reply.result).toEqual(result);
+    expect(() => validateManuscriptExtraction(reply.result, [chunk])).not.toThrow();
+    expect(reply.usage.inputTokens).toBe(100);
+    expect(mocks.generate).toHaveBeenCalledOnce(); expect(mocks.embedMany).toHaveBeenCalledOnce();
+  });
+  it("drops the entire candidate if any citation is foreign, even alongside a valid citation", async () => {
+    const unsupported = { ...result.facts[0], citations: [...result.facts[0].citations, { chunk_id: randomUUID(), quote: "Rowan" }] };
+    mocks.generate.mockResolvedValueOnce({ output: { facts: [...result.facts, unsupported], characters: [] }, totalUsage: { inputTokens: 100, outputTokens: 50 } });
+    expect((await runManuscriptExtraction([chunk], { sourceApproved: true })).result).toEqual(result);
+  });
+  it("still rejects malformed output rather than silently dropping schema failures", async () => {
+    mocks.generate.mockResolvedValueOnce({ output: { ...result, facts: [...result.facts, { ...result.facts[0], statement: "x".repeat(601) }] }, totalUsage: { inputTokens: 100, outputTokens: 50 } });
+    await expect(runManuscriptExtraction([chunk], { sourceApproved: true })).rejects.toMatchObject({ code: "invalid_output" });
+    expect(mocks.embedMany).not.toHaveBeenCalled();
+  });
   it("retains valid paid extraction when the optional embedding index fails", async () => {
     mocks.embedMany.mockRejectedValueOnce(new Error("private provider error"));
     const reply=await runManuscriptExtraction([chunk],{sourceApproved:true}); expect(reply.result).toEqual(result); expect(reply.embeddings).toEqual([]); expect(reply.usage.embedding_status).toBe("unavailable"); expect(mocks.generate).toHaveBeenCalledOnce();

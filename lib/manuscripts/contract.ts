@@ -72,3 +72,19 @@ export function validateManuscriptExtraction(value: unknown, chunks: ManuscriptC
   }
   return output;
 }
+
+/** One unsupported candidate must not discard independently verified findings.
+ * Reject whole candidates, not individual citations: removing a citation could
+ * leave part of a multi-claim observation without its intended support.
+ * Malformed envelopes and entirely unsupported nonempty results still fail.
+ */
+export function selectVerifiedManuscriptExtraction(value: unknown, chunks: ManuscriptChunk[]): ManuscriptExtraction {
+  const output = manuscriptExtractionSchema.parse(value);
+  const known = new Map(chunks.map(chunk => [chunk.id, chunk.reference_text]));
+  const supported = (item: ManuscriptFact | ManuscriptCharacter) =>
+    item.citations.every(citation => known.get(citation.chunk_id)?.includes(citation.quote));
+  const result = { facts: output.facts.filter(supported), characters: output.characters.filter(supported) };
+  if (output.facts.length + output.characters.length > 0 && result.facts.length + result.characters.length === 0)
+    throw new Error("No supported manuscript citations");
+  return validateManuscriptExtraction(result, chunks);
+}

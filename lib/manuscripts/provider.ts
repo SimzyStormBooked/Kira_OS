@@ -1,7 +1,7 @@
 import "server-only";
 import { createGateway, embedMany, isStepCount, Output, ToolLoopAgent } from "ai";
 import { STUDIO_MODEL, studioUsage } from "@/lib/ai/studio-contract";
-import { manuscriptChunkSchema, validateManuscriptExtraction, MANUSCRIPT_EMBEDDING_MODEL,
+import { manuscriptChunkSchema, selectVerifiedManuscriptExtraction, MANUSCRIPT_EMBEDDING_MODEL,
   type ManuscriptChunk, type ManuscriptUsage, type ManuscriptExtractionReply } from "./contract";
 import { manuscriptModelSchema } from "./model-schema";
 
@@ -32,7 +32,7 @@ export async function generateManuscriptExtraction(input: ManuscriptChunk[]): Pr
     });
     const response = await agent.generate({ prompt: JSON.stringify({ passages: chunks.map(({ id, section, reference_text }) => ({ chunk_id: id, section, reference_text })) }), timeout: 45000 });
     usage = { ...usage, ...studioUsage(response.totalUsage.inputTokens, response.totalUsage.outputTokens, response.providerMetadata?.gateway?.generationId) };
-    try { result = validateManuscriptExtraction(response.output, chunks); }
+    try { result = selectVerifiedManuscriptExtraction(response.output, chunks); }
     catch { throw new ManuscriptProviderError("invalid_output", usage); }
   } catch (error) {
     if (error instanceof ManuscriptProviderError) throw error;
