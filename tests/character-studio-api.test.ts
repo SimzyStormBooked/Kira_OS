@@ -42,14 +42,21 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("Character Studio gallery API", () => {
-  it.each([null, "https://elsewhere.test"])("refuses a cross-origin read from %s before opening a session", async site => {
-    expect((await listCharacters(get("/api/characters", site))).status).toBe(403);
-    expect((await readCharacter(get(`/api/characters/${profileId}`, site), context)).status).toBe(403);
+  it.each([null, "https://elsewhere.test"])("refuses a cross-origin write from %s before touching private data", async site => {
+    expect((await createCharacter(send("/api/characters", { displayName: "Celine" }, "POST", site))).status).toBe(403);
+    expect((await editCharacter(send(`/api/characters/${profileId}`, { expectedVersion: 2, displayName: "X" }, "PATCH", site), context)).status).toBe(403);
     expect(requireWorkspaceSession).not.toHaveBeenCalled();
+    expect(repo.createProfile).not.toHaveBeenCalled();
+  });
+
+  it("serves a read without an Origin header, because a browser omits one on a same-origin GET", async () => {
+    // An origin-gated read would reject the app's own fetch; the session and RLS are the boundary.
+    expect((await listCharacters()).status).toBe(200);
+    expect((await readCharacter(new Request(`${origin}/api/characters/${profileId}`), context)).status).toBe(200);
   });
 
   it("returns the gallery in the client's own shape, with signed URLs and no storage paths", async () => {
-    const response = await listCharacters(get("/api/characters"));
+    const response = await listCharacters();
     expect(response.status).toBe(200);
     const payload: unknown = await response.json();
     const parsed = characterGallerySchema.parse(payload);
@@ -85,7 +92,7 @@ describe("Character Studio gallery API", () => {
 
   it("keeps a viewer read-only", async () => {
     vi.mocked(getWorkspaceRole).mockResolvedValue("viewer");
-    expect((await listCharacters(get("/api/characters"))).status).toBe(200);
+    expect((await listCharacters()).status).toBe(200);
     expect((await createCharacter(send("/api/characters", { displayName: "Celine" }))).status).toBe(403);
     expect((await editCharacter(send(`/api/characters/${profileId}`, { expectedVersion: 2, displayName: "Renamed" }, "PATCH"), context)).status).toBe(403);
     expect(repo.createProfile).not.toHaveBeenCalled();
