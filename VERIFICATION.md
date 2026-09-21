@@ -1,5 +1,26 @@
 # KIRA OS verification
 
+## Current checkpoint — September 20, 2026
+
+Production migration history was checked directly over verified TLS at **2026-09-21 05:31 UTC (September 20, 10:31 PM Arizona)**. All **14** SQL migrations in this repository are recorded in `supabase_migrations.schema_migrations`; there are **zero pending migrations**. The stored SQL for the three September 20 migrations exactly matches the repository files:
+
+| Migration | Hosted status | Stored SQL vs repository |
+| --- | --- | --- |
+| `202609200001_background_reading.sql` | Applied and recorded | Exact match |
+| `202609200002_ads_dashboard.sql` | Applied and recorded | Exact match |
+| `202609200003_character_organization.sql` | Applied and recorded | Exact match |
+
+The audit was read-only. No migrations were re-applied, no migration history was repaired, and no manuscript processing was restarted. The sanitized result is preserved in [migration-checkpoint-2026-09-20.json](docs/migration-checkpoint-2026-09-20.json). This supersedes any review note suggesting these three migrations are unrecorded or still waiting to be pushed.
+
+The most recently verified application release is `131c4ed` (Vercel `dpl_4U9qGTk28nKBvxv33yDy7NNDEDnJ`), deployed at the canonical production alias. It includes the focused manuscript knowledge interface and evidence-carrying Raven/Desk actions. Release checks passed 515 unit/API/database tests, TypeScript, ESLint and the production build; all eight targeted manuscript desktop/mobile browser tests passed after the final changes, including automated accessibility checks. The authenticated production check confirmed the new UI bundle, available Celine knowledge, and anonymous API access denial. These are recorded results from that release, not a claim that a new adversarial review or physical-device study has completed.
+
+Current scope and open review items are captured in [the continuation handoff](docs/continuation-handoff-2026-09-20.md). **Character Studio remains a design preview, not a deployed feature or pending migration.** Automatic report emails remain explicitly deferred by the owner. Meta Ads activation still requires provider configuration and consent; no live Meta account connection is claimed.
+
+## Historical verification entries
+
+The entries below describe their named releases and verification dates; statements about future work or unavailable integrations are historical, not the current feature inventory.
+
+
 Updated after the first adversarial UX review and production AI activation. Release `562c108` is READY at [KIRA OS](https://kira-os-dusky.vercel.app), backed by dedicated Supabase project `obusnqlwuoavwtmryiik`. Vercel deployment `dpl_5d3psvQaerzRGgC2vjEASMHbwBXy` ([deployment URL](https://kira-8offqrgs9-storm-booked.vercel.app)) is aliased to the canonical site. The deployed release includes the reviewed UX fixes, live Ask Raven, Learn & Create, access/password controls, saved links, and gated Meta authorization.
 
 ## Hosted core workflow — verified

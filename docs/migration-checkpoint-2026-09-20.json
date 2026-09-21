@@ -1,0 +1,69 @@
+{
+  "checkedAt": "2026-09-21T05:31:36.620Z",
+  "migrations": [
+    {
+      "file": "202609170001_foundation.sql",
+      "recorded": true
+    },
+    {
+      "file": "202609170002_knowledge_vectors.sql",
+      "recorded": true
+    },
+    {
+      "file": "202609170003_connected_workspace.sql",
+      "recorded": true
+    },
+    {
+      "file": "20260918003251_workspace_generations.sql",
+      "recorded": true
+    },
+    {
+      "file": "20260918003254_workspace_access.sql",
+      "recorded": true
+    },
+    {
+      "file": "20260918003255_workspace_links.sql",
+      "recorded": true
+    },
+    {
+      "file": "20260918004008_meta_authorization.sql",
+      "recorded": true
+    },
+    {
+      "file": "20260918005218_studio_request_validation.sql",
+      "recorded": true
+    },
+    {
+      "file": "202609190001_manuscript_intelligence.sql",
+      "recorded": true
+    },
+    {
+      "file": "202609190002_strategy_plans.sql",
+      "recorded": true
+    },
+    {
+      "file": "202609190003_studio_book_context.sql",
+      "recorded": true
+    },
+    {
+      "file": "202609200001_background_reading.sql",
+      "recorded": true,
+      "sha256": "24ed4d51e9540056d3da42fb776b83daba8246ab09c1ba1dc0c9343c3db8fdca",
+      "recordedSqlMatches": true
+    },
+    {
+      "file": "202609200002_ads_dashboard.sql",
+      "recorded": true,
+      "sha256": "7430d57a64d7e89232adbb4aa184460197455d92c384d8dbbb08cfc4d39a5a3e",
+      "recordedSqlMatches": true
+    },
+    {
+      "file": "202609200003_character_organization.sql",
+      "recorded": true,
+      "sha256": "38a2576c343ffa0e9f4592a36064e2771fbd57a1e92ffc57cb5e56b978933040",
+      "recordedSqlMatches": true
+    }
+  ],
+  "scope": "Read-only hosted migration history audit; stored SQL equality checked for the three September 20 migrations.",
+  "pendingCount": 0
+}
