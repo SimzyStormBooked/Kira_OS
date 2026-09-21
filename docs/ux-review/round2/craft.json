@@ -1,0 +1,671 @@
+{
+ "judge": "Ines \u2014 art director (typography, rhythm, hierarchy, spacing, color, iconography, dark-theme craft, density, empty/loading/error states, mobile layout)",
+ "files_read": [
+  "/home/user/Kira_OS/docs/ux-review/brief.md",
+  "/home/user/Kira_OS/app/globals.css",
+  "/home/user/Kira_OS/components/kira/shell.css",
+  "/home/user/Kira_OS/components/kira/desk.css",
+  "/home/user/Kira_OS/components/kira/library.css",
+  "/home/user/Kira_OS/components/kira/plans.css",
+  "/home/user/Kira_OS/components/kira/studio.css",
+  "/home/user/Kira_OS/components/kira/workspace-status.css",
+  "/home/user/Kira_OS/components/kira/ads/dashboard.css",
+  "/home/user/Kira_OS/components/ui/button.tsx",
+  "/home/user/Kira_OS/components/ui/input.tsx",
+  "/home/user/Kira_OS/components/ui/textarea.tsx",
+  "/home/user/Kira_OS/components/ui/badge.tsx",
+  "/home/user/Kira_OS/components/ui/skeleton.tsx",
+  "/home/user/Kira_OS/components/kira/app-shell.tsx",
+  "/home/user/Kira_OS/components/kira/mission-control.tsx",
+  "/home/user/Kira_OS/components/kira/connected-home.tsx",
+  "/home/user/Kira_OS/components/kira/getting-started.tsx",
+  "/home/user/Kira_OS/components/kira/desk-page.tsx",
+  "/home/user/Kira_OS/components/kira/approval-card.tsx",
+  "/home/user/Kira_OS/components/kira/metric-card.tsx",
+  "/home/user/Kira_OS/components/kira/universe-catalog.tsx",
+  "/home/user/Kira_OS/components/kira/connected-library.tsx",
+  "/home/user/Kira_OS/components/kira/book-detail.tsx",
+  "/home/user/Kira_OS/components/kira/connected-book-detail.tsx",
+  "/home/user/Kira_OS/components/kira/studio-page.tsx",
+  "/home/user/Kira_OS/components/kira/learn-page.tsx",
+  "/home/user/Kira_OS/components/kira/plans-page.tsx",
+  "/home/user/Kira_OS/components/kira/opportunities-page.tsx",
+  "/home/user/Kira_OS/components/kira/settings-page.tsx",
+  "/home/user/Kira_OS/components/kira/access-page.tsx",
+  "/home/user/Kira_OS/components/kira/login-form.tsx",
+  "/home/user/Kira_OS/app/login/page.tsx",
+  "/home/user/Kira_OS/app/layout.tsx",
+  "/home/user/Kira_OS/app/error.tsx",
+  "/home/user/Kira_OS/app/not-found.tsx",
+  "/home/user/Kira_OS/app/loading.tsx",
+  "/home/user/Kira_OS/app/[module]/page.tsx",
+  "/home/user/Kira_OS/lib/data/seed.ts",
+  "/home/user/Kira_OS/components/kira/inspiration-shelf.tsx",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/desktop-home.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/desktop-desk.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/desktop-universe.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/desktop-universe-assassins-refusal.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/desktop-studio.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/desktop-plans.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/desktop-settings.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/desktop-login.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/desktop-learn.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/desktop-raven.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/desktop-connections.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/desktop-reader-pulse.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/cdesktop-login.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/cdesktop-plans.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/cdesktop-studio.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/cdesktop-access.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/cdesktop-ads.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/cdesktop-universe-assassins-refusal.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/mobile-home.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/mobile-desk.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/mobile-plans.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/mobile-universe-assassins-refusal.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/cmobile-plans.png"
+ ],
+ "first_five_minutes": "Cassy opens the demo on her laptop. The home page lands well: Cormorant at 56px, \"Good morning, Cassandra.\" in italic, a warm olive-and-gold room that feels like a study rather than a SaaS console. Her eye goes to the six metric tiles \u2014 and snags. Five tiles put the label and the DEMO chip on one line; \"Open opportunities\" wraps its chip to a second line, so the big serif \"7\" sits a full line lower than \"24.8k\" beside it. The row is out of rhythm before she has read a word. Four tiles have a sparkline, two don't. Then the Raven briefing, which is beautiful \u2014 until she tries to read it: the summary paragraph under that 49px headline is 11px. So is every page's subtitle. So is the proposed brief she is meant to approve at her desk. She'll lean in, and she'll feel her eyes doing it.\n\nShe clicks into The Universe. This is the best screen in the product: eight placeholder covers, colour-coded by series, each honestly labelled \"CATALOG PLACEHOLDER \u00b7 NOT OFFICIAL COVER\", every card saying \"Metadata needs verification\". She opens Assassin's Refusal. The metadata list is clean, then \"Details to add\" opens onto thirteen 11px pills wrapping across two rows, and the panel under them is a 300px-tall card holding two sentences. The \"Prepare book details\" button is a 1,085px-wide gold bar \u2014 it reads as a banner, not a button.\n\nShe goes to Learn & Create because the name is inviting. The first thing she sees is a broken control: \"Five quick lessons, when you need them\" shows the browser's default \u25b6 triangle and then the designed chevron drops onto its own line below. Under it, four \"starting role\" cards with stark white operating-system radio buttons \u2014 the only pure white in the whole app, because nothing declares `color-scheme: dark`. She clicks Marketing Plans: a 1,150px-wide card containing one heading, one sentence and one button, then a thousand pixels of nothing.\n\nIf she opens it on her phone \u2014 and she will, tomorrow, in front of Michael \u2014 the home metric tiles are three-across at 390px, labels wrapping to two lines, DEMO chips wrapping under them, numerals landing at four different heights. And if she ever reaches the Ads page, the H1 \"Ads & next steps\" is set in the sans while the empty-state headline right below it is in the serif: two display faces on one screen, because `--font-display` is referenced in three stylesheets and defined in none.",
+ "scores": [
+  {
+   "criterion": "agency_control",
+   "score": 7,
+   "verdict": "Defaults genuinely favour her and the gates are explained as workflow rather than permission-seeking \u2014 but she cannot remove her own manuscript from her own workspace, and the UI says so twice on the same page.",
+   "evidence": [
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 132,
+     "quote": "Plans get a second read from the workspace owner before dated tasks go live \u2014 a check on audience, budget and dates, not on you."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 146,
+     "quote": "Every version you upload is kept. Removing a manuscript from the app isn\u2019t available yet \u2014 ask your workspace owner if you need a file removed."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 166,
+     "quote": "<input type=\"checkbox\" checked={searchAllowed} ... />Show manuscript excerpts, which may contain spoilers."
+    },
+    {
+     "file": "components/kira/getting-started.tsx",
+     "line": 141,
+     "quote": "<Button type=\"button\" variant=\"ghost\" size=\"sm\" onClick={hideSteps}>"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 146,
+     "change": "Give the owner-decision an explicit surface instead of a dead end: add a \"Request removal\" action next to the custody list that opens a prefilled desk brief naming the version and filename, so the request is recorded in the workspace she can see, and change the copy to \"Removal is a request you make here \u2014 it is recorded with the version.\"",
+     "rationale": "Right now the only path is out-of-band (\"ask your workspace owner\"), so the app offers her no way at all to act on her own file. The removal itself needs an owner/SQL decision; giving her a visible, recorded request does not."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 170,
+     "change": "Remove the duplicate sentence (identical text already appears at line 146 in the consent list) and replace it with the version-level custody facts (size, who granted permission) that line 171 currently apologises for omitting.",
+     "rationale": "Saying the same limitation twice on one page reads as an apology rather than a policy, and it is the loudest note on a screen that is otherwise about her control."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 58,
+     "change": "Owner decision: whether an Editor can build a marketing plan. The code currently blocks it and explains it well; if the answer is yes, the gate moves to approval only.",
+     "rationale": "Marked as an owner/role decision, not a code fix \u2014 but it is the one place where Cassy (an Editor today) is blocked from creating, not just approving."
+    }
+   ]
+  },
+  {
+   "criterion": "safe_to_experiment_undo",
+   "score": 7,
+   "verdict": "Draft protection is unusually thoughtful nearly everywhere \u2014 and then the one long, expensive form in the product keeps its draft only in React state while telling her it is \"kept\".",
+   "evidence": [
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 155,
+     "quote": "You have unsaved edits to this brief, kept in this tab until you save them."
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 476,
+     "quote": "You have unsaved work in this browser session. Signing out discards unfinished desk briefs, workshop notes, and questions."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 68,
+     "quote": "const [value,setValue]=useState(initial),[error,setError]=useState<string|null>(null)"
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 88,
+     "quote": "changed?\"Not saved yet \u00b7 Kept in this tab until you save.\":\"No unsaved changes.\""
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 68,
+     "change": "Persist the PlanForm draft through the workspace scratchpad the way learn-page and studio-page already do (updateLearnScratchpad / updateStudioScratchpad), keyed by plan id or \"new\", so a reload or an accidental back-navigation does not wipe a 12-field plan.",
+     "rationale": "Desk briefs, studio questions and workshop blueprints all survive a reload; the plan form \u2014 the longest form in the app, with budget, dates, books and up to eight goals \u2014 does not. The inconsistency is the problem, and the save-state label implies more protection than exists."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 53,
+     "change": "Replace the bare `<p role=\"status\">Loading your saved plans\u2026</p>` with the Skeleton pattern already used in opportunities-page.tsx:20 (two `.plan-card` skeletons), so a slow load never looks like an empty workspace.",
+     "rationale": "An author on a hotel wifi sees one line of grey text where her plans should be; that reads as \"my plans are gone\", not \"loading\"."
+    }
+   ]
+  },
+  {
+   "criterion": "clarity_self_explanation",
+   "score": 7,
+   "verdict": "The writing is exceptionally clear and the demo/manual/verified vocabulary is disciplined \u2014 but the machine states (loading, error, empty) repeatedly fall out of the design system into bare paragraphs, so the app is legible in prose and illegible in status.",
+   "evidence": [
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 52,
+     "quote": "{error&&<p role=\"alert\" className=\"plan-alert\">{error}</p>}"
+    },
+    {
+     "file": "components/kira/studio-page.tsx",
+     "line": 218,
+     "quote": "<p>{loading ? \"Loading your saved questions\u2026\" : \"Your first question will appear here when you ask. Nothing runs in the background.\"}</p>"
+    },
+    {
+     "file": "components/kira/connected-library.tsx",
+     "line": 68,
+     "quote": "{loading && !data && <p role=\"status\">Opening your book library\u2026</p>}"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 133,
+     "quote": "if (!library.authorized) return <p role=\"status\">Returning to sign in\u2026</p>;"
+    },
+    {
+     "file": "app/error.tsx",
+     "line": 12,
+     "quote": "<div className=\"empty-state failure-state\" role=\"alert\">"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 52,
+     "change": "Render the page-level error with the shared `.failure-state` block used by app/error.tsx: TriangleAlert icon, an eyebrow, a one-line heading, the message, and an inline \"Try again\" button wired to `load()`. Delete the bare `.plan-alert` paragraph style from components/kira/plans.css.",
+     "rationale": "The app already owns a good failure language (globals.css:3608). Marketing Plans, the most fragile connected page, uses a plain wine box with no icon, no heading and no recovery action \u2014 the retry is a \"Refresh\" button 200px away in the header."
+    },
+    {
+     "file": "components/kira/studio-page.tsx",
+     "line": 218,
+     "change": "Wrap the \"Recent questions\" empty and loading branches in a Card with an eyebrow, the Bird glyph and the existing `.empty-state` treatment, instead of a naked `<p>` on the page background.",
+     "rationale": "On the connected Studio screenshot this leaves a single grey sentence above ~350px of void; it reads as a rendering failure rather than an empty history."
+    },
+    {
+     "file": "components/kira/connected-library.tsx",
+     "line": 68,
+     "change": "Replace the bare loading paragraph with the `.book-grid` filled by six Skeleton cards sized to `.book-card`, keeping the sr-only status text.",
+     "rationale": "A skeleton shows her the shape of what is coming; one line of text shows her an empty library."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 133,
+     "change": "Return the `.failure-state`/`.empty-state` shell with a spinner-free status line rather than a lone `<p>`, so a session expiry does not blank the whole page to one sentence.",
+     "rationale": "This is the full-page return value \u2014 the entire book page becomes unstyled body text."
+    }
+   ]
+  },
+  {
+   "criterion": "tone_dignity",
+   "score": 8,
+   "verdict": "Peer-level, specific, and consistently voiced; it treats her as the professional and the system as the assistant. The only softness is a numbered-wizard cadence on one page.",
+   "evidence": [
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 42,
+     "quote": "The evidence is here. <br /> <em>The call is yours.</em>"
+    },
+    {
+     "file": "components/kira/agent-status.tsx",
+     "line": 1,
+     "quote": "Not running. Not pretending to."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 132,
+     "quote": "a check on audience, budget and dates, not on you"
+    },
+    {
+     "file": "components/kira/learn-page.tsx",
+     "line": 161,
+     "quote": "<legend>1. Choose a starting role</legend>"
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 252,
+     "quote": "Let Kira write. <br /> <em>A little help for the business.</em>"
+    }
+   ],
+   "must_fix_to_reach_8": []
+  },
+  {
+   "criterion": "respect_creative_material",
+   "score": 6,
+   "verdict": "The consent surface is the most carefully made thing in the product \u2014 and then the one page that holds her novel is also the page with the worst layout in the product, and the page where her book's knowledge silently loses the editorial typeface.",
+   "evidence": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 148,
+     "quote": "I have permission to upload this manuscript and to let Raven read it privately for book knowledge. This is not permission to publish or quote from it."
+    },
+    {
+     "file": "components/kira/library.css",
+     "line": 8,
+     "quote": ".library-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }"
+    },
+    {
+     "file": "components/kira/library.css",
+     "line": 90,
+     "quote": ".knowledge-intro h3{font-family:var(--font-display),Georgia,serif;font-size:clamp(30px,3.5vw,43px)"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 137,
+     "quote": "<Card className=\"library-panel\"><span className=\"eyebrow\">THE DETAILS YOU PROVIDED</span><h2>Your book, in your words.</h2>"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/library.css",
+     "line": 8,
+     "change": "Stop forcing the manuscript page into two equal columns. Make \"Your book, in your words.\" a full-width card above, and the manuscript/consent card full-width below: `.library-detail-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 22px; }`.",
+     "rationale": "In cdesktop-universe-assassins-refusal.png the left card ends at ~540px while the right runs to ~1,300px, leaving roughly 760px of empty column beside the consent list. The page that asks her to hand over her novel currently looks unfinished."
+    },
+    {
+     "file": "components/kira/library.css",
+     "line": 90,
+     "change": "Define the missing token. Add `--font-display: \"Cormorant Garamond\", Georgia, serif;` to `:root` in app/globals.css:9-33 (or change these rules to `var(--font-serif)`).",
+     "rationale": "`--font-display` is referenced in library.css:90, studio.css:3 and ads/dashboard.css:1 and defined nowhere, so the declaration is invalid at computed-value time and the knowledge workbench headings inherit Manrope. Her book's memory pages are the one place the serif voice matters most."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 164,
+     "change": "Give the \"A place for this book's memory.\" empty state the same composition as the Ads empty state (`.ads-empty`): centred, an eyebrow, a serif h2, the radial-gradient ground \u2014 not a bare bordered box with a sans `<h3>`.",
+     "rationale": "This is the first thing she sees on her own book before a manuscript exists; it currently reads as a placeholder rather than an invitation."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 142,
+     "change": "Replace the raw `<Input type=\"file\">` with a labelled drop zone: a dashed `.library-form input[type=file]` container is already styled, but the control renders the browser's \"Choose File / No file chosen\" widget. Wrap it so the visible affordance is \"Choose your manuscript file\" plus the chosen filename, with the native input visually hidden and focus-linked.",
+     "rationale": "The OS widget is the only unbranded element on the most intimate screen in the app; it makes handing over a novel feel like an attachment upload."
+    }
+   ]
+  },
+  {
+   "criterion": "visual_craft_warmth",
+   "score": 5,
+   "verdict": "There is a real point of view here \u2014 Cormorant against Manrope, the olive-and-gold ground, the raven line art, the placeholder covers, the \"03\" telescope \u2014 and then the system is undermined by an undefined font token, an 11px type floor applied to body copy, light-mode native controls on a dark page, and four or five screens that visibly drop out of the design.",
+   "evidence": [
+    {
+     "file": "app/globals.css",
+     "line": 32,
+     "quote": "--text-xs: 11px;"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1686,
+     "quote": ".approval-draft pre {\n  white-space: pre-wrap;\n  overflow-wrap: anywhere;\n  font-family: \"Manrope Variable\", sans-serif;\n  font-size: var(--text-xs);"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2630,
+     "quote": "/* Legibility refinements for compact editorial surfaces. */\n.metric-top {\n  font-size: var(--text-xs);\n}\n.recommendation-card > p {\n  font-size: 11px;\n}\n.raven-summary {\n  font-size: 11px;\n}"
+    },
+    {
+     "file": "components/kira/ads/dashboard.css",
+     "line": 1,
+     "quote": ".ads-heading h1{font-family:var(--font-display),Georgia,serif;font-size:clamp(38px,4vw,58px)"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 9,
+     "quote": ":root {\n  --background: #121312;"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 3551,
+     "quote": ".learn-lessons-panel > summary { cursor: pointer; padding: 18px 0; min-height: 52px; color: var(--gold); font-weight: 500; }"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 548,
+     "quote": ".metric-top {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  flex-wrap: wrap;"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2583,
+     "quote": "@media (max-width: 380px) {\n  .metrics-grid {\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n  }"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 3421,
+     "quote": ".access-owner, .access-member { padding: 20px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }"
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 48,
+     "quote": "<Card className=\"plan-card\"><h2>Not part of this demo</h2><p>In a connected workspace you shape a plan\u2026"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "app/globals.css",
+     "line": 32,
+     "change": "Raise the floor: `--text-xs: 12px; --text-sm: 13px; --text-base: 15px; --text-lg: 17px;`, then delete the literal `font-size: 11px` re-declarations that pin reading copy \u2014 globals.css:486 and 2300 (`.page-heading p`), 1665 (`.approval-card > p`), 1686 (`.approval-draft pre`, set to `--text-sm`), 1793 (`.form-label`), 1797 (`.form-error`), 1851 (`.policy-list > div`), 1828/1920 (`.settings-grid`), 2537 (`.approval-draft pre` mobile), 2632-2639 (the \"Legibility refinements\" block). Keep 11px only for eyebrows, kbd and badges.",
+     "rationale": "95 uses of `var(--text-xs)` plus 55 literal 11px and 56 literal 10px means most of the app's prose is below 12px. The brief she must read before approving (`.approval-draft pre`), every page's subtitle, every form label and the creative-firewall table are all 11px. An editorial product for a novelist cannot set its reading text smaller than its own chrome."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 9,
+     "change": "Add `color-scheme: dark;` to `:root`.",
+     "rationale": "Nothing in app/ or components/ declares it (`html` only carries Tailwind's `.dark` class, layout.tsx:95). Every native widget therefore paints in light mode on a near-black ground: the four white radios on /learn (learn-page.tsx:163), the light chevrons on the `<select>`s in /plans, /access and /connections, the grey `mm/dd/yyyy` date control and its calendar glyph on /plans, the file picker on the book page, and the scrollbars. One line fixes all of them."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 9,
+     "change": "Add `--font-display: \"Cormorant Garamond\", Georgia, serif;` beside `--gold` and `--wine`.",
+     "rationale": "`var(--font-display)` is used in ads/dashboard.css:1, studio.css:3 and library.css:90 but never defined, so those declarations are invalid at computed-value time and the elements inherit Manrope. The result is visible in cdesktop-ads.png: the H1 \"Ads & next steps\" is sans while the empty-state h2 directly below it is serif \u2014 two display faces on one screen."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 548,
+     "change": "Stop the DEMO chip from wrapping the value out of alignment: `.metric-card { display: flex; flex-direction: column; }`, `.metric-top { min-height: 2lh; align-items: flex-start; flex-wrap: nowrap; }`, `.metric-top > span { min-width: 0; }`, `.metric-value { margin-top: auto; }`.",
+     "rationale": "In desktop-home.png the \"Open opportunities\" tile wraps its chip, dropping its numeral a full line below the other five; the six-tile row loses its baseline before she reads it. On mobile-home.png the same wrap happens in four of six tiles."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2583,
+     "change": "Move the two-column metric grid up from 380px to 560px: change the `@media (max-width: 380px)` guard around `.metrics-grid` to its own `@media (max-width: 560px)` rule, or replace the base rule at :538 with `grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))`.",
+     "rationale": "iPhone 13/14/15 are 390px wide, so the pinned mobile test viewport gets the three-across layout: ~110px tiles with two-line labels, wrapped chips and four different numeral baselines. The 380px breakpoint misses every current iPhone by 10px."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 3551,
+     "change": "`.learn-lessons-panel > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; list-style: none; }` plus `.learn-lessons-panel > summary::-webkit-details-marker { display: none; }` and `.learn-lessons-panel[open] > summary svg { transform: rotate(180deg); }` \u2014 matching what `.learn-lesson summary` already does at :3434-3437.",
+     "rationale": "In desktop-learn.png this summary shows the browser's \u25b6 marker AND drops the designed chevron onto a second line. It is the first control on the page and it looks broken."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 3421,
+     "change": "`.access-owner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }` and move the `.quiet-note` to a full-width child.",
+     "rationale": "In cdesktop-access.png \"cassie-fixture@example.test\" butts directly against the OWNER pill with zero space \u2014 the two read as one string."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 48,
+     "change": "Give the demo Plans card the composed empty-state treatment: eyebrow, Target glyph, serif h2, centred `.empty-state` frame \u2014 and add the DEMO origin badge, since it is describing demo mode.",
+     "rationale": "desktop-plans.png is a 1,150px-wide card holding three lines of content above ~600px of void. It is the only page in the product with no visual idea at all."
+    },
+    {
+     "file": "components/kira/book-detail.tsx",
+     "line": 136,
+     "change": "Cap the primary actions instead of letting them span the card: add `.book-materials-card [data-slot=\"button\"] { justify-self: start; width: auto; }` and the same for `.access-form [data-slot=\"button\"]` and `.connection-form [data-slot=\"button\"]`.",
+     "rationale": "\"Prepare book details\" (1,085px), \"Grant access\" (535px) and \"Save link\" (525px) render as full-bleed bars. A gold bar that wide stops reading as a button and flattens the hierarchy of the card."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1607,
+     "change": "Replace the 13-pill wrapping tab bar on the demo book page with a two-column list or a `<details>` accordion of the same sections, and raise `.book-tabs-list [data-slot=\"tabs-trigger\"]` from `var(--text-xs)`/7px padding to 13px/10px 14px.",
+     "rationale": "Thirteen 11px pills wrapping across two rows, each opening a 300px card holding two sentences, is the densest and emptiest control in the product at the same time."
+    },
+    {
+     "file": "components/kira/plans.css",
+     "line": 1,
+     "change": "Re-format plans.css and ads/dashboard.css as multi-line CSS (they are currently 1 and 4 lines of minified source) and move their shared tokens (#3a2227, #945c61, #394132, #4c5743\u2026) onto the :root palette.",
+     "rationale": "Three of six stylesheets are hand-minified and the palette is ~200 one-off hex values; the system cannot hold together across pages when half of it is unreadable and none of it is tokenised."
+    }
+   ]
+  },
+  {
+   "criterion": "accessibility",
+   "score": 6,
+   "verdict": "The programmatic work is genuinely strong \u2014 skip link, sr-only descriptions, aria-errormessage, managed focus, live regions, reduced-motion \u2014 and then it is undercut by a 10\u201311px reading floor, a 7px label, light-scheme native controls on a dark ground, and sub-target tap areas.",
+   "evidence": [
+    {
+     "file": "app/globals.css",
+     "line": 2601,
+     "quote": "  .cover-placeholder {\n    font-size: 7px;\n  }"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 32,
+     "quote": "--text-xs: 11px;"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1607,
+     "quote": ".book-tabs-list [data-slot=\"tabs-trigger\"] {\n  flex: 0 0 auto;\n  font-size: var(--text-xs);\n  padding: 7px 11px;\n}"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 3299,
+     "quote": ".daily-quote-context summary { cursor:pointer; width:fit-content; padding:3px 0; }"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1929,
+     "quote": ".skip-link {\n  position: fixed;\n  top: -100px;"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2620,
+     "quote": "@media (prefers-reduced-motion: reduce) {"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "app/globals.css",
+     "line": 2601,
+     "change": "Delete the `.cover-placeholder { font-size: 7px; }` override inside the \u2264380px query and let it inherit the 9-10px rule at :2490, or hide the placeholder line entirely at that width.",
+     "rationale": "7px is not readable by anyone; it is smaller than the icon strokes around it."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 32,
+     "change": "Raise `--text-xs` to 12px and `--text-base` to 15px, and remove the mobile re-declarations that pin body copy to 11px (globals.css:2300 `.page-heading p`, :2352 `.raven-summary`, :2537 `.approval-draft pre`).",
+     "rationale": "Body copy at 11px on a phone is below any reasonable legibility floor, and the mobile media query explicitly re-asserts it rather than relaxing it."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 9,
+     "change": "Add `color-scheme: dark;` to `:root`.",
+     "rationale": "Beyond the visual clash, the `<input type=\"date\">` on /plans renders its `mm/dd/yyyy` placeholder in Chromium's light-scheme grey (~#757575) against `--background` #121312, which computes to roughly 4.0:1 \u2014 below 1.4.3 AA for normal text. Declaring the colour scheme makes the UA paint the control for a dark surface."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1607,
+     "change": "Raise the book-detail tab triggers to `min-height: 44px; padding: 10px 14px; font-size: 13px;` and remove the \u2264760px override at :2513 that shrinks the padding further to 8px 9px.",
+     "rationale": "Thirteen targets at ~28px tall, wrapping to five rows on a 390px screen, are the hardest things to hit in the app \u2014 and the mobile rule currently makes them smaller, not larger."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 3299,
+     "change": "`.daily-quote-context summary { min-height: 32px; display: inline-flex; align-items: center; padding: 6px 0; }` and give it the same `list-style: none` + chevron treatment used on `.learn-lesson summary`.",
+     "rationale": "At 11px with 3px padding the \"About this excerpt\" target is roughly 19\u00d7120px \u2014 under the 24\u00d724 minimum of WCAG 2.2 SC 2.5.8 unless it happens to clear the spacing exception, and it is the provenance link on the sign-in page."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 3270,
+     "change": "`.inspiration-filter { min-height: 44px; padding: 10px 16px; font-size: 12px; }` \u2014 the plain `<button>` is not covered by the `[data-slot=\"button\"] { min-height: 44px }` rule at :3591.",
+     "rationale": "The inspiration category chips are 34px with 11px labels and are the primary control inside the \"Find a spark\" dialog on mobile."
+    }
+   ]
+  },
+  {
+   "criterion": "trust_honesty",
+   "score": 7,
+   "verdict": "The labelling discipline is exemplary \u2014 DEMO on every synthetic record, MANUAL SNAPSHOT with an unknown date, NEEDS VERIFICATION, model and cost disclosed \u2014 but the demo metrics borrow the full visual grammar of real analytics, and one of them is hard-coded to point up.",
+   "evidence": [
+    {
+     "file": "components/kira/metric-card.tsx",
+     "line": 24,
+     "quote": "{metric.values.length ? (\n            <ArrowUpRight size={12} />\n          ) : (\n            <MoveRight size={12} />\n          )}"
+    },
+    {
+     "file": "lib/data/seed.ts",
+     "line": 352,
+     "quote": "label: \"Reviews\",\n    value: \"38\",\n    change: \"+6\",\n    detail: \"Invented review count\","
+    },
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 164,
+     "quote": "<DemoBadge origin=\"manual\" />\n            <span>Snapshot date unknown \u00b7 Not live</span>"
+    },
+    {
+     "file": "components/kira/agent-status.tsx",
+     "line": 1,
+     "quote": "Specialists are foundations, not running agents. Raven synthesizes seeded findings when you ask."
+    },
+    {
+     "file": "components/kira/settings-page.tsx",
+     "line": 88,
+     "quote": "Allowed means this app is permitted to do it \u2014 not that the feature is built yet."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/metric-card.tsx",
+     "line": 24,
+     "change": "Derive the direction from the data instead of from `values.length`: pick ArrowUpRight / ArrowDownRight / MoveRight from the sign of the change, and desaturate the sparkline stroke for demo records (e.g. `.metric-card[data-origin=\"demo\"] .sparkline { color: #6b7355; opacity: .6 }`).",
+     "rationale": "Every sparkline metric renders an up-and-right arrow regardless of its value. Today all six demo values are positive so nothing is false, but the component cannot render a decline \u2014 an analytics tile that can only point up is a dark pattern waiting to happen once real numbers arrive."
+    },
+    {
+     "file": "lib/data/seed.ts",
+     "line": 352,
+     "change": "Surface the honesty that already exists in the data: render `metric.detail` (\"Invented review count\", \"Illustrative 30-day reach\") as visible caption text under the value instead of only inside the sr-only span at metric-card.tsx:42.",
+     "rationale": "The seed is admirably blunt about these being invented, but sighted users only see \"38 \u2197 +6\" with a DEMO chip. The chip says the data is demo; the caption says what it actually is."
+    }
+   ]
+  }
+ ],
+ "top_findings": [
+  {
+   "priority": 1,
+   "title": "`--font-display` is used in three stylesheets and defined in none \u2014 the Ads H1, the Studio demo H2 and the book-knowledge workbench silently lose the serif",
+   "file": "app/globals.css",
+   "line": 9,
+   "problem": "`var(--font-display)` appears in components/kira/ads/dashboard.css:1 (.ads-heading h1), components/kira/studio.css:3 (.studio-jobs-preview h2) and components/kira/library.css:90 (.knowledge-intro h3, .knowledge-reading > header h3). The token is never declared, so each `font-family` declaration is invalid at computed-value time and the element inherits Manrope. cdesktop-ads.png shows the result plainly: the page H1 \"Ads & next steps\" is sans at 58px while the empty-state headline directly beneath it is Cormorant. Two display faces on one screen.",
+   "proposed_change": "Add `--font-display: \"Cormorant Garamond\", Georgia, serif;` to `:root` alongside `--gold` and `--wine` (app/globals.css:29-31), and add a `@theme inline` alias if Tailwind utilities should reach it.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 2,
+   "title": "11px is the de-facto body size: 95 `--text-xs` uses plus 55 literal 11px and 56 literal 10px, including the brief she must read to approve",
+   "file": "app/globals.css",
+   "line": 32,
+   "problem": "`--text-xs: 11px` is applied to the approval draft body (`.approval-draft pre`, :1686, re-asserted at :2537 for mobile), every page subtitle (`.page-heading p`, :486 and :2300), every form label (`.form-label`, :1793), every form error (`.form-error`, :1797), the creative-firewall table (`.policy-list > div`, :1851), the settings grid (:1828), the raven briefing summary (:679) and the recommendation card body \u2014 and a block commented \"Legibility refinements for compact editorial surfaces\" (:2630-2639) re-pins three of them at 11px. The mobile query relaxes nothing; it re-declares 11px. There is no real type scale, only 11/12/14/16.",
+   "proposed_change": "Set `--text-xs: 12px; --text-sm: 13px; --text-base: 15px; --text-lg: 17px;` and delete the literal 11px re-declarations at :486, :1665, :1686, :1793, :1797, :1851, :2300, :2352, :2537 and :2630-2639, promoting reading copy to `--text-sm`/`--text-base` and keeping 11px only for eyebrows, kbd and origin badges.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 3,
+   "title": "No `color-scheme: dark` anywhere, so every native control renders in light mode on a near-black page",
+   "file": "app/globals.css",
+   "line": 9,
+   "problem": "`grep -rn color-scheme app components` returns nothing; `html` carries only Tailwind's `.dark` class (app/layout.tsx:95). Chromium therefore paints all UA widgets for a light surface: the four white radios on /learn (learn-page.tsx:163), the light chevrons and popups on the `<select>`s in /plans (plans-page.tsx:77,80,86), /access (access-page.tsx:134,147) and /connections, the `mm/dd/yyyy` date field and calendar glyph on /plans (plans-page.tsx:81) whose placeholder computes to roughly 4.0:1 against #121312, the file picker on the manuscript page, and the scrollbars.",
+   "proposed_change": "Add `color-scheme: dark;` to the `:root` block at app/globals.css:9, and add a custom chevron background to the shared select rule at :3406 so the control reads as designed rather than merely dark.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 4,
+   "title": "Metric tiles lose their baseline whenever the DEMO chip wraps \u2014 visible on desktop and in four of six tiles on mobile",
+   "file": "app/globals.css",
+   "line": 548,
+   "problem": "`.metric-top` is `display:flex; justify-content:space-between; flex-wrap:wrap` holding the label and `<DemoBadge/>` (metric-card.tsx:15-19). When the label is long (\"Open opportunities\"), the chip drops to a second line and pushes the 40px serif numeral down, so the six-tile row on desktop-home.png has two different value baselines. At 390px the grid is still three-across (the two-column rule sits behind `@media (max-width: 380px)`, :2583), so labels wrap to two lines, chips wrap under them, and the tiles land at four different heights.",
+   "proposed_change": "`.metric-card { display: flex; flex-direction: column; }`, `.metric-top { min-height: 2lh; align-items: flex-start; flex-wrap: nowrap; }`, `.metric-top > span:first-child { min-width: 0; }`, `.metric-value { margin-top: auto; }`; and move the two-column breakpoint from 380px to 560px (or make the base grid `repeat(auto-fit, minmax(150px, 1fr))` at :538).",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 5,
+   "title": "The manuscript page \u2014 the most intimate screen in the product \u2014 is a two-equal-column grid with ~760px of empty column",
+   "file": "components/kira/library.css",
+   "line": 8,
+   "problem": "`.library-detail-grid { grid-template-columns: 1fr 1fr; align-items: start; }` pairs a card that usually holds two sentences (\"Your book, in your words.\", connected-book-detail.tsx:137) against the consent + upload card that runs to ~1,300px (line 141-149). In cdesktop-universe-assassins-refusal.png the left column stops at 540px and the rest is void. The \"Prepare book details\" button below it spans 1,085px as a full-bleed bar.",
+   "proposed_change": "Single-column the grid (`grid-template-columns: minmax(0,1fr)`) so the description card sits full width above the manuscript card, and cap the primary actions with `.book-materials-card [data-slot=\"button\"], .library-panel > [data-slot=\"button\"] { justify-self: start; width: auto; }`.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 6,
+   "title": "Loading, error and empty states repeatedly drop out of the design system into bare paragraphs",
+   "file": "components/kira/plans-page.tsx",
+   "line": 52,
+   "problem": "The connected Plans error is a plain wine box with no icon, no heading and no inline retry (`<p className=\"plan-alert\">`, :52), while a good failure language already exists in `.failure-state` (globals.css:3608, used by app/error.tsx:12). Loading is a naked `<p role=\"status\">` in at least five places: plans-page.tsx:53, connected-home.tsx:102, connected-library.tsx:68, studio-page.tsx:204 and 218, connected-book-detail.tsx:133 and 173. Skeleton exists and is used in exactly two files (app/loading.tsx, opportunities-page.tsx:20). The demo /plans page (plans-page.tsx:48) and the connected Studio history (studio-page.tsx:218) render as a bare card or a single sentence above hundreds of pixels of void.",
+   "proposed_change": "Standardise three shared blocks and use them everywhere: `.failure-state` for page errors (icon + eyebrow + heading + message + inline retry wired to the page's own `load()`), Skeleton grids shaped like the content for loading (book grid, plan cards, studio list), and the composed `.empty-state`/`.ads-empty` treatment for empties. Convert plans-page.tsx:52-53,60,121-124,131-132, studio-page.tsx:204,218, connected-library.tsx:68, connected-home.tsx:102 and connected-book-detail.tsx:133,173.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 7,
+   "title": "Broken disclosure control at the top of Learn & Create: native \u25b6 marker plus a chevron that wraps to its own line",
+   "file": "app/globals.css",
+   "line": 3551,
+   "problem": "`.learn-lessons-panel > summary` sets only cursor, padding, min-height, colour and weight. It never removes the list marker and never becomes a flex row, so the summary at learn-page.tsx:147 \u2014 which contains a `<span>` and a `ChevronDown` \u2014 renders the browser triangle and drops the designed chevron onto a second line. The inner `.learn-lesson summary` two rules away (:3434-3437) does all of this correctly.",
+   "proposed_change": "`.learn-lessons-panel > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; list-style: none; }`, `.learn-lessons-panel > summary::-webkit-details-marker { display: none; }`, `.learn-lessons-panel[open] > summary svg { transform: rotate(180deg); }`.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 8,
+   "title": "Owner email collides with the OWNER pill on Workspace access",
+   "file": "app/globals.css",
+   "line": 3421,
+   "problem": "`.access-owner` is a plain block with only padding and a border, while access-page.tsx:142 renders `<strong>{email}</strong><span className=\"status-pill\">OWNER</span>` as two inline elements with no separator. In cdesktop-access.png \"cassie-fixture@example.test\" butts directly against the pill with zero space; the two read as one string.",
+   "proposed_change": "`.access-owner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }` and give the trailing `.quiet-note` `flex-basis: 100%`.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 9,
+   "title": "7px type and 28px tap targets at the small end",
+   "file": "app/globals.css",
+   "line": 2601,
+   "problem": "`@media (max-width: 380px)` sets `.cover-placeholder { font-size: 7px; }`, so the \"CATALOG PLACEHOLDER \u00b7 NOT OFFICIAL COVER\" provenance line \u2014 the label that keeps the decorative covers honest \u2014 is unreadable on an iPhone SE. Separately `.book-tabs-list [data-slot=\"tabs-trigger\"]` (:1607) is 11px with 7px/11px padding, giving ~28px targets across thirteen wrapping tabs, and the mobile override at :2513 shrinks the padding further to 8px/9px.",
+   "proposed_change": "Delete the 7px override at :2601-2602 (let it inherit the ~9px rule at :2490 or hide the line below 380px), and raise the tab triggers to `min-height: 44px; padding: 10px 14px; font-size: 13px;` while removing the shrinking override at :2513.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 10,
+   "title": "Full-bleed primary buttons flatten the hierarchy on four screens",
+   "file": "components/kira/book-detail.tsx",
+   "line": 136,
+   "problem": "\"Prepare book details\" renders as a 1,085px gold bar (book-detail.tsx:133-136 inside `.book-materials-card`), \"Grant access\" as a 535px bar (access-page.tsx), \"Save link\" as a 525px bar (connections-page.tsx), \"Copy for NotebookLM\" likewise. A gold rectangle that wide stops reading as a button and becomes a banner, and it leaves the card with no visual centre.",
+   "proposed_change": "Add `.book-materials-card [data-slot=\"button\"], .access-form [data-slot=\"button\"], .connection-form [data-slot=\"button\"], .notebook-bridge [data-slot=\"button\"] { justify-self: start; width: auto; }` (keeping `.learn-save-button`'s full width, which is deliberate inside a narrow column).",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 11,
+   "title": "Zero renders as the letter O in the desk's serif counter",
+   "file": "components/kira/desk-page.tsx",
+   "line": 147,
+   "problem": "`.memory-count strong` sets Cormorant Garamond at 46px (globals.css:1755-1759) and desk-page.tsx:147 prints `{feedback.length}` directly, so a fresh workspace shows a 46px Cormorant zero beside \"lessons saved\" \u2014 in desktop-desk.png it reads as \"O lessons saved\". The connected home already solves this properly by rendering an em-dash for zero (connected-home.tsx:171).",
+   "proposed_change": "Mirror connected-home.tsx:171: render `{feedback.length > 0 ? feedback.length : \"\u2014\"}` and move the count to a caption (\"No lessons saved yet\"), or add `font-variant-numeric: lining-nums tabular-nums;` to `.memory-count strong` and `.community-stats strong`.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 12,
+   "title": "Half the stylesheets are hand-minified and the palette is ~200 untokenised hex values",
+   "file": "components/kira/plans.css",
+   "line": 1,
+   "problem": "components/kira/plans.css is a single 3,400-character line and components/kira/ads/dashboard.css is four; library.css is half formatted and half minified. Meanwhile `:root` (globals.css:9-33) defines nine colour tokens while the sheets hard-code roughly two hundred one-off hexes (#3a2227, #945c61, #394132, #4c5743, #b8cdbd, #dcc1cf\u2026). Nothing in the system can be adjusted in one place, which is why the same component reads differently on different pages.",
+   "proposed_change": "Re-format plans.css, ads/dashboard.css and the minified half of library.css as multi-line CSS, then lift the recurring surface, hairline, panel and accent values onto `:root` as `--surface-1/2`, `--hairline`, `--accent-story/readers` and use `color-mix()` for the tints.",
+   "fixable_in_code": true
+  }
+ ],
+ "what_works": [
+  "The type pairing is a real point of view: Cormorant Garamond for display against Manrope for interface, with italic `<em>` as the second line of nearly every headline (\"The evidence is here. / *The call is yours.*\"). It reads as a book designer's decision, not a template's.",
+  "The dark palette is warm and specific \u2014 olive-gold rather than the usual blue-grey \u2014 and it holds across almost every surface. `--gold #c7af83`, `--wine #753a47`, backgrounds around #121312/#191a18. Nothing about it says generic SaaS.",
+  "The raven line-art in the briefing card (components/kira/raven-art.tsx) and the huge ghosted \"03\" behind the telescope on the roadmap previews (app/[module]/page.tsx:127-130, globals.css:1901 `font-size: 250px`) are genuine moments of delight that cost nothing and never tip into kitsch.",
+  "The placeholder book covers are the best-executed idea in the product: series-coloured, set in the display face, and honestly captioned \"CATALOG PLACEHOLDER \u00b7 NOT OFFICIAL COVER\" on the artwork itself (desktop-universe.png). They give an empty catalog visual presence without pretending to be real.",
+  "Provenance has a consistent visual language \u2014 the outlined DEMO / PUBLIC SOURCE / MANUAL SNAPSHOT / NEEDS VERIFICATION chips share one form and vary only by colour family (globals.css:585-609). It is disciplined enough that she will learn it in a minute.",
+  "The connected home's zero states are exactly right: an em-dash with a caption rather than a \"0\" (connected-home.tsx:170-175), and a completed step renders a check in place of its numeral (getting-started.tsx:148).",
+  "Card rhythm and vertical spacing on Mission Control, Briefings and the demo Universe are confident and unhurried \u2014 generous card padding (24-28px), a clear eyebrow/headline/body stack, and a footer that sets expectations quietly rather than shouting.",
+  "Focus and motion craft are carefully handled: a 2px gold focus ring with 4px offset on every link, button and summary (globals.css:98-102), a working skip link (:1929), and a blanket `prefers-reduced-motion` rule (:2620).",
+  "The custom checkbox is properly made \u2014 appearance reset, a clip-path tick, gold fill on check, its own focus ring and a disabled state \u2014 and it is shared across the library, plans and studio (globals.css:3602-3607). It shows the system can be done well when someone does it.",
+  "The Ads empty state (`.ads-empty` with its orbit glyph, radial ground and serif headline) and the 404 page are what every other empty state in the app should be modelled on."
+ ]
+}

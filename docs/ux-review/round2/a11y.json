@@ -1,0 +1,626 @@
+{
+ "judge": "Priya \u2014 WCAG 2.2 AA auditor (screen-reader and keyboard-only usability sessions)",
+ "files_read": [
+  "/home/user/Kira_OS/docs/ux-review/brief.md",
+  "/home/user/Kira_OS/components/kira/app-shell.tsx",
+  "/home/user/Kira_OS/components/kira/mission-control.tsx",
+  "/home/user/Kira_OS/components/kira/connected-home.tsx",
+  "/home/user/Kira_OS/components/kira/getting-started.tsx",
+  "/home/user/Kira_OS/components/kira/desk-page.tsx",
+  "/home/user/Kira_OS/components/kira/manual-review-form.tsx",
+  "/home/user/Kira_OS/components/kira/approval-card.tsx",
+  "/home/user/Kira_OS/components/kira/session-ended-dialog.tsx",
+  "/home/user/Kira_OS/components/kira/universe-catalog.tsx",
+  "/home/user/Kira_OS/components/kira/connected-library.tsx",
+  "/home/user/Kira_OS/components/kira/book-detail.tsx",
+  "/home/user/Kira_OS/components/kira/connected-book-detail.tsx",
+  "/home/user/Kira_OS/components/kira/book-knowledge.tsx",
+  "/home/user/Kira_OS/components/kira/book-card.tsx",
+  "/home/user/Kira_OS/components/kira/book-details-brief.tsx",
+  "/home/user/Kira_OS/components/kira/studio-page.tsx",
+  "/home/user/Kira_OS/components/kira/learn-page.tsx",
+  "/home/user/Kira_OS/components/kira/plans-page.tsx",
+  "/home/user/Kira_OS/components/kira/opportunities-page.tsx",
+  "/home/user/Kira_OS/components/kira/settings-page.tsx",
+  "/home/user/Kira_OS/components/kira/access-page.tsx",
+  "/home/user/Kira_OS/components/kira/connections-page.tsx",
+  "/home/user/Kira_OS/components/kira/login-form.tsx",
+  "/home/user/Kira_OS/components/kira/setup-status.tsx",
+  "/home/user/Kira_OS/components/kira/password-settings.tsx",
+  "/home/user/Kira_OS/components/kira/evidence-drawer.tsx",
+  "/home/user/Kira_OS/components/kira/context-help.tsx",
+  "/home/user/Kira_OS/components/kira/workspace-guide.tsx",
+  "/home/user/Kira_OS/components/kira/inspiration-shelf.tsx",
+  "/home/user/Kira_OS/components/kira/agent-status.tsx",
+  "/home/user/Kira_OS/components/kira/metric-card.tsx",
+  "/home/user/Kira_OS/components/kira/origin-badge.tsx",
+  "/home/user/Kira_OS/components/kira/workspace-permission-notice.tsx",
+  "/home/user/Kira_OS/components/kira/daily-quote.tsx",
+  "/home/user/Kira_OS/components/kira/raven-briefing.tsx",
+  "/home/user/Kira_OS/components/kira/recommendation-card.tsx",
+  "/home/user/Kira_OS/components/kira/raven-page.tsx",
+  "/home/user/Kira_OS/app/login/page.tsx",
+  "/home/user/Kira_OS/app/welcome/page.tsx",
+  "/home/user/Kira_OS/app/[module]/page.tsx",
+  "/home/user/Kira_OS/app/error.tsx",
+  "/home/user/Kira_OS/app/layout.tsx",
+  "/home/user/Kira_OS/app/globals.css",
+  "/home/user/Kira_OS/components/kira/library.css",
+  "/home/user/Kira_OS/components/kira/plans.css",
+  "/home/user/Kira_OS/components/kira/shell.css",
+  "/home/user/Kira_OS/components/kira/desk.css",
+  "/home/user/Kira_OS/components/kira/studio.css",
+  "/home/user/Kira_OS/components/kira/workspace-status.css",
+  "/home/user/Kira_OS/components/ui/button.tsx",
+  "/home/user/Kira_OS/components/ui/input.tsx",
+  "/home/user/Kira_OS/components/ui/tabs.tsx",
+  "/home/user/Kira_OS/lib/db/demo-store.tsx",
+  "/home/user/Kira_OS/lib/data/agent-recipes.ts",
+  "/home/user/Kira_OS/lib/knowledge/provenance.ts",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/desktop-desk.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/cmobile-universe-assassins-refusal.png"
+ ],
+ "first_five_minutes": "Cassy lands on Mission Control. It is beautiful and it reads as hers: \"Good afternoon, Cassandra.\", \"Your call, every time.\", six DEMO-badged metrics, \"Nothing leaves without you.\" Nothing lies to her \u2014 the agent panel literally says \"Not running. Not pretending to.\" (agent-status.tsx:19). She tabs: the skip link appears properly (globals.css:1929-1940), focus rings are a clear gold 2px at 4px offset (globals.css:100-103), the sidebar reads as a real nav with descriptions. So far this is a careful, adult product.\n\nThen she goes to her Desk to try the thing the app is actually for: writing down an idea. And the first friction is visual, not conceptual \u2014 she cannot see where the fields are. \"Give it a title\" and \"Your idea\" are boxes whose only boundary is a 1px #37382f line at 1.57:1 against the page (globals.css:26, input.tsx:10); the fill is 1.11:1. On the desktop screenshot the inputs read as faint rectangles you locate by the placeholder text, not by the field. She'll find them; someone with low vision on a laptop in a bright room will hunt. Same story for the most consequential control in the whole product \u2014 the manuscript permission checkbox (globals.css:3602, library.css:22), a 20px box with a 1.57:1 border. That is a 1.4.11 Non-text Contrast failure, and it is systemic: every input, textarea, select and checkbox in the app.\n\nSecond, the reading. A very large share of the copy that carries meaning \u2014 provenance badges, \"Not saved yet \u00b7 Kept in this tab\", every eyebrow, every nav description, every error message \u2014 runs at 11px (globals.css:32, 1799), and a few load-bearing labels run lower: \"Manuscript-supported \u00b7 unreviewed\" vs \"Interpretation \u00b7 verify with source\" at 10px (library.css:90), the evidence Source ID at 10px (evidence-drawer.tsx:58), the sidebar section labels at 9\u201310px (globals.css:250, 286, 365, 422). The most important honesty signals in the product are set in the smallest type in the product.\n\nThird, if she were using a screen reader she would miss most of the app's reassurance. The pattern the codebase uses nine times \u2014 mount a `<p role=\"status\">` at the same moment as its text \u2014 does not announce in NVDA/JAWS/VoiceOver: \"That brief is not available in your workspace\" (desk-page.tsx:82), \"Opening your saved workspace\u2026\" (connected-home.tsx:102), \"Your question is being saved and considered\" (studio-page.tsx:198), \"Loading your saved plans\u2026\" (plans-page.tsx:53), \"Opening your book library\u2026\" (connected-library.tsx:68). The forms that got this right \u2014 manual-review-form.tsx:258, studio-page.tsx:217, learn-page.tsx:195, access-page.tsx:126 \u2014 prove the team knows the correct pattern; it just isn't applied consistently.\n\nShe would still finish her first idea, and the save-state honesty (\"Not saved yet \u00b7 Kept in this tab until you save.\", manual-review-form.tsx:248) would land. The bones are good. The finish is not AA.",
+ "scores": [
+  {
+   "criterion": "agency_control",
+   "score": 6,
+   "verdict": "Consent is genuinely well-designed at the moment of asking \u2014 spoilers default off, manuscript permission is explicit, draft-conflict dialogs never overwrite without a choice, reading can be paused. But two real gaps remain: she cannot take her manuscript back, and as an Editor she cannot get her own marketing plan's tasks dated without the Owner. One control also commits before she confirms.",
+   "evidence": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 146,
+     "quote": "Every version you upload is kept. Removing a manuscript from the app isn\u2019t available yet \u2014 ask your workspace owner if you need a file removed."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 132,
+     "quote": "This plan is ready. Plans get a second read from the workspace owner before dated tasks go live \u2014 a check on audience, budget and dates, not on you."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 129,
+     "quote": "<select id={`plan-task-${t.id}`} disabled={!canEdit||busy} value={t.status} onChange={e=>void act({action:\"task\",id:t.id,expected:t.version,status:e.target.value})}>"
+    },
+    {
+     "file": "components/kira/book-knowledge.tsx",
+     "line": 89,
+     "quote": "<input type=\"checkbox\" checked={spoilers} onChange={...}/>Reveal plot details and potential spoilers"
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 145,
+     "quote": "Keep your words, or replace them with \u201c{idea.title}\u201d. Nothing changes until you choose."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 146,
+     "change": "Add a 'Request removal of this version' control that writes an owner-addressed brief to the desk (reusing createManualReview), and state in the same bullet who acts on it and how long it takes. Actual deletion is an owner + SQL decision; the request path is not.",
+     "rationale": "'Ask your workspace owner' with no in-app affordance makes her file feel like something she handed over rather than something she lent. A first-class request path restores agency without violating the retention rule."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 129,
+     "change": "Replace the commit-on-change select with a select plus an explicit 'Save progress' button (or commit on blur/Enter only), matching the 'Save role' pattern already used in access-page.tsx:150.",
+     "rationale": "WCAG 3.2.2 On Input. A Windows keyboard user arrowing through the native select fires a save on every option passed, silently writing 'Done' then 'Skipped' to her plan. It is also the only control in the app that acts without a confirm step."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 132,
+     "change": "Owner decision: whether an Editor can activate dated tasks on her own plans. If the gate stays, add a one-click 'Ask for a review' action here that notifies nothing but records the request, so she is not left with only a link to /access.",
+     "rationale": "Cassy is the author and the Editor. Being told her plan for her own books needs a second read, with no way to move it forward from this screen, is the one place the app reads as permission-seeking."
+    }
+   ]
+  },
+  {
+   "criterion": "safe_to_experiment_undo",
+   "score": 7,
+   "verdict": "Draft protection is the strongest thing in this codebase \u2014 the session-ended dialog hands back every unsaved word with a copy button, the corrupt-workspace dialog offers a download before anything is replaced, edits are keyed to the draft version they were written against. Two holes: one destructive action has no confirmation and no undo, and one control saves on keystroke.",
+   "evidence": [
+    {
+     "file": "components/kira/session-ended-dialog.tsx",
+     "line": 87,
+     "quote": "Your unfinished words are below, exactly as you left them. Copy anything you want to keep, then sign in again. Everything you already saved is untouched."
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 156,
+     "quote": "You wrote them against Draft ${keptVersion + 1}; this brief is now Draft ${approval.version + 1}."
+    },
+    {
+     "file": "components/kira/connections-page.tsx",
+     "line": 100,
+     "quote": "<Button variant=\"ghost\" size=\"icon\" disabled={busy} aria-label={`Remove ${link.label}`} onClick={() => void change(\"DELETE\", { id: link.id })}>"
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 129,
+     "quote": "onChange={e=>void act({action:\"task\",id:t.id,expected:t.version,status:e.target.value})}"
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 476,
+     "quote": "You have unsaved work in this browser session. Signing out discards unfinished desk briefs, workshop notes, and questions. Your saved workspace records stay available."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connections-page.tsx",
+     "line": 100,
+     "change": "Route the delete through a confirmation Dialog naming the link ('Remove \u201cMy author profile\u201d? The shortcut is deleted from this workspace; nothing on Instagram changes.'), matching access-page.tsx:155-171, and return focus to the list after removal.",
+     "rationale": "Every other destructive action in the app is confirmed and narrated. A single-click icon button that permanently deletes a saved record \u2014 and is reachable by Tab+Enter with no undo \u2014 is out of character and is exactly the kind of accident a keyboard user makes."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 129,
+     "change": "Same fix as agency: explicit save, and announce the result in the always-mounted status paragraph rather than relying on a silent write.",
+     "rationale": "A status change that commits on arrow-key traversal is silent data loss for keyboard users, and there is no visible confirmation that it saved."
+    }
+   ]
+  },
+  {
+   "criterion": "clarity_self_explanation",
+   "score": 7,
+   "verdict": "The app explains itself unusually well in prose \u2014 provenance labels, save-state, 'Reading is a separate step that you start', the manuscript consent list. What undermines it is that several machine-facing strings leak straight into the UI, and most loading/empty state announcements never reach a screen reader.",
+   "evidence": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 149,
+     "quote": "Saving stores the file only. Reading is a separate step that you start, and you can pause it."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 86,
+     "quote": "{(field===\"metric\"?[\"preorders\",\"sales\",\"reviews\",\"subscribers\",\"readers\",\"revenue\",\"custom\"]:[\"count\",\"currency\",\"percent\"]).map(o=><option key={o}>{o}</option>)}"
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 121,
+     "quote": "Last attempt did not complete ({revisions[0].error_code?.replaceAll(\"_\",\" \")}). Your previous saved work is retained."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 53,
+     "quote": "{!loaded&&!error&&<p role=\"status\">Loading your saved plans\u2026</p>}"
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 248,
+     "quote": "Not saved yet \u00b7 Kept in this tab until you save."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 86,
+     "change": "Add a label map for metric and unit (e.g. subscribers \u2192 'Newsletter subscribers', count \u2192 'A number', currency \u2192 'Dollars', percent \u2192 'Percent') and render `<option value={o}>{optionLabels[o]}</option>`, mirroring the existing `labels` map at plans-page.tsx:17.",
+     "rationale": "Raw enum identifiers in a user-facing select are unexplained internal vocabulary; 'count' and 'custom' mean nothing to an author setting a goal, and the file already has the pattern for fixing it."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 121,
+     "change": "Replace `error_code?.replaceAll(\"_\",\" \")` with a lookup keyed on error_code (as studioFailureMessages already does in lib/ai/studio-contract.ts) and fall back to a plain sentence for unknown codes.",
+     "rationale": "Surfacing 'provider unavailable' / 'daily limit' as bare identifiers reads as a leaked log line and gives her no next step, in a product that elsewhere always tells her what to do next."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 53,
+     "change": "Keep a single always-mounted `<p role=\"status\" className=\"plan-load-status\">{loadingMessage}</p>` and toggle its text, instead of mounting the element with its text. Apply the same change at connected-home.tsx:102, studio-page.tsx:198 and 204, connected-library.tsx:68, opportunities-page.tsx:20, desk-page.tsx:82.",
+     "rationale": "An aria-live container inserted into the DOM together with its content is not reliably announced by NVDA, JAWS or VoiceOver, so none of these loading/empty/error states exist for a screen-reader user."
+    }
+   ]
+  },
+  {
+   "criterion": "tone_dignity",
+   "score": 8,
+   "verdict": "Peer-level throughout. It treats her as the professional: evidence first, no cheerleading, no infantilising metaphors, and error copy that protects her work rather than apologising at her. The Kira/Cassandra duality is handled as two facets of one woman, not two people.",
+   "evidence": [
+    {
+     "file": "components/kira/agent-status.tsx",
+     "line": 19,
+     "quote": "<h2>Not running. Not pretending to.</h2>"
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 149,
+     "quote": "Kira Stanley<small>Cassandra\u2019s author workspace</small>"
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 108,
+     "quote": "We could not reach your workspace. Your text is still here; please try again."
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 44,
+     "quote": "<em>The call is yours.</em>"
+    },
+    {
+     "file": "components/kira/book-knowledge.tsx",
+     "line": 102,
+     "quote": "Saved, unreviewed observations. Differing accounts remain visible for you to resolve; this is not an approved character bible."
+    }
+   ],
+   "must_fix_to_reach_8": []
+  },
+  {
+   "criterion": "respect_creative_material",
+   "score": 6,
+   "verdict": "The consent disclosure is the best I have read in a product like this \u2014 storage, readers, named providers, retention, spoiler default, 'never rewritten'. But the file is one-way: there is no removal path. And the single checkbox that carries that consent is the least visible control on the page and has no accessible error handling of its own.",
+   "evidence": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 143,
+     "quote": "<div className=\"library-consent\"><h3>What happens to your file</h3><ul>"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 148,
+     "quote": "<label className=\"library-check\"><input type=\"checkbox\" name=\"permission\" value=\"true\" required disabled={uploading || reading} />I have permission to upload this manuscript and to let Raven read it privately for book knowledge."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 170,
+     "quote": "Every version you upload is kept. Removing a manuscript from the app isn\u2019t available yet \u2014 ask your workspace owner if you need a file removed."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 104,
+     "quote": "if (form.get(\"permission\") !== \"true\") { setError(\"Confirm your permission before uploading.\"); return; }"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 152,
+     "quote": "{error && <p role=\"alert\" className=\"library-error\">{error}</p>}{message && <p role=\"status\" className=\"library-success\">{message}</p>}"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 152,
+     "change": "Move the upload error and success paragraphs inside the upload form, directly above the submit button, keep both always mounted with empty text, and on failure call `errorRef.current?.focus()` the way manual-review-form.tsx:85 does.",
+     "rationale": "Today the result of the most sensitive action in the app renders in a different card, below an unrelated 'Bring a business question to your desk' panel. A sighted user may not see it; a screen-reader user will not hear it because the element mounts with its text."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 148,
+     "change": "Drop `required` from the permission checkbox and the file input, and instead set `aria-invalid` and `aria-errormessage` pointing at the in-form error paragraph when the custom checks at lines 103-104 fail \u2014 the same pattern already used at manual-review-form.tsx:190-192.",
+     "rationale": "With `required` present the browser blocks submission with a transient native bubble and the carefully written custom message ('Confirm your permission before uploading.') can never appear. Consent failure must be stated in a way that persists and is programmatically associated with the control."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 3602,
+     "change": "Raise the unchecked checkbox border to at least 3:1 against #121312 \u2014 e.g. `border: 1.5px solid #6f7264;` (4.0:1) \u2014 and apply the same to components/kira/library.css:22.",
+     "rationale": "WCAG 1.4.11. The manuscript permission checkbox is currently a 1.57:1 outline. The one control that records her consent over her own book must be unambiguously visible."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 170,
+     "change": "Add a 'Request removal' action here that files an owner-addressed brief, and say plainly what happens to the stored file and its embeddings when it is removed. Actual deletion semantics are an owner + SQL decision.",
+     "rationale": "'Your work is yours' is not fully true while the only exit is an out-of-band conversation. Even a request path materially changes how the upload feels."
+    }
+   ]
+  },
+  {
+   "criterion": "visual_craft_warmth",
+   "score": 7,
+   "verdict": "A genuinely handsome, coherent dark editorial system \u2014 Cormorant display against Manrope, restrained gold, real hierarchy, mobile layouts that hold up. Two craft failures pull it down: form controls are effectively borderless, and a very large share of body copy sits at 11px.",
+   "evidence": [
+    {
+     "file": "app/globals.css",
+     "line": 26,
+     "quote": "--input: #37382f;"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 32,
+     "quote": "--text-xs: 11px;"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1799,
+     "quote": "font-size: 11px;"
+    },
+    {
+     "file": "components/kira/library.css",
+     "line": 90,
+     "quote": ".knowledge-proof{color:#b9c5ab;font-size:10px}"
+    },
+    {
+     "file": "app/layout.tsx",
+     "line": 94,
+     "quote": "<html lang=\"en\" className=\"dark\">"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "app/globals.css",
+     "line": 26,
+     "change": "Change `--input: #37382f;` to a value at 3:1 or better against `--background` (e.g. `#6f7264`, 4.0:1) and `--border: #33342c;` (line 25) to at least `#5b5d52` for the surfaces where it draws a control boundary (selects at globals.css:3406, plan-options labels in plans.css).",
+     "rationale": "WCAG 1.4.11 and plain craft. In the rendered desk screenshot the title and idea fields are located by their placeholder text, not by the field outline. Decorative hairlines can stay subtle; control boundaries cannot."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 32,
+     "change": "Raise `--text-xs` to 12px and `--text-sm` to 13px, then re-check the ~40 rules that hardcode `font-size: 11px` (2635, 2638, 2923, 2957, 3029, 3071, 3197, 3256, 3282, 3297, 3311, 3314, 3334, 3363, 3438, 3483, 3499, 3511 and library.css:57, 91) and move the meaningful ones onto the token.",
+     "rationale": "11px is the default for eyebrows, nav descriptions, save-state, error messages and provenance badges \u2014 the copy that carries the app's honesty. At 11px on a 14px base it reads as fine print, which is the opposite of the intent."
+    },
+    {
+     "file": "components/kira/library.css",
+     "line": 90,
+     "change": "Raise `.knowledge-proof` from 10px to at least 12px and `.knowledge-index small:last-child` from 10px to 12px; raise the Source ID in evidence-drawer.tsx:58 from `text-[10px]` to `text-xs`.",
+     "rationale": "'Manuscript-supported \u00b7 unreviewed' versus 'Interpretation \u00b7 verify with source' is the distinction the whole knowledge panel rests on, and it is set smaller than anything else on the page."
+    },
+    {
+     "file": "app/layout.tsx",
+     "line": 94,
+     "change": "Owner decision: whether to ship a light theme. If yes, move the palette into a `:root` / `@media (prefers-color-scheme: light)` pair and drop the hardcoded `dark` class; if no, say so in docs so it is a choice rather than an omission.",
+     "rationale": "A forced dark theme is defensible for this brand but it is a real accessibility limitation for users with astigmatism or light-sensitivity-inverse needs, and it is currently unstated."
+    }
+   ]
+  },
+  {
+   "criterion": "accessibility",
+   "score": 5,
+   "verdict": "The fundamentals are handled with real care \u2014 skip link, reduced-motion block, 16px inputs and 44px targets on mobile, lucide icons auto-hidden, dialog focus return, aria-errormessage on the main forms, clean heading order, labelled progress. But I found a systemic 1.4.11 failure across every form control, an aria-live pattern that does not announce repeated in nine files, a live region wrapping an entire results list, a select that commits on arrow-key, and focus that jumps backwards after every access change. An axe pass cannot see any of these.",
+   "evidence": [
+    {
+     "file": "app/globals.css",
+     "line": 26,
+     "quote": "--input: #37382f;"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 3602,
+     "quote": ".library-check input[type=\"checkbox\"], .plan-options input[type=\"checkbox\"], .studio-book-selection input[type=\"checkbox\"] { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; flex-shrink: 0; margin: 1px 0 0; border: 1.5px solid var(--input); border-radius: 5px; background: #00000030;"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 166,
+     "quote": "<div role=\"status\" className=\"library-search-results\">{searchAllowed && searchResults && <><p>{searchResults.length} matching passage\u2026"
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 129,
+     "quote": "<select id={`plan-task-${t.id}`} disabled={!canEdit||busy} value={t.status} onChange={e=>void act({action:\"task\",id:t.id,expected:t.version,status:e.target.value})}>"
+    },
+    {
+     "file": "components/kira/access-page.tsx",
+     "line": 101,
+     "quote": "requestAnimationFrame(() => (focusAlert.current ? alertRef : statusRef).current?.focus());"
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 82,
+     "quote": "{briefId && ready && !selectedBrief && <p role=\"status\" className=\"quiet-note\">That brief is not available in your workspace."
+    },
+    {
+     "file": "components/kira/learn-page.tsx",
+     "line": 170,
+     "quote": "<Input ref={nameRef} id=\"agent-blueprint-name\" value={input.name} onChange={(event) => updateField(\"name\", event.target.value)} maxLength={80} required disabled={pending} />"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2620,
+     "quote": "@media (prefers-reduced-motion: reduce) {"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 3588,
+     "quote": "body :is(input, textarea, select):not([type=\"radio\"]):not([type=\"checkbox\"]) { font-size: 16px; }"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 153,
+     "quote": "<progress aria-label=\"Manuscript reading progress\" aria-valuetext={`${latest.completed_chunks} of ${latest.chunk_count} passages read`} max={latest.chunk_count} value={latest.completed_chunks} />"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "app/globals.css",
+     "line": 26,
+     "change": "`--input: #6f7264;` (4.0:1 on #121312) and `--border: #5b5d52;` where it bounds a control; keep the darker hairline for purely decorative separators via a new `--hairline` token.",
+     "rationale": "WCAG 1.4.11 Non-text Contrast, 3:1. Currently every Input, Textarea, select and custom checkbox is identified by a 1.41\u20131.57:1 boundary over a 1.11:1 fill. This is the single largest AA failure in the build and it affects every form in the app."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 3602,
+     "change": "Same token change reaches this rule and components/kira/library.css:22; additionally raise the custom checkbox from 20\u00d720 to 24\u00d724 so it meets SC 2.5.8 without relying on the spacing exception (the studio-book-selection labels at globals.css:3599 have no padding).",
+     "rationale": "1.4.11 plus 2.5.8 Target Size (Minimum). The spoiler and book-selection checkboxes sit in tight label rows where the 24px exception is not safely met."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 166,
+     "change": "Move `role=\"status\"` off the results container and onto a dedicated, always-mounted count paragraph: `<p role=\"status\">{resultSummary}</p>` followed by a plain `<div className=\"library-search-results\">` holding the result cards.",
+     "rationale": "A live region containing every excerpt and a 'Show full passage' button for each result means a screen reader reads the entire result set aloud on every search, including button labels. It is unusable at more than two or three hits."
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 82,
+     "change": "Render the live region unconditionally with empty text and toggle only the string: `<p role=\"status\" className=\"quiet-note\">{briefId && ready && !selectedBrief ? \"That brief is not available\u2026\" : \"\"}</p>`. Apply the identical change at connected-home.tsx:102, studio-page.tsx:198 and 204, plans-page.tsx:53, 121, 122, connected-library.tsx:68, opportunities-page.tsx:20, connected-book-detail.tsx:133 and 173.",
+     "rationale": "SC 4.1.3 Status Messages. Inserting the live-region element and its text in the same render is the classic non-announcing pattern; nine status messages are currently silent. The correct pattern already exists in this codebase at manual-review-form.tsx:258."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 129,
+     "change": "Split the task-status select from its commit: keep local state and add an adjacent 'Save progress' button, or commit only on `onBlur`/Enter, then write the outcome into the page's existing status paragraph.",
+     "rationale": "SC 3.2.2 On Input \u2014 changing the value of a select must not automatically change context or commit data. On Windows, arrowing through the options saves each intermediate value to her plan."
+    },
+    {
+     "file": "components/kira/access-page.tsx",
+     "line": 101,
+     "change": "Stop moving focus to the status paragraph on success; keep focus on the invoking control (Save role / Grant access / the dialog's return target) and let the always-mounted `role=\"status\"` at line 126 do the announcing. Keep the focus move only for the error path at line 125.",
+     "rationale": "SC 2.4.3 Focus Order. The status paragraph sits above the access grid, so after saving a member's role the keyboard user is thrown back above the list and must re-traverse it. The live region already announces without focus; focusing an aria-live element also causes double announcement in JAWS."
+    },
+    {
+     "file": "components/kira/learn-page.tsx",
+     "line": 170,
+     "change": "Remove `required` from the three blueprint fields (170, 171, 173) and rely on the existing custom validation at learn-page.tsx:75, adding `aria-invalid` and `aria-errormessage=\"learn-error\"` tied to the paragraph at line 194; give that paragraph the id.",
+     "rationale": "SC 3.3.1. Mixing native `required` with a hand-written message means the custom message never fires and the user gets only a transient native bubble with no persistent, programmatically associated error text."
+    },
+    {
+     "file": "components/kira/library.css",
+     "line": 90,
+     "change": "`.knowledge-proof` 10px \u2192 12px; `.knowledge-index small:last-child` 10px \u2192 12px; and in evidence-drawer.tsx:58 change `text-[10px]` to `text-xs`.",
+     "rationale": "These are the smallest meaningful strings in the app and they carry provenance ('Interpretation \u00b7 verify with source', the evidence Source ID). Sub-12px body text is unreadable for a large share of users even though it technically zooms."
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 107,
+     "change": "Append `<span className=\"sr-only\">: {a.title}</span>` to the 'Turn this idea into a marketing plan' link.",
+     "rationale": "SC 2.4.4. Every brief renders an identically named link; a screen-reader user listing links sees N copies of the same label with no way to tell which brief each belongs to."
+    }
+   ]
+  },
+  {
+   "criterion": "trust_honesty",
+   "score": 8,
+   "verdict": "This is the strongest dimension. Nothing claims to be running that is not, provenance is attached to every synthetic record, costs and model names are disclosed, and the app repeatedly names what it will *not* do. I found no dark patterns and no claim that the code does not support. One small seam: a checklist step reports completion from a browser-local breadcrumb without saying so.",
+   "evidence": [
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 214,
+     "quote": "This decision is final: the brief becomes read-only and cannot be reopened or edited. You can still add a lesson. Nothing will be published, sent, purchased, or changed outside this workspace."
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 154,
+     "quote": "Your notes are saved with the decision and you can export them any time. Raven does not learn from them automatically."
+    },
+    {
+     "file": "components/kira/studio-page.tsx",
+     "line": 212,
+     "quote": "Saved privately \u00b7 {generation.model}{generation.estimated_cost_usd !== null ? ` \u00b7 Estimated model cost $${generation.estimated_cost_usd.toFixed(5)}` : \" \u00b7 Model cost unavailable\"}"
+    },
+    {
+     "file": "components/kira/access-page.tsx",
+     "line": 90,
+     "quote": "Access saved. No invitation or email was sent."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 40,
+     "quote": "window.localStorage.setItem(\"kira-os:visited-book:v1\", \"true\");"
+    },
+    {
+     "file": "components/kira/getting-started.tsx",
+     "line": 103,
+     "quote": "status: visitedBook ? \"You\u2019ve opened a book\" : \"A good place to begin\","
+    }
+   ],
+   "must_fix_to_reach_8": []
+  }
+ ],
+ "top_findings": [
+  {
+   "priority": 1,
+   "title": "Every form control fails WCAG 1.4.11: input/select/checkbox borders are 1.4\u20131.6:1",
+   "file": "app/globals.css",
+   "line": 26,
+   "problem": "`--input: #37382f` gives a 1.57:1 boundary against the #121312 page and 1.41:1 against the control's own #1d1e1b fill; `--border: #33342c` (line 25) is 1.48:1 and bounds every native select (globals.css:3406). The custom checkbox (globals.css:3602, library.css:22) inherits the same 1.5px #37382f outline. Non-text Contrast requires 3:1 for the visual information needed to identify a UI component. This affects the desk idea form, plan forms, access forms, login, connections, the studio question box and \u2014 most consequentially \u2014 the manuscript permission checkbox.",
+   "proposed_change": "Set `--input: #6f7264` (4.0:1) and introduce a separate `--hairline: #33342c` for decorative separators, leaving `--border` at a 3:1-or-better value wherever it draws a control boundary. Verify the rendered borders on /desk, /plans, /access and the manuscript upload panel.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 2,
+   "title": "Nine status messages never announce: live regions are mounted together with their text",
+   "file": "components/kira/desk-page.tsx",
+   "line": 82,
+   "problem": "The codebase repeatedly renders `{condition && <p role=\"status\">\u2026</p>}`. Inserting an aria-live container and its content in the same commit does not trigger announcement in NVDA, JAWS or VoiceOver. Affected: desk-page.tsx:82, connected-home.tsx:102, studio-page.tsx:198 and 204, plans-page.tsx:53/121/122, connected-library.tsx:68, opportunities-page.tsx:20, connected-book-detail.tsx:133 and 173. A screen-reader user gets no loading, no empty-state and no 'your question is being saved' feedback on those screens.",
+   "proposed_change": "Convert each to an always-mounted region whose text toggles, e.g. `<p role=\"status\" className=\"quiet-note\">{message}</p>` with `message` defaulting to `\"\"` and a `:empty { display:none }` rule (the pattern already used at manual-review-form.tsx:258, studio-page.tsx:217, learn-page.tsx:195, access-page.tsx:126 and globals.css:3417).",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 3,
+   "title": "Manuscript upload errors render outside the form and cannot be heard",
+   "file": "components/kira/connected-book-detail.tsx",
+   "line": 152,
+   "problem": "`{error && <p role=\"alert\" \u2026>}` sits after the upload Card and after the 'Bring a business question' Card, so the result of the most sensitive action in the product appears far from the control that caused it, is mounted with its text (so it does not announce), and focus is never moved to it. Compounding this, `required` on the file input and the permission checkbox (line 142, 148) means the hand-written messages at lines 103-104 can never fire.",
+   "proposed_change": "Move the error and success paragraphs inside the upload `<form>` above the submit button, keep both always mounted with empty text, drop `required` in favour of the existing custom checks, wire `aria-invalid`/`aria-errormessage` on the file input and checkbox to the error paragraph's id, and focus the error on failure (manual-review-form.tsx:85 pattern).",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 4,
+   "title": "Plan task status commits on every select change (WCAG 3.2.2)",
+   "file": "components/kira/plans-page.tsx",
+   "line": 129,
+   "problem": "`onChange={e=>void act({action:\"task\", \u2026, status:e.target.value})}` writes to the server the instant the select value changes. On Windows, a keyboard user arrowing through a closed native select fires change on every option passed, so 'To do' \u2192 'Done' \u2192 'Skipped' all get saved. There is no confirmation, no announcement and no undo.",
+   "proposed_change": "Hold the value in local state and add an explicit 'Save progress' button per task (mirroring 'Save role' at access-page.tsx:150), or commit only on blur/Enter; announce the saved status in the page's always-mounted status region.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 5,
+   "title": "Search results list is wrapped in role=\"status\"",
+   "file": "components/kira/connected-book-detail.tsx",
+   "line": 166,
+   "problem": "`<div role=\"status\" className=\"library-search-results\">` contains the count, every result excerpt, every location eyebrow and a 'Show full passage' button per result. When results change, the entire set \u2014 including button labels \u2014 is announced. With ten matches this is a wall of speech a user cannot interrupt meaningfully.",
+   "proposed_change": "Put `role=\"status\"` on a small dedicated paragraph holding only the count sentence, and render the result cards in a plain sibling container.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 6,
+   "title": "Meaningful text below 12px, including the provenance labels the product depends on",
+   "file": "components/kira/library.css",
+   "line": 90,
+   "problem": "`.knowledge-proof` is 10px \u2014 that is the 'Manuscript-supported \u00b7 unreviewed' vs 'Interpretation \u00b7 verify with source' distinction. `.knowledge-index small:last-child` is 10px. The evidence Source ID is `text-[10px]` (evidence-drawer.tsx:58). `--text-xs: 11px` (globals.css:32) drives all eyebrows, nav descriptions, save-state, DEMO/MANUAL SNAPSHOT badges (globals.css:565) and error messages (globals.css:1799). Sidebar labels run 9\u201310px (globals.css:250, 286, 365, 422, 451). The cover text at 7\u20139px is correctly `aria-hidden` (book-card.tsx:15) and is not a concern.",
+   "proposed_change": "Raise `--text-xs` to 12px and `--text-sm` to 13px; move the ~40 hardcoded `font-size: 11px` rules onto the token; raise `.knowledge-proof`, `.knowledge-index small:last-child` and the evidence Source ID to 12px.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 7,
+   "title": "Focus jumps backwards above the member list after every access change",
+   "file": "components/kira/access-page.tsx",
+   "line": 101,
+   "problem": "`requestAnimationFrame(() => (focusAlert.current ? alertRef : statusRef).current?.focus())` runs after every request, including success. The status paragraph at line 126 is above the access grid, so after saving a role or granting access the keyboard user is dropped above the list and must Tab through it again. Focusing an aria-live element also produces a double announcement in JAWS.",
+   "proposed_change": "On success, leave focus on the invoking button and let the always-mounted status region announce; keep the focus move only for the error branch.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 8,
+   "title": "A saved connection link is deleted by a single icon button with no confirm and no undo",
+   "file": "components/kira/connections-page.tsx",
+   "line": 100,
+   "problem": "The Trash2 icon button calls `change(\"DELETE\", \u2026)` directly. It is a Tab stop with the accessible name 'Remove My author profile' and no confirmation step, in an app where sign-out, demo reset, member removal and draft replacement are all confirmed. Focus after removal is also lost when the list re-renders.",
+   "proposed_change": "Route through a confirmation Dialog naming the link and stating that nothing on the platform changes, then return focus to the list heading or the next remove button.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 9,
+   "title": "No way to take a manuscript back",
+   "file": "components/kira/connected-book-detail.tsx",
+   "line": 146,
+   "problem": "'Removing a manuscript from the app isn\u2019t available yet \u2014 ask your workspace owner if you need a file removed' (repeated at line 170). The disclosure is honest, which is why it scores so well on trust, but the capability gap is the biggest agency and creative-respect gap in the product: her most intimate file is one-way once uploaded.",
+   "proposed_change": "Ship a 'Request removal of this version' action that files an owner-addressed desk brief with the manuscript id and version, and state what removal will and will not erase. Actual deletion (storage object, chunks, embeddings, audit row) is an owner decision and a SQL migration, not a tonight fix.",
+   "fixable_in_code": false,
+   "owner_decision_needed": "Whether and how manuscripts can be deleted \u2014 retention policy, what happens to derived knowledge and citations, and who may trigger it. Code can ship the request path tonight; the deletion itself needs the owner's call and a migration."
+  },
+  {
+   "priority": 10,
+   "title": "Owner review gates the author's own marketing plan",
+   "file": "components/kira/plans-page.tsx",
+   "line": 132,
+   "problem": "As an Editor, Cassy can build and generate a plan for her own books but cannot activate dated tasks; the screen explains the gate warmly but offers only a link to /access. In a product whose thesis is 'the call is yours', the one place a plan becomes actionable is the one place she needs Michael.",
+   "proposed_change": "Owner decision on the right; in code, at minimum add an in-page 'Ask for a review' action that records the request and shows its state, so she can move the plan forward from here rather than leaving the screen.",
+   "fixable_in_code": false,
+   "owner_decision_needed": "Whether an Editor may approve and activate her own plans, or whether owner review stays. If it stays, whether a request-review action is acceptable given the no-notification rule."
+  }
+ ],
+ "what_works": [
+  "Reduced motion is handled properly: `html { scroll-behavior: smooth }` (globals.css:68) is neutralised along with all animation and transition durations under `@media (prefers-reduced-motion: reduce)` (globals.css:2620-2627), and the `.animate-spin` refresh icon on /raven is covered by it.",
+  "iOS zoom-on-focus is prevented deliberately: `body :is(input, textarea, select)\u2026{ font-size: 16px }` inside the 760px breakpoint (globals.css:3588), alongside `min-height: 44px` for inputs, selects and every `[data-slot=\"button\"]` (globals.css:3589-3596). Desktop targets are all \u226524\u00d724, so SC 2.5.8 is met.",
+  "Decorative iconography is genuinely silent: lucide-react v1.47 emits `aria-hidden=\"true\"` whenever no a11y prop is passed (node_modules/lucide-react/dist/cjs/lucide-react.js:64-66), and the one place with real text inside a decorative graphic \u2014 the placeholder book cover \u2014 is explicitly `aria-hidden` (book-card.tsx:15) with the title repeated in the `<h3>`.",
+  "The best-practice live-region pattern does exist here and is worth copying everywhere: always-mounted, empty by default, hidden via `:empty { display: none }` \u2014 manual-review-form.tsx:258, studio-page.tsx:217, learn-page.tsx:195, access-page.tsx:126 and globals.css:3417.",
+  "Polling does not spam the screen reader: the manuscript reading announcement is throttled to one sentence per state change or once per 20 seconds (connected-book-detail.tsx:51-57) into a stable region (line 153), and the `<progress>` element carries both `aria-label` and `aria-valuetext`.",
+  "Dialog focus is managed by hand where the default would be wrong: the sign-out confirmation focuses 'Keep working' on open and returns to the sign-out button on close (app-shell.tsx:472-473); approve/reject dialogs focus Cancel first and return to the trigger, falling back to the Reviewed tab when the trigger has unmounted (approval-card.tsx:197-205).",
+  "Error handling on the main forms is textbook: `aria-required`, `aria-invalid`, `aria-errormessage` pointing at a `role=\"alert\"` paragraph that is then focused \u2014 manual-review-form.tsx:190-192/240, plans-page.tsx:74-75/87/136-138, studio-page.tsx:192.",
+  "Character counting is done right: the visible '0 / 10,000' is `aria-hidden` and a separate `sr-only` string gives graded, non-chatty feedback only near and at the limit (manual-review-form.tsx:203-214).",
+  "Heading structure is clean across every page I read \u2014 one `h1` per route, `h2` per card/section, `h3`/`h4` nested correctly inside the knowledge workbench (book-knowledge.tsx:88, 91, 101) and the studio result (studio-page.tsx:205-208).",
+  "Status is never conveyed by colour alone: the creative-firewall list pairs a check/cross icon with the words 'Allowed'/'Prohibited' (settings-page.tsx:80-83), and metric cards carry an `sr-only` detail sentence including 'Demo data' (metric-card.tsx:42).",
+  "The skip link is real and visible on focus (globals.css:1929-1940, app-shell.tsx:363), `<main id=\"main-content\" tabIndex={-1}>` is a valid target, and the permission-retry flow returns focus there deliberately (workspace-permission-notice.tsx:12).",
+  "External links consistently announce themselves: `<span className=\"sr-only\"> (opens in a new tab)</span>` on connections-page.tsx:99/130 and setup-status.tsx:63/74, and a full `aria-label` on the daily quote source (daily-quote.tsx:12).",
+  "Toasts have no auto-dismiss timer anywhere in lib/db/demo-store.tsx, so SC 2.2.1 Timing Adjustable is not engaged \u2014 a notice waits until she dismisses it.",
+  "The inspiration carousel is a correctly built one: `aria-roledescription=\"carousel\"`, an `sr-only` keyboard-help string wired via `aria-describedby`, arrow/Home/End handling that defers to inner links and buttons, and a polite position region that also speaks the new idea's title (inspiration-shelf.tsx:49-62)."
+ ]
+}

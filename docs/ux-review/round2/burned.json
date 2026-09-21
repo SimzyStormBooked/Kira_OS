@@ -1,0 +1,628 @@
+{
+ "judge": "Dana \u2014 data-loss and save-state adversary (round 2)",
+ "files_read": [
+  "/home/user/Kira_OS/docs/ux-review/brief.md",
+  "/home/user/Kira_OS/lib/db/demo-store.tsx",
+  "/home/user/Kira_OS/lib/db/workspace-state.ts",
+  "/home/user/Kira_OS/components/kira/app-shell.tsx",
+  "/home/user/Kira_OS/components/kira/session-ended-dialog.tsx",
+  "/home/user/Kira_OS/components/kira/manual-review-form.tsx",
+  "/home/user/Kira_OS/components/kira/approval-card.tsx",
+  "/home/user/Kira_OS/components/kira/desk-page.tsx",
+  "/home/user/Kira_OS/components/kira/settings-page.tsx",
+  "/home/user/Kira_OS/components/kira/learn-page.tsx",
+  "/home/user/Kira_OS/components/kira/studio-page.tsx",
+  "/home/user/Kira_OS/components/kira/connected-book-detail.tsx",
+  "/home/user/Kira_OS/components/kira/connected-library.tsx",
+  "/home/user/Kira_OS/components/kira/library-provider.tsx",
+  "/home/user/Kira_OS/components/kira/mission-control.tsx",
+  "/home/user/Kira_OS/components/kira/connected-home.tsx",
+  "/home/user/Kira_OS/components/kira/getting-started.tsx",
+  "/home/user/Kira_OS/components/kira/universe-catalog.tsx",
+  "/home/user/Kira_OS/components/kira/book-detail.tsx",
+  "/home/user/Kira_OS/components/kira/book-knowledge.tsx",
+  "/home/user/Kira_OS/components/kira/plans-page.tsx",
+  "/home/user/Kira_OS/components/kira/opportunities-page.tsx",
+  "/home/user/Kira_OS/components/kira/access-page.tsx",
+  "/home/user/Kira_OS/components/kira/connections-page.tsx",
+  "/home/user/Kira_OS/components/kira/raven-page.tsx",
+  "/home/user/Kira_OS/components/kira/recommendation-card.tsx",
+  "/home/user/Kira_OS/components/kira/inspiration-shelf.tsx",
+  "/home/user/Kira_OS/components/kira/workspace-guide.tsx",
+  "/home/user/Kira_OS/components/kira/workspace-permission-notice.tsx",
+  "/home/user/Kira_OS/components/kira/context-help.tsx",
+  "/home/user/Kira_OS/components/kira/password-settings.tsx",
+  "/home/user/Kira_OS/components/kira/setup-status.tsx",
+  "/home/user/Kira_OS/components/kira/one-time-sign-in.tsx",
+  "/home/user/Kira_OS/components/kira/evidence-drawer.tsx",
+  "/home/user/Kira_OS/components/kira/origin-badge.tsx",
+  "/home/user/Kira_OS/components/kira/metric-card.tsx",
+  "/home/user/Kira_OS/components/kira/agent-status.tsx",
+  "/home/user/Kira_OS/components/kira/daily-quote.tsx",
+  "/home/user/Kira_OS/app/login/page.tsx",
+  "/home/user/Kira_OS/components/kira/login-form.tsx",
+  "/home/user/Kira_OS/app/welcome/page.tsx",
+  "/home/user/Kira_OS/app/[module]/page.tsx",
+  "/home/user/Kira_OS/app/error.tsx",
+  "/home/user/Kira_OS/app/layout.tsx",
+  "/home/user/Kira_OS/lib/data/seed.ts",
+  "/home/user/Kira_OS/lib/data/agent-recipes.ts",
+  "/home/user/Kira_OS/app/globals.css",
+  "/home/user/Kira_OS/components/kira/library.css",
+  "/home/user/Kira_OS/supabase/migrations/202609190001_manuscript_intelligence.sql",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/desktop-home.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/mobile-desk.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/cdesktop-universe-assassins-refusal.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/cmobile-plans.png"
+ ],
+ "first_five_minutes": "Cassy lands on Mission Control and it is beautiful and legible: DEMO badges on every synthetic number, \"Not running. Not pretending to.\" on the specialists card, a footer that tells her exactly where her changes live. She opens Cassandra's Desk, types an idea, and sees \"Not saved yet \u00b7 Kept in this tab until you save\" \u2014 which is true there, and it is the single best thing in this build. She reloads on purpose to test it; her words survive. Good.\n\nThen she wanders. She opens a brief, hits Edit, rewrites the middle paragraph, cancels the dialog \u2014 the card warns her she has unsaved edits and offers \"Continue editing.\" Excellent. But she then clicks Approve, because she thinks approving is what saves it; the dialog says the decision is final and mentions nothing about her rewrite, and after \"Confirm approval\" her edited text is gone (approval-card.tsx:67 clears the edit draft, and the brief that got approved is the old draft). She has no idea it happened.\n\nOn the connected side she opens Assassin's Refusal, clicks \"Edit book details,\" writes four paragraphs of her own book description into the dialog, gets distracted, and presses Escape. Nothing warns her; nothing was kept. On Marketing Plans she fills the whole form \u2014 name, intent, books, goals \u2014 and reads \"Not saved yet \u00b7 Kept in this tab until you save.\" That sentence is false there: the value lives in a component useState (plans-page.tsx:68), so a reload, a stray navigation, or an expired session takes all of it, and neither the beforeunload guard nor the sign-out dialog counts it as unsaved work. Same for a long Teach Raven lesson. She alt-tabs to check something, comes back, the focus listener refreshes, the session has expired, and because none of those fields register as \"private drafts\" the app hard-redirects her to /login with no dialog and no copy button.\n\nBy minute five the app has earned a lot of trust with its language and then quietly broken the specific promise that language made. For someone who has lost 40,000 words once, that is worse than never making the promise.",
+ "scores": [
+  {
+   "criterion": "agency_control",
+   "score": 6,
+   "verdict": "Consent and role gating are genuinely good \u2014 permission is asked before the manuscript is read, spoilers are off by default, reading can be paused, every 'replace my draft' moment gives her the keep option. But on her most intimate asset she has no exit: she cannot delete her manuscript, cannot download it back, and cannot see who granted permission or how big the file was. The copy points her at the workspace owner for removal, and the owner has no path either.",
+   "evidence": [
+    {
+     "file": "supabase/migrations/202609190001_manuscript_intelligence.sql",
+     "line": 473,
+     "quote": "create policy kira_manuscript_no_delete on storage.objects as restrictive for delete to authenticated using(bucket_id<>'kira-manuscripts')"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 146,
+     "quote": "Every version you upload is kept. Removing a manuscript from the app isn\u2019t available yet \u2014 ask your workspace owner if you need a file removed."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 171,
+     "quote": "The file size and the member who granted permission are recorded with each version but are not shown here yet."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 148,
+     "quote": "I have permission to upload this manuscript and to let Raven read it privately for book knowledge. This is not permission to publish or quote from it."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 132,
+     "quote": "Plans get a second read from the workspace owner before dated tasks go live \u2014 a check on audience, budget and dates, not on you."
+    },
+    {
+     "file": "components/kira/connections-page.tsx",
+     "line": 100,
+     "quote": "{canEdit && <Button variant=\"ghost\" size=\"icon\" disabled={busy} aria-label={`Remove ${link.label}`} onClick={() => void change(\"DELETE\", { id: link.id })}>"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 169,
+     "change": "Add a 'Download this version' button per row in the custody list, backed by a new GET /api/manuscripts/[id]/file route that issues a short-lived signed URL under the existing kira_manuscript_read policy. She must be able to get her own file back out.",
+     "rationale": "An upload she cannot retrieve or remove is a one-way door on the most personal object in the app."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 146,
+     "change": "Until deletion exists, replace 'ask your workspace owner if you need a file removed' with the literal truth: 'No one \u2014 including the workspace owner \u2014 can remove a manuscript from inside this app yet. Removal currently needs a direct database request.'",
+     "rationale": "The current sentence promises a human escalation path that does not exist; that is worse than admitting the gap."
+    },
+    {
+     "file": "components/kira/connections-page.tsx",
+     "line": 100,
+     "change": "Wrap the link Remove action and the 'Disconnect Meta' action (line 125) in the same confirm dialog pattern used for Remove access, with the safe option focused.",
+     "rationale": "Every other destructive action in the app is confirmed; these two delete saved state on a single click with no undo."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 169,
+     "change": "Show the recorded file size and permission-granting member in each custody row instead of the apology on line 171.",
+     "rationale": "'We recorded it but won't show you' is the opposite of letting her see what happened to her file; the data is already stored."
+    }
+   ]
+  },
+  {
+   "criterion": "safe_to_experiment_undo",
+   "score": 4,
+   "verdict": "The protected scratchpads (desk idea, Learn blueprints, Ask Raven question, brief edits) are excellent \u2014 sessionStorage-backed, restored into a session-ended dialog, guarded by beforeunload and a sign-out confirm. But that protection covers four fields and the app has at least six more long-text fields with none of it, and one of them displays the protected fields' exact reassurance text while having no persistence at all. Approving a brief silently destroys her unsaved rewrite of it.",
+   "evidence": [
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 154,
+     "quote": "return Boolean(scratchpad.title.trim() || scratchpad.draft.trim() || changedRecipe || editedBrief || (studioScratchpad.prompt.trim() && studioScratchpad.savedSignature !== questionSignature));"
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 88,
+     "quote": "<span className=\"plan-save-state\" role=\"status\">{busy?\"Saving your plan details\u2026\":changed?\"Not saved yet \u00b7 Kept in this tab until you save.\":\"No unsaved changes.\"}</span>"
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 68,
+     "quote": "const [value,setValue]=useState(initial),[error,setError]=useState<string|null>(null)"
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 67,
+     "quote": "if (modal !== \"teach\") clearEditDrafts(approval.id);"
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 214,
+     "quote": "`You are about to ${modal} \u201c${approval.title}\u201d. This decision is final: the brief becomes read-only and cannot be reopened or edited.`"
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 35,
+     "quote": "const [lesson, setLesson] = useState(\"\");"
+    },
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 88,
+     "quote": "// Unreadable drafts are dropped quietly; nothing she saved lives here."
+    },
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 100,
+     "quote": "// Per-tab storage is a convenience; the in-memory draft is still hers."
+    },
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 238,
+     "quote": "window.location.replace(\"/login\");"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 172,
+     "quote": "<Dialog open={editing} onOpenChange={setEditing}><DialogContent className=\"library-dialog\">"
+    },
+    {
+     "file": "components/kira/studio-page.tsx",
+     "line": 47,
+     "quote": "const busy = Boolean(studioScratchpad.pendingRequestId);"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 68,
+     "change": "Either move the PlanForm value into the workspace store's private scratchpads (a planScratchpad keyed by plan id, persisted like studioScratchpad) or change line 88 to the truth: 'Not saved yet \u00b7 This form clears if you reload or leave the page.'",
+     "rationale": "Right now the longest form in the app tells her it is protected when it is not; that is the exact failure mode she has been burned by before."
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 214,
+     "change": "When keptEditFor returns an unsaved edit and the modal is approve/reject, append to the dialog description: 'You have unsaved edits to this brief. Approving records Draft N as it is saved now and discards those edits. Save the draft first if you want them included.' Offer a 'Save my draft first' button.",
+     "rationale": "Approve currently destroys typed text with no warning and records a decision against a version she did not intend."
+    },
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 154,
+     "change": "Add a registerDraft(key, getText) escape hatch on the store and have the Teach Raven lesson field, the BookMetadataForm, the PlanForm, the plan review notes and the plan result note register through it, so hasPrivateDrafts, beforeunload, the sign-out dialog and the session-ended dialog all see them.",
+     "rationale": "A draft guard that covers only four of ten long-text fields creates a false sense of safety across the whole app."
+    },
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 88,
+     "change": "On a failed parse in restoreDrafts, keep the raw string and surface it the way corruptWorkspace is surfaced (a dialog offering copy/download) instead of returning fresh silently.",
+     "rationale": "This branch discards exactly the words the mechanism exists to protect, and does it without telling her."
+    },
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 99,
+     "change": "In persistDrafts, on a thrown write set a store flag and render a visible warning ('This browser could not hold your draft \u2014 copy it before reloading'), instead of swallowing the error while the UI keeps printing 'Kept in this tab until you save.'",
+     "rationale": "A silently broken persistence promise is indistinguishable from a working one until she reloads."
+    },
+    {
+     "file": "components/kira/studio-page.tsx",
+     "line": 47,
+     "change": "Treat a restored pendingRequestId as stale on mount (clear it, or show 'Your last question may not have been sent \u2014 check recent questions') and render the 'Ask a new question' reset control on the /studio form, not only inside a generation card.",
+     "rationale": "A tab closed mid-request leaves the persisted flag set; on return the ask form is permanently disabled at 'Raven is thinking\u2026' with no way out, and book-knowledge refuses to open Raven forever."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 172,
+     "change": "Guard the Edit book details dialog (and the Add book dialog in connected-library.tsx:76) against Escape/outside dismissal when fields are dirty, with a keep/discard choice.",
+     "rationale": "The book description field accepts 10,000 characters of her own prose and loses all of it to a stray Escape."
+    }
+   ]
+  },
+  {
+   "criterion": "clarity_self_explanation",
+   "score": 7,
+   "verdict": "Provenance, mode and status language are consistently strong \u2014 demo vs manual snapshot vs connected is never fudged, and the context-help panels are genuinely useful. What keeps it under 8: the same phrase ('Kept in this tab until you save') means two different guarantees in two places, a failed plans load renders an empty-state that reads as fact, and the manuscript removal copy describes a process that does not exist.",
+   "evidence": [
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 56,
+     "quote": "{plans.length===0?<p className=\"quiet-note\">Your first plan starts below. Existing ideas stay on Cassandra\u2019s Desk.</p>"
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 34,
+     "quote": "setError(e instanceof Error?e.message:\"Marketing Plans could not load right now. Your saved work is untouched.\")"
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 248,
+     "quote": "? \"Not saved yet \u00b7 Kept in this tab until you save.\""
+    },
+    {
+     "file": "components/kira/settings-page.tsx",
+     "line": 133,
+     "quote": "Download your saved briefs, decisions, source evidence, and lessons. Manuscripts, extracted book knowledge, marketing plans, Ask Raven answers and account connections are not included in this file."
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 82,
+     "quote": "That brief is not available in your workspace. You can search your saved briefs or browse the desk below."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 56,
+     "change": "Gate the 'Your first plan starts below' empty state on `loaded && !error`; when the load failed, show 'We could not read your plan list \u2014 this is not an empty list' plus a retry.",
+     "rationale": "As shipped (see cmobile-plans.png) the page shows a load error and an empty list simultaneously, which reads as 'your plans are gone.'"
+    },
+    {
+     "file": "components/kira/settings-page.tsx",
+     "line": 148,
+     "change": "Add one line under the export button: 'This file is a copy for your records. It cannot be loaded back into KIRA OS.' \u2014 the same warning currently buried in the reset dialog at line 171.",
+     "rationale": "An export she believes is a restore point is a trap the first time she needs it."
+    }
+   ]
+  },
+  {
+   "criterion": "tone_dignity",
+   "score": 7,
+   "verdict": "Peer-level throughout, no cutesiness, no instruction in how to be an author; error copy consistently tells her where her words are rather than apologising at her. The one real breach is the brief's named mistake: a roadmap page speaks about 'Kira's books' in the third person, to Kira.",
+   "evidence": [
+    {
+     "file": "app/[module]/page.tsx",
+     "line": 194,
+     "quote": "\"Build a source-backed picture of how readers discover Kira\u2019s books.\""
+    },
+    {
+     "file": "app/[module]/page.tsx",
+     "line": 232,
+     "quote": "\"Owner-supplied contact records\","
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 46,
+     "quote": "<p>Approve, adjust, or record what only you know.</p>"
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 476,
+     "quote": "You have unsaved work in this browser session. Signing out discards unfinished desk briefs, workshop notes, and questions. Your saved workspace records stay available."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 132,
+     "quote": "a check on audience, budget and dates, not on you"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "app/[module]/page.tsx",
+     "line": 194,
+     "change": "Change to 'Build a source-backed picture of how readers discover your books.'",
+     "rationale": "Kira and Cassandra are the same woman; third-person reference to her pen name inside her own workspace is the error the brief calls out by name."
+    },
+    {
+     "file": "app/[module]/page.tsx",
+     "line": 232,
+     "change": "Change 'Owner-supplied contact records' to 'Contact records you supply'.",
+     "rationale": "In her workspace the requirement should be addressed to her, not described in admin voice."
+    }
+   ]
+  },
+  {
+   "criterion": "respect_creative_material",
+   "score": 6,
+   "verdict": "The disclosure at upload is the best writing in the product: where the file is stored, who else can read it, which providers see passages, that spoilers stay hidden, that it is never rewritten. Reading is a separate, startable, pausable step with saved progress. What it does not give her is any way to see or reclaim the file itself \u2014 she can never take it back, never download it, and the per-version record withholds the two facts (size, who consented) it admits to holding.",
+   "evidence": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 149,
+     "quote": "Saving stores the file only. Reading is a separate step that you start, and you can pause it."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 168,
+     "quote": "Each version stays in this workspace\u2019s private manuscript storage with the permission recorded at upload. Everyone with workspace access can read its passages and findings."
+    },
+    {
+     "file": "components/kira/book-knowledge.tsx",
+     "line": 89,
+     "quote": "Reveal plot details and potential spoilers"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 162,
+     "quote": "Findings with quotations that cannot be matched exactly to the manuscript are omitted."
+    },
+    {
+     "file": "supabase/migrations/202609190001_manuscript_intelligence.sql",
+     "line": 473,
+     "quote": "create policy kira_manuscript_no_delete on storage.objects as restrictive for delete to authenticated"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "supabase/migrations/202609190001_manuscript_intelligence.sql",
+     "line": 473,
+     "change": "OWNER DECISION: decide whether an author-initiated manuscript withdrawal exists at all. If yes, add a soft-withdraw path (status 'withdrawn', chunks and embeddings purged, storage object removed via a server-only capability) and an in-app control; if no, say so plainly in the UI.",
+     "rationale": "Immutability is defensible as an audit stance but must be a stated product decision, not an unremarked side effect of a storage policy."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 141,
+     "change": "Before the file input, state the irreversibility where she decides: 'Once saved, a manuscript version stays in this workspace permanently. There is no way to remove it from inside the app yet.'",
+     "rationale": "The consent checkbox covers reading permission but not permanence; the one irreversible fact appears three bullets down and after the fact in the history panel."
+    }
+   ]
+  },
+  {
+   "criterion": "visual_craft_warmth",
+   "score": 7,
+   "verdict": "The editorial dark theme is genuinely lovely \u2014 Cormorant display over Manrope, gold and wine accents used sparingly, good empty states, coherent card rhythm, mobile stacking that holds up. Three things stop it short: the theme is hardcoded dark with no light option, the manuscript upload \u2014 the most emotionally loaded control in the product \u2014 is a raw unstyled browser file input, and the connected book page leaves a large dead column.",
+   "evidence": [
+    {
+     "file": "app/layout.tsx",
+     "line": 328,
+     "quote": "<html lang=\"en\" className=\"dark\">"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 142,
+     "quote": "<label>Manuscript file<Input type=\"file\" name=\"file\" accept=\".docx,.pdf,.epub,.txt,.md\" required disabled={uploading || reading} aria-describedby={formatNoteId} /></label>"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2632,
+     "quote": ".recommendation-card > p {\n  font-size: 11px;\n}"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 29,
+     "quote": "--text-base: 14px;"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 137,
+     "quote": "<div className=\"library-detail-grid\"><Card className=\"library-panel\"><span className=\"eyebrow\">THE DETAILS YOU PROVIDED</span>"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 142,
+     "change": "Style the file control as a drop/choose zone matching the card system (button + filename + size readout after selection), so she can see what she is about to hand over before pressing Save manuscript.",
+     "rationale": "Screenshot cdesktop-universe-assassins-refusal.png shows a default 'Choose File / No file chosen' widget inside otherwise finished design, at the one moment she most needs to feel the app is careful."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 29,
+     "change": "Raise --text-base to 15px and retire the 10px/11px sizes used for provenance and helper text (47 occurrences) in favour of --text-sm at 12\u201313px.",
+     "rationale": "The honesty labels \u2014 DEMO, NEEDS VERIFICATION, source IDs, 'Not live' \u2014 are set smaller than anything else on the page, which undercuts both craft and the trust story."
+    },
+    {
+     "file": "app/layout.tsx",
+     "line": 328,
+     "change": "OWNER DECISION: whether to ship a light theme. If yes, move the palette into a :root / prefers-color-scheme pair and drop the hardcoded class; if no, record it as a deliberate choice.",
+     "rationale": "A permanently dark workspace is a real accessibility and comfort constraint for a daily-use tool and cannot be fixed later without a token rewrite."
+    }
+   ]
+  },
+  {
+   "criterion": "accessibility",
+   "score": 7,
+   "verdict": "Real, deliberate work: skip link, focus returned to triggers after dialogs, safe-option autofocus on destructive confirms, aria-errormessage wiring, live regions that only change at thresholds rather than per keystroke, reduced-motion media query, 44px targets on touch, labelled progress element. What holds it at 7 is type size: 14px base with 10\u201311px provenance and a 10px source ID, which is a legibility problem for the very content the product's credibility rests on, plus the absence of any light mode for people who cannot read light-on-dark comfortably.",
+   "evidence": [
+    {
+     "file": "app/globals.css",
+     "line": 2620,
+     "quote": "@media (prefers-reduced-motion: reduce) {"
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 207,
+     "quote": "<span className=\"sr-only\">\n                {draft.length >= 10000"
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 198,
+     "quote": "if (isDecision) { event.preventDefault(); cancelRef.current?.focus(); }"
+    },
+    {
+     "file": "components/kira/evidence-drawer.tsx",
+     "line": 58,
+     "quote": "<dd className=\"mono break-all text-[10px]\">{e.source_id}</dd>"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 3589,
+     "quote": "body input:not([type=\"radio\"]):not([type=\"checkbox\"]), body select { min-height: 44px; }"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/evidence-drawer.tsx",
+     "line": 58,
+     "change": "Remove the text-[10px] override; render the source ID at --text-sm with break-all.",
+     "rationale": "10px monospace is below any reasonable legibility floor for a field whose purpose is letting her verify a claim."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 29,
+     "change": "Lift --text-base to 15px and --text-xs to 12px, then re-check the 47 hardcoded 10\u201311px declarations.",
+     "rationale": "The whole interface sits one step below comfortable reading size; this is the cheapest single improvement to daily usability."
+    }
+   ]
+  },
+  {
+   "criterion": "trust_honesty",
+   "score": 6,
+   "verdict": "On external claims this is close to exemplary \u2014 no fake agent activity, DEMO provenance everywhere, explicit 'no model was retrained', 'no invitation or email was sent', model and cost shown on every generation. The failures are all internal claims about her own data: two save-state promises the code does not keep, an empty state that appears during a load failure, a removal path that does not exist, and a blanket 'nothing has been lost' on the error boundary.",
+   "evidence": [
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 88,
+     "quote": "changed?\"Not saved yet \u00b7 Kept in this tab until you save.\":\"No unsaved changes.\""
+    },
+    {
+     "file": "app/error.tsx",
+     "line": 226,
+     "quote": "Nothing you saved has been lost. Try loading this workspace again."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 170,
+     "quote": "Every version you upload is kept. Removing a manuscript from the app isn\u2019t available yet \u2014 ask your workspace owner if you need a file removed."
+    },
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 437,
+     "quote": "\"Lesson saved to your private workspace for future use. No model was retrained.\""
+    },
+    {
+     "file": "components/kira/agent-status.tsx",
+     "line": 161,
+     "quote": "<h2>Not running. Not pretending to.</h2>"
+    },
+    {
+     "file": "components/kira/access-page.tsx",
+     "line": 89,
+     "quote": "\"Access saved. No invitation or email was sent.\""
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 88,
+     "change": "Make the claim true (persist the plan draft) or make the text match the code, as described under safe_to_experiment_undo.",
+     "rationale": "A save-state indicator that lies is the single most damaging thing this product can do to a user with her history."
+    },
+    {
+     "file": "app/error.tsx",
+     "line": 226,
+     "change": "Change to 'Anything you had already saved is untouched. Unsaved text in the page you were on may not have survived \u2014 check before retyping.'",
+     "rationale": "The current sentence is an unconditional guarantee the error boundary cannot make."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 170,
+     "change": "Same correction as the upload panel: state that no in-app removal exists for anyone, rather than implying the owner can do it.",
+     "rationale": "Pointing her at a person who also has no button is a false reassurance at the point of maximum sensitivity."
+    }
+   ]
+  }
+ ],
+ "top_findings": [
+  {
+   "priority": 1,
+   "title": "Approving a brief silently destroys her unsaved rewrite of it",
+   "file": "components/kira/approval-card.tsx",
+   "line": 67,
+   "problem": "After a successful approve or reject, clearEditDrafts(approval.id) deletes the kept edit text. The confirm dialog (line 214) never mentions that unsaved edits exist or that they will be dropped, and the decision is recorded against approval.draft \u2014 the version she was in the middle of replacing. Once status leaves 'pending' the unsaved-edits notice at line 152 stops rendering, so there is no trace it ever existed.",
+   "proposed_change": "When keptEditFor returns a non-null unsaved edit and the modal is approve/reject, extend the dialog description with 'You have unsaved edits to this brief. Approving records Draft N as saved and discards them.' and add a 'Save my draft first' action that runs the edit transition before the decision.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 2,
+   "title": "Marketing Plans claims draft protection it does not have",
+   "file": "components/kira/plans-page.tsx",
+   "line": 88,
+   "problem": "PlanForm renders 'Not saved yet \u00b7 Kept in this tab until you save' \u2014 the exact wording used by the genuinely sessionStorage-backed desk scratchpad \u2014 while its value lives in a component useState at line 68. A reload, a navigation, an error boundary, or an expired session loses the whole form. Because the value is not in the store, hasPrivateDrafts (demo-store.tsx:154) does not see it, so beforeunload does not warn, the sign-out dialog does not warn, and the session-ended dialog cannot hand it back.",
+   "proposed_change": "Add a planScratchpad to the private scratchpads in lib/db/demo-store.tsx (same schema-validated sessionStorage path as studioScratchpad) and drive PlanForm from it; if that is out of scope tonight, change line 88 to 'Not saved yet \u00b7 This form clears if you reload or leave the page.'",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 3,
+   "title": "Session expiry discards unprotected long-text fields with no dialog",
+   "file": "lib/db/demo-store.tsx",
+   "line": 238,
+   "problem": "endSession() only stops to hand words back when hasPrivateDrafts is true (line 154), which covers just the desk scratchpad, Learn blueprints, Ask Raven prompt and brief edits. The Teach Raven lesson (approval-card.tsx:35), BookMetadataForm fields, PlanForm, plan review notes, plan result notes and the NotebookLM box are all plain component state. A 401 arriving from the window-focus refresh (demo-store.tsx:592) therefore calls window.location.replace('/login') immediately and takes all of them.",
+   "proposed_change": "Give the store a registerDraft(key, label, getText) API, have every long-text field register, and include registered drafts in hasPrivateDrafts so beforeunload, the sign-out confirm and the session-ended dialog all cover them.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 4,
+   "title": "Unreadable stored drafts and failed draft writes are both swallowed in silence",
+   "file": "lib/db/demo-store.tsx",
+   "line": 88,
+   "problem": "restoreDrafts returns a fresh scratchpad whenever the stored JSON fails schema validation, discarding exactly the unsaved words the mechanism exists to protect \u2014 the comment even argues 'nothing she saved lives here', which is backwards. persistDrafts (line 99) likewise swallows quota or private-mode write failures while the UI keeps printing 'Kept in this tab until you save.' Compare the care taken with corruptWorkspace, which preserves the raw file and offers a download.",
+   "proposed_change": "Preserve the raw string on a parse failure and surface it through the same dialog pattern as corruptWorkspace; on a persist failure set a store flag and show 'This browser could not hold your draft \u2014 copy it before reloading' next to the save-state line.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 5,
+   "title": "A stale pending Ask Raven request locks the question form permanently",
+   "file": "components/kira/studio-page.tsx",
+   "line": 47,
+   "problem": "busy is derived from studioScratchpad.pendingRequestId, which is persisted to sessionStorage (demo-store.tsx:70). finishStudioRequest only runs in the ask() finally block, so a tab closed or crashed mid-request leaves the flag set. On return to /studio the submit button reads 'Raven is thinking\u2026' and is disabled forever, and the only reset (startNewQuestion, line 147) is rendered solely inside a generation card. book-knowledge.tsx:64 also treats it as 'unfinished or running' and refuses to open Raven.",
+   "proposed_change": "Clear pendingRequestId on mount (or treat a restored one as stale and show 'Your last question may not have been sent \u2014 check recent questions'), and render the reset control on the bare /studio form as well.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 6,
+   "title": "Book description and Add-book dialogs discard typed prose on Escape",
+   "file": "components/kira/connected-book-detail.tsx",
+   "line": 172,
+   "problem": "The Edit book details dialog uses onOpenChange={setEditing} with uncontrolled defaultValue fields (connected-library.tsx:42-53), including a 10,000-character 'Author-approved description'. Escape or an outside click closes it and the text is gone; nothing warns, nothing is kept, and the field is invisible to the draft guard. Same for the Add book dialog at connected-library.tsx:76.",
+   "proposed_change": "Track dirtiness in BookMetadataForm and intercept onOpenChange when dirty, showing the same keep/discard choice used by the sign-out and new-question dialogs.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 7,
+   "title": "A failed Marketing Plans load renders as an empty plan list",
+   "file": "components/kira/plans-page.tsx",
+   "line": 56,
+   "problem": "The 'Your plans' card renders 'Your first plan starts below' whenever plans.length === 0, regardless of loaded/error. cmobile-plans.png shows the error banner and that sentence on screen together, which reads to a user as 'your plans are gone.'",
+   "proposed_change": "Gate the empty state on loaded && !error; when the load failed, say 'We could not read your plan list. This is not an empty list.' with a retry.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 8,
+   "title": "Her manuscript can never be removed or retrieved, and the copy names a rescuer who cannot help",
+   "file": "components/kira/connected-book-detail.tsx",
+   "line": 146,
+   "problem": "Storage policy kira_manuscript_no_delete (supabase/migrations/202609190001_manuscript_intelligence.sql:473) blocks delete for every authenticated role, and there is no download route under app/api/manuscripts. The UI tells her to 'ask your workspace owner if you need a file removed', but the owner has no in-app path either. The custody list also withholds the file size and the consenting member it says it recorded (line 171).",
+   "proposed_change": "Add a signed-URL download per version; state plainly that no one can remove a manuscript from inside the app yet; show the recorded size and permission grantor. Whether an author-initiated withdrawal exists at all is an owner decision that also needs SQL work.",
+   "fixable_in_code": false,
+   "owner_decision_needed": "Does an author-initiated manuscript withdrawal exist? If yes it needs a soft-withdraw status, chunk/embedding purge and a server-only capability; if no, the permanence must be stated at the moment of upload."
+  },
+  {
+   "priority": 9,
+   "title": "Two destructive connection actions have no confirmation",
+   "file": "components/kira/connections-page.tsx",
+   "line": 100,
+   "problem": "The Remove button on a saved link deletes it on a single click with no dialog and no undo, and 'Disconnect Meta' (line 125) revokes provider authorization the same way \u2014 requiring the whole hosted consent flow to redo. Every other destructive action in the app (reset demo, remove access, sign out with drafts, discard question) is confirmed with the safe option focused.",
+   "proposed_change": "Reuse the Remove access dialog pattern for both, with 'Keep' focused and the destructive button styled variant=\"destructive\".",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 10,
+   "title": "The export is presented as a safety net but cannot be restored, and the error boundary over-promises",
+   "file": "components/kira/settings-page.tsx",
+   "line": 132,
+   "problem": "'Export them before switching devices or clearing site data' frames the JSON as a backup, while the fact that it 'cannot be loaded back into KIRA OS' appears only inside the reset-confirm dialog at line 171. Separately app/error.tsx:226 states 'Nothing you saved has been lost' unconditionally, including when the error fired during a save.",
+   "proposed_change": "Put the no-reimport sentence next to the export button in Settings and on the desk's Export decisions control; soften error.tsx to 'Anything you had already saved is untouched. Unsaved text in the page you were on may not have survived.'",
+   "fixable_in_code": true
+  }
+ ],
+ "what_works": [
+  "The desk scratchpad is the real thing, not a gesture: schema-validated sessionStorage per mode and per signed-in account (lib/db/demo-store.tsx:74), a keyed provider so a different account cannot inherit in-memory notes (line 567), and an honest inline save state at manual-review-form.tsx:248.",
+  "SessionEndedDialog is the best draft-loss handling I have reviewed in this kind of app \u2014 an expired session stops, lists every unfinished piece with a per-item Copy button in a read-only textarea, refuses Escape and outside-click, and only clears after she chooses to leave (session-ended-dialog.tsx:75-111).",
+  "The unreadable-demo-file path keeps her old localStorage payload byte-for-byte, refuses to write over it (demo-store.tsx:213), and offers 'Download the unreadable workspace file' before 'Start a fresh demo workspace'. That is exactly the behaviour I wanted and almost never see.",
+  "Sign-out with unsaved work opens a confirm whose safe option ('Keep working') is the one that receives focus, with the destructive button labelled 'Sign out and discard drafts' rather than a euphemism (app-shell.tsx:470-482).",
+  "Edited briefs are keyed to the draft number they were written against, so a concurrent change surfaces 'You wrote them against Draft 2; this brief is now Draft 3' and blocks the save instead of silently clobbering (approval-card.tsx:156, demo-store.tsx:135).",
+  "Every replace-my-words moment asks first: the idea shelf prefill (manual-review-form.tsx:134), the book-details starter (book-detail.tsx:215), the Learn shareable starter (learn-page.tsx:158), and starting a new Raven question (studio-page.tsx:215).",
+  "Error copy consistently tells her where her words are \u2014 'Your text is still here; please try again', 'Your blueprint is still here; try again or download a copy', 'Your unfinished notes are still here' \u2014 rather than apologising without information.",
+  "Manuscript handling is honest and staged: an explicit permission checkbox, a four-bullet 'What happens to your file' that names the providers and the other people who can read it, storage separated from reading, a pausable background job with saved progress, and findings that omit any quotation that cannot be matched to the source (connected-book-detail.tsx:143-162).",
+  "Approve/reject confirmations state finality in plain words and explicitly bound the consequence \u2014 'Nothing will be published, sent, purchased, or changed outside this workspace' (approval-card.tsx:214) \u2014 and the desk repeats it as a standing notice.",
+  "Connected-mode export copy lists what the file does not contain (settings-page.tsx:133) instead of implying completeness, and Teach Raven notices say 'No model was retrained' (demo-store.tsx:437)."
+ ]
+}
