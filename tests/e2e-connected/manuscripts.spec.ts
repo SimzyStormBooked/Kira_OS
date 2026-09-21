@@ -16,7 +16,7 @@ test("a private book, series and audio details survive reload and appear in cata
   const book=await addBook(page,"Synthetic Library Book");await page.getByRole("button",{name:"Edit book details",exact:true}).click();
   const dialog=page.getByRole("dialog",{name:"Edit book details",exact:true});await dialog.getByLabel("Series or collection").selectOption("new");await dialog.getByLabel("New series name").fill("Fixture Series");await dialog.getByLabel("Book number").fill("2");await dialog.getByLabel("Author-approved description").fill("A synthetic catalog description for browser verification.");
   await dialog.locator("summary").click();await dialog.getByLabel("Audiobook available",{exact:true}).check();await dialog.getByLabel("Narrator",{exact:true}).fill("Fixture Narrator");await dialog.getByLabel("Runtime in minutes").fill("360");await dialog.getByRole("button",{name:"Save book details",exact:true}).click();await expect(dialog).not.toBeVisible();
-  await expect(page.getByText("Narrated by Fixture Narrator · 360 minutes",{exact:true})).toBeVisible();await page.reload();await expect(page.getByText("Narrated by Fixture Narrator · 360 minutes",{exact:true})).toBeVisible();
+  await expect(page.locator("#main-content").getByText("Narrated by Fixture Narrator · 360 minutes",{exact:true})).toBeVisible();await page.reload();await expect(page.locator("#main-content").getByText("Narrated by Fixture Narrator · 360 minutes",{exact:true})).toBeVisible();
   await page.goto("/universe");await page.getByRole("button",{name:"Fixture Series",exact:true}).click();await expect(page.locator("a.book-card")).toHaveCount(1);await expect(page.locator("a.book-card")).toHaveAttribute("href",`/universe/${book.slug}`);
   await page.getByRole("button",{name:"Search workspace",exact:true}).click();await page.getByLabel("Search books, briefs and pages",{exact:true}).fill("Synthetic Library Book");await expect(page.getByRole("dialog").getByRole("link",{name:/Synthetic Library Book/})).toBeVisible();
 });
@@ -36,17 +36,16 @@ test("learned knowledge has private citations, hides spoilers, searches text, an
   const text="Rowan is the coordinator in this synthetic reference record. The team keeps its documents in an archive. A private outcome is recorded here.";
   const seeded=await request.post(`${fixture.supabaseUrl}/__test/manuscripts`,{data:{bookId:book.id,text}});expect(seeded.ok()).toBe(true);await page.reload();
   await expect(page.getByRole("heading",{name:"Knowledge ready",exact:true})).toBeVisible();
-  await expect(page.getByText(/findings with potential spoilers are hidden/)).toBeVisible();
+  await expect(page.locator("#main-content").getByText(/findings with potential spoilers are hidden/)).toBeVisible();
   await expect(page.locator(".knowledge-character")).toHaveCount(1);
   await page.getByLabel("Find a character",{exact:true}).fill("Coordinator");
   await expect(page.locator(".knowledge-character")).toHaveCount(1);
   await page.getByLabel("Find a character",{exact:true}).fill("missing");
   await expect(page.locator(".knowledge-character")).toHaveCount(0);
   await page.getByLabel("Find a character",{exact:true}).fill("Rowan");
-  await page.locator(".knowledge-character > details > summary").click();
-  await page.locator(".knowledge-field > summary").filter({hasText:/^About/}).click();
+  await expect(page.getByRole("heading",{name:"Rowan",exact:true})).toBeVisible();
   await expect(page.getByText("A second synthetic observation of the same character.",{exact:true})).toBeVisible();
-  await page.getByRole("button",{name:"Show source",exact:true}).first().click();const dialog=page.getByRole("dialog");await expect(dialog.locator("blockquote")).toContainText(text);await page.keyboard.press("Escape");
+  await page.getByRole("button",{name:"Read supporting passage",exact:true}).first().click();const dialog=page.getByRole("dialog");await expect(dialog.locator("blockquote")).toContainText(text);await page.keyboard.press("Escape");
   await page.getByRole("button",{name:"Story Arc",exact:true}).click();
   await expect(page.locator(".knowledge-fact-group")).toHaveCount(0);
   await page.getByLabel("Reveal plot details and potential spoilers",{exact:true}).check();
@@ -55,7 +54,7 @@ test("learned knowledge has private citations, hides spoilers, searches text, an
   await expect(page.getByText("Synthetic spoiler detail for reveal-control verification.",{exact:true})).toHaveCount(0);
   await page.getByRole("button",{name:"Marketing",exact:true}).click();
   await expect(page.locator(".knowledge-fact-group")).toHaveCount(2);
-  await page.locator(".knowledge-fact-group > details > summary").first().click();
+  await expect(page.getByText("WHAT CAN I DO WITH THIS?",{exact:true})).toBeVisible();
   await expect(page.getByText("Manuscript-supported · unreviewed",{exact:true})).toBeVisible();
   await page.getByLabel(/Show manuscript excerpts/).check();await page.getByLabel("Search manuscript",{exact:true}).fill("Rowan");await page.getByRole("button",{name:"Find passages",exact:true}).click();await expect(page.locator(".library-search-result")).toContainText("Rowan");
   await page.screenshot({path:testInfo.outputPath("manuscript-knowledge.png"),fullPage:true});
@@ -71,4 +70,21 @@ test("learned knowledge has private citations, hides spoilers, searches text, an
   expect((await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa"]).analyze()).violations).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"revision.txt",mimeType:"text/plain",buffer:Buffer.from(text+" This is a revised source record.")});await page.getByLabel(/I have permission to upload/).check();await page.getByRole("button",{name:"Upload & let Kira read",exact:true}).click();await expect(page.getByRole("heading",{name:"Ready to read",exact:true})).toBeVisible();await expect(page.getByText("The previous completed version remains available below until this version is ready.",{exact:true})).toBeVisible();
   await expect(page.getByRole("heading",{name:"What Kira learned",exact:true})).toBeVisible();await page.reload();await expect(page.getByText("The previous completed version remains available below until this version is ready.",{exact:true})).toBeVisible();
+});
+
+
+test("knowledge actions carry the selected evidence, preserve unfinished Raven work, and expose deep search matches",async({page,request},testInfo)=>{
+ const book=await addBook(page,"Synthetic Action Book");
+ expect((await request.post(`${fixture.supabaseUrl}/__test/manuscripts`,{data:{bookId:book.id,text:"Synthetic permission-approved reference for interface testing. Rowan works with Mira in the archive.",extended:true}})).ok()).toBe(true);await page.reload();
+ await page.getByRole("group",{name:"Character details",exact:true}).getByRole("button",{name:"Relationships",exact:true}).click();
+ await page.getByRole("button",{name:"Explore this character with Raven",exact:true}).click();
+ let dialog=page.getByRole("dialog");await expect(dialog.getByLabel("Question to explore")).toHaveValue(/Rowan works with Mira/);await expect(dialog.getByLabel("Question to explore")).toHaveValue(/Relationships/);await page.keyboard.press("Escape");
+ await page.getByRole("button",{name:"Save next step to my Desk",exact:true}).click();await expect(page.getByRole("status").filter({hasText:"Saved to Cassandra"})).toBeVisible();
+ await page.getByRole("button",{name:"Marketing",exact:true}).click();await page.getByLabel("Find an observation",{exact:true}).fill("late-match-signal");await expect(page.locator(".knowledge-signal")).toHaveCount(1);await expect(page.locator(".knowledge-signal")).toContainText("late-match-signal");
+ await page.getByRole("button",{name:"Explore this angle",exact:true}).click();dialog=page.getByRole("dialog");await expect(dialog.getByLabel("Question to explore")).toHaveValue(/late-match-signal/);
+ await page.route("**/api/studio",async route=>{if(route.request().method()==="GET")await route.fulfill({json:{role:"editor",availability:{available:true,reason:"ready",message:"Synthetic test availability"},generations:[],generation:null}});else throw new Error("Preparing a question must not submit an AI request");});
+ await dialog.getByRole("button",{name:"Open in Ask Raven",exact:true}).click();await expect(page).toHaveURL(/\/studio$/);await expect(page.getByLabel("Your question and useful context",{exact:true})).toHaveValue(/late-match-signal/);await expect(page.getByRole("checkbox",{name:"Synthetic Action Book",exact:true})).toBeChecked();
+ if(await page.getByRole("button",{name:"Open navigation",exact:true}).isVisible())await page.getByRole("button",{name:"Open navigation",exact:true}).click();
+ await page.getByRole("link",{name:"The Universe",exact:true}).click();await page.locator(`a[href="/universe/${book.slug}"]`).first().click();await page.getByRole("button",{name:"Explore this character with Raven",exact:true}).click();dialog=page.getByRole("dialog");await expect(dialog.getByRole("button",{name:"Open in Ask Raven",exact:true})).toBeDisabled();await expect(dialog).toContainText("will not overwrite");await page.keyboard.press("Escape");
+ await page.getByRole("button",{name:"Marketing",exact:true}).click();await page.locator(".book-knowledge").screenshot({path:testInfo.outputPath("knowledge-workbench.png")});expect((await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa"]).analyze()).violations).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
