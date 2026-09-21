@@ -1,0 +1,579 @@
+{
+ "judge": "Dana \u2014 data-loss and save-state adversary (lost a 40k-word draft to a sync conflict; reads every save state, dialog, sign-out and reload path with suspicion)",
+ "files_read": [
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/board/context.md",
+  "/home/user/Kira_OS/lib/db/demo-store.tsx",
+  "/home/user/Kira_OS/lib/db/workspace-state.ts",
+  "/home/user/Kira_OS/components/kira/app-shell.tsx",
+  "/home/user/Kira_OS/components/kira/manual-review-form.tsx",
+  "/home/user/Kira_OS/components/kira/approval-card.tsx",
+  "/home/user/Kira_OS/components/kira/desk-page.tsx",
+  "/home/user/Kira_OS/components/kira/connected-book-detail.tsx",
+  "/home/user/Kira_OS/components/kira/book-knowledge.tsx",
+  "/home/user/Kira_OS/components/kira/connected-library.tsx",
+  "/home/user/Kira_OS/components/kira/studio-page.tsx",
+  "/home/user/Kira_OS/components/kira/learn-page.tsx",
+  "/home/user/Kira_OS/components/kira/library-provider.tsx",
+  "/home/user/Kira_OS/components/kira/settings-page.tsx",
+  "/home/user/Kira_OS/components/kira/access-page.tsx",
+  "/home/user/Kira_OS/components/kira/mission-control.tsx",
+  "/home/user/Kira_OS/components/kira/connected-home.tsx",
+  "/home/user/Kira_OS/components/kira/getting-started.tsx",
+  "/home/user/Kira_OS/components/kira/context-help.tsx",
+  "/home/user/Kira_OS/components/kira/workspace-permission-notice.tsx",
+  "/home/user/Kira_OS/components/kira/one-time-sign-in.tsx",
+  "/home/user/Kira_OS/components/kira/universe-catalog.tsx",
+  "/home/user/Kira_OS/components/kira/plans-page.tsx",
+  "/home/user/Kira_OS/app/layout.tsx",
+  "/home/user/Kira_OS/app/page.tsx",
+  "/home/user/Kira_OS/app/error.tsx",
+  "/home/user/Kira_OS/app/not-found.tsx",
+  "/home/user/Kira_OS/app/login/page.tsx",
+  "/home/user/Kira_OS/app/welcome/page.tsx",
+  "/home/user/Kira_OS/app/[module]/page.tsx",
+  "/home/user/Kira_OS/app/api/workspace/route.ts",
+  "/home/user/Kira_OS/app/api/manuscripts/upload/route.ts",
+  "/home/user/Kira_OS/supabase/migrations/202609190001_manuscript_intelligence.sql",
+  "/home/user/Kira_OS/app/globals.css (tokens, .toast, focus-visible, reduced-motion, mobile media queries)",
+  "/home/user/Kira_OS/docs/manuscript-foundation.md",
+  "/home/user/Kira_OS/tests/e2e/experience.spec.ts (grep)",
+  "/home/user/Kira_OS/tests/e2e/workspace.spec.ts (grep)",
+  "/home/user/Kira_OS/tests/e2e-connected/ux-search-decisions.spec.ts (grep)",
+  "/home/user/Kira_OS/tests/e2e-connected/manuscripts.spec.ts (grep)",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots/cdesktop-universe-assassins-refusal.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots/desktop-desk.png"
+ ],
+ "first_five_minutes": "Connected mode, the way it will actually land tomorrow. Cassy opens the link and gets /login: \"WELCOME HOME, CASSANDRA \u00b7 Your private workspace \u00b7 Sign in to pick up where you left off\" beside a daily quote and \"A little more room to be the author.\" It is warm and it is hers. She signs in and lands on \"Welcome home, Cassandra.\" with a locked-padlock \"Private workspace\" chip, a quote, the inspiration shelf, a desk card, and a three-step \"Start with one small thing.\" Counts read \"\u2014\" for a beat and then fill in. Nothing is shouting at her. This is the best part of the app and it does its job.\n\nHer first click is almost certainly \"Open your books\" (step 01) or the Universe card, because the deck she has been shown is about her books. She opens Assassin's Refusal. The right-hand panel is the biggest thing on the page: \"Let Kira get to know this book.\" A file picker, one checkbox \u2014 \"I have permission to upload this manuscript and have Kira's AI services analyze it privately for book knowledge\" \u2014 and one gold button, \"Upload & let Kira read\" (components/kira/connected-book-detail.tsx:119).\n\nThis is the moment I care about, and it is the moment the app is least honest with her. That one click does three irreversible things at once: it writes her manuscript file into permanent private storage, it chops the full text into stored passages, and it starts shipping those passages out of Supabase to google/gemini-3.8-flash and openai/text-embedding-3-small through Vercel AI Gateway (docs/manuscript-foundation.md:64 says so plainly; the checkbox does not). Then she will look for the way to take it back \u2014 because every author who has ever uploaded a manuscript looks for that \u2014 and there is no delete control on the page, no delete endpoint in app/api/manuscripts/*, and supabase/migrations/202609190001_manuscript_intelligence.sql:473 installs a restrictive policy that makes deleting the stored object impossible for any authenticated user, including her. \"Manuscript history \u00b7 2 versions\" will accumulate forever.\n\nIf instead she starts at the desk, minute four looks like this: she types a real idea into \"Your idea\", sees the reassuring \"Not saved yet \u00b7 Kept while you explore. Save before reloading or signing out.\", then alt-tabs to find the promo date in her email. On return, the window focus handler fires a background refresh (lib/db/demo-store.tsx:468, components/kira/library-provider.tsx:56). If her session has lapsed \u2014 the ordinary case \u2014 the 401 path at lib/db/demo-store.tsx:133-141 and library-provider.tsx:33-34 wipes every in-memory draft and hard-navigates her to /login. She gets no dialog, no \"copy your text first\", no recovery. The words are simply gone, and the thing that took them is the app noticing she came back.",
+ "scores": [
+  {
+   "criterion": "agency_control",
+   "score": 5,
+   "verdict": "Consent is asked for clearly at the moment of upload, and role limits are explained without condescension \u2014 but the two controls that would make consent real are missing: she cannot delete her manuscript (the SQL forbids it outright), and she cannot separate 'store my file' from 'send my prose to an external model'. One button does both, permanently.",
+   "evidence": [
+    {
+     "file": "supabase/migrations/202609190001_manuscript_intelligence.sql",
+     "line": 473,
+     "quote": "create policy kira_manuscript_no_delete on storage.objects as restrictive for delete to authenticated using(bucket_id<>'kira-manuscripts')"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 119,
+     "quote": "I have permission to upload this manuscript and have Kira\u2019s AI services analyze it privately for book knowledge. This does not approve publishing excerpts."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 87,
+     "quote": "else if (saved.manuscript.status === \"queued\") await readManuscript(saved.manuscript.id, false);"
+    },
+    {
+     "file": "components/kira/book-knowledge.tsx",
+     "line": 89,
+     "quote": "Reveal plot details and potential spoilers"
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 139,
+     "quote": "You already have an unfinished idea."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 136,
+     "change": "Add a 'Remove this version' control to the manuscript-history list (owner/editor only) behind a typed-title confirmation, backed by a new DELETE in app/api/manuscripts/[id]/route.ts and a migration that replaces the blanket kira_manuscript_no_delete policy with one permitting delete where private.can_edit_author(m.author_id) and the row is the caller's tenant; cascade the chunks/knowledge rows for that manuscript_id.",
+     "rationale": "She cannot currently take her own manuscript back by any route in the product. For an intimate creative file, 'upload is forever and undocumented' is the single largest agency failure in the app."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 87,
+     "change": "Do not auto-start reading after upload. Land on the saved-but-unread state and require a second, separate click ('Start reading this manuscript') with the AI-provider disclosure attached to that button.",
+     "rationale": "Storing a file and sending its text to third-party models are different consents. Bundling them into one click means she cannot say yes to one and no to the other."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 119,
+     "change": "Extend the checkbox label after the pinned prefix: '\u2026 analyze it privately for book knowledge. Passages are sent to third-party AI models (Google Gemini, OpenAI embeddings) through Vercel AI Gateway. Your file and its saved passages stay in this workspace and, today, cannot be deleted from the interface.'",
+     "rationale": "Consent that omits who reads the prose is not consent. The docs already state this; the UI must. (Pinned prefix-match test: tests/e2e-connected/manuscripts.spec.ts:28,31,71 uses getByLabel(/I have permission to upload/), so appending after that phrase keeps it green.)"
+    }
+   ]
+  },
+  {
+   "criterion": "safe_to_experiment_undo",
+   "score": 3,
+   "verdict": "Three surfaces explicitly protect and warn about drafts, and then the app throws drafts away on a routine session expiry, on Escape in the Edit dialog, and on Escape in the book-details dialog \u2014 none of which warns, and all of which are unrecoverable.",
+   "evidence": [
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 136,
+     "quote": "...emptyWorkspace(),\n        ...freshPrivateScratchpads(),\n        ready: false,"
+    },
+    {
+     "file": "components/kira/library-provider.tsx",
+     "line": 34,
+     "quote": "if (mounted.current) { clear(); clearScratchpads.current(); window.location.replace(\"/login\"); }"
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 101,
+     "quote": "setDraft(approval.draft);"
+    },
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 472,
+     "quote": "if (hasPrivateDrafts(store.getSnapshot())) {"
+    },
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 169,
+     "quote": "\"Browser storage is unavailable or contains an incompatible workspace. Export any existing data before resetting.\""
+    },
+    {
+     "file": "app/api/workspace/route.ts",
+     "line": 42,
+     "quote": "action: z.literal(\"create\"),\n      title: z.string().trim().min(1).max(200),"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/library-provider.tsx",
+     "line": 34,
+     "change": "Do not call clearScratchpads() or window.location.replace() from a background GET. Set a `sessionExpired` flag on the workspace store; render a blocking dialog titled 'Your session ended \u2014 copy anything unsaved' that shows every non-empty scratchpad in a read-only textarea with a Copy button, plus 'Sign in again'. Only clear after she confirms. Apply the identical change at lib/db/demo-store.tsx:133-141 and components/kira/studio-page.tsx:80-84,123-127.",
+     "rationale": "Three independent code paths destroy in-memory drafts and hard-navigate away, triggered by a background refresh on window focus (demo-store.tsx:468, library-provider.tsx:56). Tab away, come back to an expired session, lose the words. This is reachable in normal use and produces exactly the loss the rest of the app's copy promises will not happen."
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 101,
+     "change": "Keep edited draft text in a per-approval map keyed by approval.id + version instead of a single `draft` state that is overwritten on every open; do not reset from approval.draft when a newer local edit exists. Add an unsaved-changes confirm to onOpenChange (line 162) when draft !== approval.draft, and include these edits in hasPrivateDrafts() so beforeunload and the sign-out dialog cover them.",
+     "rationale": "Today: open Edit, rewrite up to 10,000 characters, press Escape (or click the backdrop), reopen Edit \u2014 her rewrite is silently replaced by the stored version, with no undo and no warning. The store's beforeunload guard (demo-store.tsx:471-476) does not see this text at all, so a reload kills it too."
+    },
+    {
+     "file": "components/kira/connected-library.tsx",
+     "line": 47,
+     "change": "Make BookMetadataForm controlled (or track dirtiness via a form ref) and have connected-book-detail.tsx:137 pass an onOpenChange that confirms before closing a dirty form; same for the Cancel button at line 55.",
+     "rationale": "The 10,000-character 'Author-approved description' is an uncontrolled defaultValue field inside a Dialog whose onOpenChange is bare `setEditing`. Escape discards her rewritten book description with no prompt."
+    },
+    {
+     "file": "app/api/workspace/route.ts",
+     "line": 41,
+     "change": "Add a required client-generated `id: z.uuid()` to the `create` and `teach` commands and make the repository insert idempotent on it (as /api/studio and /api/plans already do); have demo-store.createManualReview/teachRaven generate and reuse the id across retries.",
+     "rationale": "If the PATCH commits but the response is lost, manual-review-form.tsx:99 tells her 'Your idea could not be saved. Your text is still here; please try again.' and a retry creates a second copy. The reassurance is true; the outcome is a duplicate she has to clean up."
+    },
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 167,
+     "change": "When parseWorkspace throws, stash the raw string and offer a real recovery: a 'Download the unreadable workspace file' button plus 'Start a fresh demo workspace' \u2014 and never let saveLocal() overwrite the unparseable value until she has chosen one.",
+     "rationale": "The message tells her to 'Export any existing data before resetting', but exportWorkspace() (line 410) serializes the in-memory snapshot, not the corrupt localStorage value, and the next successful save silently overwrites it. The advice is impossible to follow and the data is then destroyed."
+    },
+    {
+     "file": "components/kira/settings-page.tsx",
+     "line": 171,
+     "change": "Either add a workspace-import path (file picker \u2192 workspaceSchema.parse \u2192 saveLocal, demo only) or change 'Export your workspace first if you want to keep it.' to 'Export first if you want a copy for your records. This file cannot be loaded back into KIRA OS.'",
+     "rationale": "'Export before resetting' reads as a restore path. There is no importer anywhere in the tree, so the offered safety net does not catch anything."
+    }
+   ]
+  },
+  {
+   "criterion": "clarity_self_explanation",
+   "score": 5,
+   "verdict": "Save-state language is unusually careful in three places and genuinely well done \u2014 and then the global error screen tells connected users something false about where their work is, and the only channel that reports a failed save is 11px text in the corner.",
+   "evidence": [
+    {
+     "file": "app/error.tsx",
+     "line": 9,
+     "quote": "Your locally saved decisions are still in your browser. Try loading this workspace again."
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 228,
+     "quote": "\"Not saved yet \u00b7 Kept while you explore. Save before reloading or signing out.\""
+    },
+    {
+     "file": "components/kira/studio-page.tsx",
+     "line": 186,
+     "quote": "Unsent questions stay with you while you navigate in this tab. Copy your question before reloading, closing the tab, or signing out; unfinished questions are not saved to your account."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1154,
+     "quote": "font-size: 11px;"
+    },
+    {
+     "file": "components/kira/settings-page.tsx",
+     "line": 133,
+     "quote": "Ask Raven answers and account connections are separate and are not included in this file."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "app/error.tsx",
+     "line": 9,
+     "change": "Make the copy mode-aware, or mode-neutral and accurate: 'Anything you have already saved is safe \u2014 demo decisions in this browser, private-workspace records in your account. Anything you had typed but not saved may not have survived; check before retyping.' Add a 'Back to Mission Control' link beside 'Try again'.",
+     "rationale": "In connected mode the current sentence is simply false \u2014 her decisions are in Supabase, not the browser. An error screen is exactly where a false reassurance about data location does the most damage to trust."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1154,
+     "change": "Raise .toast font-size to 14px (and the \u2264mobile override at line 2628 from 10px to 14px), and give .toast-error role-appropriate weight and padding.",
+     "rationale": "Every save failure in the workspace surfaces only through this toast (app-shell.tsx:398-414). 'Could not save\u2026' at 11px, 10px on a phone, in the corner, is not a legible failure report."
+    },
+    {
+     "file": "components/kira/settings-page.tsx",
+     "line": 133,
+     "change": "Complete the omission list: 'Manuscripts, extracted book knowledge, marketing plans, Ask Raven answers and account connections are not included in this file.' And rename the button from 'Export briefs & lessons' only if the desk button label stays as-is.",
+     "rationale": "The export (lib/db/demo-store.tsx:410-424) serializes only approvals, feedback, dismissed, recommendations and last_run_at. Naming two of at least five omissions makes the file look more complete than it is. (Pinned: 'Export decisions' on the desk is asserted in tests/e2e/workspace.spec.ts:85 \u2014 keep that label or update the test.)"
+    }
+   ]
+  },
+  {
+   "criterion": "tone_dignity",
+   "score": 6,
+   "verdict": "Mostly a peer talking to a professional \u2014 'They bring the evidence. You bring the instinct.' is right. Two places slip: a cutesy emoji line that also asserts work is happening when none is, and reassurance copy that pats her on the head while being wrong.",
+   "evidence": [
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 110,
+     "quote": "\"The minions are working. Go write. \ud83d\udda4\""
+    },
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 94,
+     "quote": "The minions are working. Go write. \ud83d\udda4"
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 43,
+     "quote": "They bring the evidence.\n            <br />\n            <em>You bring the instinct.</em>"
+    },
+    {
+     "file": "app/error.tsx",
+     "line": 9,
+     "quote": "Your locally saved decisions are still in your browser."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 110,
+     "change": "Replace with 'Nothing is waiting on you right now. Go write.' (drop 'minions' and the emoji) and mirror the change at components/kira/mission-control.tsx:94.",
+     "rationale": "'Minions are working' claims background agents are doing work; AGENTS.md forbids fake autonomous agent status, and nothing is running. It is also the one line in the app that talks down to her. No test pins this string (grep of tests/ for 'minions' returns nothing), so it is free to change tonight."
+    }
+   ]
+  },
+  {
+   "criterion": "respect_creative_material",
+   "score": 4,
+   "verdict": "The framing is beautiful and the citation discipline is real \u2014 every finding traces to an exact passage, spoilers are opt-in, 'Your manuscript is never rewritten.' But she cannot see where her file went, cannot get it back, and cannot remove it. The product stores her novel permanently and tells her almost nothing about it.",
+   "evidence": [
+    {
+     "file": "supabase/migrations/202609190001_manuscript_intelligence.sql",
+     "line": 473,
+     "quote": "create policy kira_manuscript_no_delete on storage.objects as restrictive for delete to authenticated using(bucket_id<>'kira-manuscripts')"
+    },
+    {
+     "file": "supabase/migrations/202609190001_manuscript_intelligence.sql",
+     "line": 477,
+     "quote": "comment on table public.manuscripts is 'Private, immutable manuscript versions. Permission permits private read-only analysis, not publication or fiction generation.'"
+    },
+    {
+     "file": "docs/manuscript-foundation.md",
+     "line": 64,
+     "quote": "Submitted passage groups are sent through Vercel AI Gateway to **`google/gemini-3.8-flash`** for extraction and, when available, **`openai/text-embedding-3-small`** ... This is not processing confined entirely to Supabase or the user's device."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 136,
+     "quote": "<details className=\"library-history\"><summary>Manuscript history \u00b7 {data.manuscripts.length} version"
+    },
+    {
+     "file": "components/kira/connected-library.tsx",
+     "line": 67,
+     "quote": "Private to your workspace. Your manuscript is never rewritten."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 136,
+     "change": "Turn the manuscript-history <details> into a real custody panel: per version show filename, size, upload date, who granted permission, storage location ('private kira-manuscripts bucket, not public'), which models have read it, and a 'Download my original file' link plus the 'Remove this version' control described above.",
+     "rationale": "'Take it back' and 'see what happened to my file' are both currently impossible. A version list with a status word is not custody information for a manuscript."
+    },
+    {
+     "file": "components/kira/connected-library.tsx",
+     "line": 67,
+     "change": "Amend to: 'Private to your workspace. Your manuscript is never rewritten. Passages are read by third-party AI models to build book knowledge; your file stays in your workspace.'",
+     "rationale": "'Private to your workspace' alongside no other disclosure reads as 'nothing leaves' \u2014 the opposite of what docs/manuscript-foundation.md:64 documents."
+    },
+    {
+     "file": "app/api/manuscripts/upload/route.ts",
+     "line": 38,
+     "change": "Record and expose a retention field on the manuscripts row (e.g. retained_until / retention_policy) and surface it in the upload panel before the button, even if the value is 'kept until you remove it'.",
+     "rationale": "Unknown retention on an author's unpublished novel is the metadata most worth stating, and the project's own rule is that unknown metadata stays visible and verifiable rather than silent."
+    }
+   ]
+  },
+  {
+   "criterion": "visual_craft_warmth",
+   "score": 7,
+   "verdict": "Genuinely lovely and coherent \u2014 editorial serif headings, restrained gold, warm dark ground, real empty states, prefers-reduced-motion honored. My complaint is scoped to my lens: the surfaces that carry bad news are the least crafted ones in the app.",
+   "evidence": [
+    {
+     "file": "app/globals.css",
+     "line": 2689,
+     "quote": "@media (prefers-reduced-motion: reduce) {"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1139,
+     "quote": ".toast {\n  position: fixed;\n  bottom: 22px;"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2628,
+     "quote": "font-size: 10px;"
+    },
+    {
+     "file": "app/error.tsx",
+     "line": 5,
+     "quote": "<div className=\"empty-state\">"
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 106,
+     "quote": "\"A clean slate.\""
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "app/globals.css",
+     "line": 1139,
+     "change": "Give .toast-error distinct treatment worthy of a failure: 14px text, an alert icon instead of the shared <Check/> currently rendered at app-shell.tsx:403, more padding, and a persistent 'What happened?' affordance. Presently a save failure and a save success render in the same box with the same check mark.",
+     "rationale": "app-shell.tsx:403 renders a Check icon for errors as well as notices. A failed save that looks like a tick, at 10px on a phone, is how people learn too late that their work did not save."
+    }
+   ]
+  },
+  {
+   "criterion": "accessibility",
+   "score": 6,
+   "verdict": "Real work here \u2014 skip link, focus-visible outlines, focus restoration after dialogs, aria-live status regions, reduced-motion, labelled inputs. Deductions are in my lane: the failure channel is undersized, one dialog makes the destructive choice the visually primary button, and a media query hides content outright.",
+   "evidence": [
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 417,
+     "quote": "onOpenAutoFocus={(event) => { event.preventDefault(); keepWorkingRef.current?.focus(); }}"
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 426,
+     "quote": "<Button type=\"button\" disabled={signingOut} onClick={() => void completeSignOut()}>{signingOut ? \"Signing out\u2026\" : \"Sign out and discard drafts\"}</Button>"
+    },
+    {
+     "file": "components/kira/studio-page.tsx",
+     "line": 206,
+     "quote": "<Button type=\"button\" onClick={startNewQuestion}>Discard draft and start fresh</Button>"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2659,
+     "quote": ".human-control {\n    display: none;\n  }"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 96,
+     "quote": "a:focus-visible,\nbutton:focus-visible,\nsummary:focus-visible {\n  outline: 2px solid var(--gold);"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 426,
+     "change": "Add variant=\"destructive\" to the 'Sign out and discard drafts' button and variant=\"default\" to 'Keep working' at line 425, matching the pattern already used correctly in settings-page.tsx:175-179 and access-page.tsx:157-158. Same change at studio-page.tsx:206 ('Discard draft and start fresh' \u2192 destructive; 'Keep my question' \u2192 default).",
+     "rationale": "In the app's two draft-destroying dialogs \u2014 and only those two \u2014 the destructive option is the primary gold button and the safe option is the quiet outline. Focus defaults to safe, which is good, but the visual hierarchy points at the irreversible choice. (Pinned: tests/e2e-connected/ux-search-decisions.spec.ts:165-177 asserts the button names, not their variants, so restyling is safe; renaming is not.)"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2659,
+     "change": "Reflow .human-control at \u2264380px instead of display:none.",
+     "rationale": "Hiding content below a width threshold removes it from every user on a small phone, including screen-reader users; reflow is the accessible option."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1154,
+     "change": "Raise toast text to 14px (see clarity fix) and add aria-atomic=\"true\" to the toast container at components/kira/app-shell.tsx:398.",
+     "rationale": "An error region that swaps text in place without aria-atomic can be announced partially; combined with 10px text it is the weakest link in an otherwise careful a11y story."
+    }
+   ]
+  },
+  {
+   "criterion": "trust_honesty",
+   "score": 5,
+   "verdict": "The provenance discipline is the best thing in this codebase \u2014 DEMO badges, 'No live sources were queried', 'No model was retrained', estimated model cost, 'needs verification'. Which makes the four places where the app misstates what it did with her data stand out sharply rather than blend in.",
+   "evidence": [
+    {
+     "file": "app/error.tsx",
+     "line": 9,
+     "quote": "Your locally saved decisions are still in your browser."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 119,
+     "quote": "have Kira\u2019s AI services analyze it privately for book knowledge"
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 110,
+     "quote": "\"The minions are working. Go write. \ud83d\udda4\""
+    },
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 303,
+     "quote": "\"Lesson saved to your private workspace for future use. No model was retrained.\""
+    },
+    {
+     "file": "components/kira/settings-page.tsx",
+     "line": 171,
+     "quote": "Export your workspace first if you want to keep it."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "app/error.tsx",
+     "line": 9,
+     "change": "Make the reassurance mode-accurate (see clarity fix).",
+     "rationale": "A false statement about where her data lives, shown at the moment something broke, is the highest-cost inaccuracy in the app."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 119,
+     "change": "Name the providers and the permanence in the consent label (see agency fix).",
+     "rationale": "docs/manuscript-foundation.md:64 is honest; the consent checkbox is not. AGENTS.md rule 9 requires docs and code to stay aligned \u2014 here the honest text is in the doc she will never read and the vague text is on the button she will click."
+    },
+    {
+     "file": "components/kira/settings-page.tsx",
+     "line": 171,
+     "change": "Say the export cannot be re-imported, or build the importer (see undo fix).",
+     "rationale": "Offering an export as the safety step before a destructive reset implies restorability that does not exist."
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 110,
+     "change": "Remove the 'minions are working' claim (see tone fix).",
+     "rationale": "No background agents run; asserting they do is the one piece of fake status left in the UI and it contradicts the project's own contract."
+    }
+   ]
+  }
+ ],
+ "top_findings": [
+  {
+   "priority": 1,
+   "title": "A background refresh on window focus destroys every unsaved draft and hard-navigates to /login",
+   "file": "lib/db/demo-store.tsx",
+   "line": 133,
+   "problem": "Three code paths respond to 401 (and GET 403) by wiping in-memory scratchpads and calling window.location.replace(\"/login\"): lib/db/demo-store.tsx:133-141, components/kira/library-provider.tsx:33-34, components/kira/studio-page.tsx:80-84 and 123-127. All three are reachable from background refreshes that fire on every window focus (demo-store.tsx:468-470, library-provider.tsx:56-57). So the ordinary sequence \u2014 type a desk brief or a Raven question, tab away, session lapses, tab back \u2014 silently deletes her words. Worse, clearPrivateScratchpads()/emptyWorkspace() run *before* the navigation, so if the browser's beforeunload prompt appears and she chooses 'Stay', she is left sitting on an emptied form with nothing to copy.",
+   "proposed_change": "Replace the clear-and-redirect with a blocking 'Your session ended' dialog that renders every non-empty scratchpad read-only with a Copy button and a 'Sign in again' action; clear state only after she confirms. Never clear scratchpads before a navigation that can be cancelled.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 2,
+   "title": "A manuscript can be uploaded but never deleted, by her or by anyone using the app",
+   "file": "supabase/migrations/202609190001_manuscript_intelligence.sql",
+   "line": 473,
+   "problem": "There is no delete control in components/kira/connected-book-detail.tsx, no DELETE handler under app/api/manuscripts/*, and the migration installs a restrictive policy \u2014 kira_manuscript_no_delete \u2014 that blocks deletion of objects in the kira-manuscripts bucket for every authenticated role. Related tables use `on delete restrict` and the manuscripts table comment calls versions 'immutable'. Nothing in the UI tells her this before she clicks 'Upload & let Kira read'. For an unpublished novel this is the most consequential property of the feature and it is invisible.",
+   "proposed_change": "Add a per-version 'Remove this version' control (owner/editor, typed-title confirm) plus 'Download my original file'; back it with a DELETE route and a migration replacing the blanket no-delete policy with one scoped to private.can_edit_author(m.author_id), cascading that manuscript's chunks and knowledge rows. If permanence is a deliberate product choice, state it on the upload panel instead.",
+   "fixable_in_code": false,
+   "owner_decision_needed": "Michael must decide whether manuscript versions are deliberately immutable-forever (an audit/rights stance) or deletable by the author. The disclosure copy is code either way; the policy change is not."
+  },
+  {
+   "priority": 3,
+   "title": "The upload consent does not say her prose is sent to Google and OpenAI",
+   "file": "components/kira/connected-book-detail.tsx",
+   "line": 119,
+   "problem": "The checkbox reads '\u2026have Kira's AI services analyze it privately for book knowledge.' docs/manuscript-foundation.md:64 states the passages go through Vercel AI Gateway to google/gemini-3.8-flash and openai/text-embedding-3-small and that this 'is not processing confined entirely to Supabase or the user's device'. The honest sentence is in a doc she will never open; the vague one is attached to the irreversible button. connected-library.tsx:67 reinforces the wrong impression with 'Private to your workspace.'",
+   "proposed_change": "Append to the existing label (after the pinned '/I have permission to upload/' prefix): 'Passages are sent to third-party AI models (Google Gemini, OpenAI embeddings) through Vercel AI Gateway. Your file and its saved passages stay in this workspace.' Amend connected-library.tsx:67 to match.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 4,
+   "title": "The Edit dialog silently discards a rewritten brief on Escape",
+   "file": "components/kira/approval-card.tsx",
+   "line": 101,
+   "problem": "`draft` is a single local state seeded by setDraft(approval.draft) every time Edit opens (line 101), and the Dialog's onOpenChange (line 162-163) closes with no unsaved-changes check. Escape or a backdrop click closes the dialog; reopening Edit overwrites her rewrite with the stored version. The text is also invisible to hasPrivateDrafts() (demo-store.tsx:63-72), so beforeunload and the sign-out confirmation do not protect it either. Up to 10,000 characters, no warning, no undo.",
+   "proposed_change": "Key the draft per approval id+version, do not re-seed over a newer local edit, add an unsaved-changes confirm to onOpenChange, and register these edits in hasPrivateDrafts() so reload and sign-out guards see them.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 5,
+   "title": "'Could not be saved' can be a lie that costs her a duplicate \u2014 no idempotency on create/teach",
+   "file": "app/api/workspace/route.ts",
+   "line": 41,
+   "problem": "The `create` and `teach` commands take no client-supplied id, unlike /api/studio and /api/plans which both accept one. If the row commits and the response is lost, demo-store.perform() throws, manual-review-form.tsx:99 shows 'Your idea could not be saved. Your text is still here; please try again.', and her retry writes a second brief. The message is reassuring and wrong about the outcome.",
+   "proposed_change": "Add a required `id: z.uuid()` to both commands, insert idempotently on it in the connected repository, and have createManualReview/teachRaven generate the id once and reuse it across retries.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 6,
+   "title": "The corrupt-storage error tells her to export data that cannot be exported, then overwrites it",
+   "file": "lib/db/demo-store.tsx",
+   "line": 167,
+   "problem": "When parseWorkspace throws, the message is 'Browser storage is unavailable or contains an incompatible workspace. Export any existing data before resetting.' But exportWorkspace() (line 410) serializes the in-memory snapshot \u2014 which is the seeded fallback, not the unreadable localStorage value \u2014 and the very next successful save calls saveLocal() and overwrites the old value for good. The instruction is impossible to follow and the data is destroyed by the next click.",
+   "proposed_change": "Stash the raw unparseable string, offer 'Download the unreadable workspace file' and 'Start a fresh demo workspace', and block saveLocal() from overwriting until she picks one.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 7,
+   "title": "The two draft-discarding dialogs make the destructive choice the primary button",
+   "file": "components/kira/app-shell.tsx",
+   "line": 426,
+   "problem": "'Sign out and discard drafts' uses the default (gold, primary) variant while 'Keep working' is an outline; studio-page.tsx:206 repeats it with 'Discard draft and start fresh'. The app already gets this right elsewhere \u2014 settings-page.tsx:175-179 and access-page.tsx:157-158 both use variant=\"destructive\" for the destructive action. The inconsistency lands precisely on the two dialogs that throw work away.",
+   "proposed_change": "Swap the variants in both dialogs: destructive for the discard action, default for the keep action. Focus already defaults to the safe button; keep that.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 8,
+   "title": "Save failures are reported in 11px (10px on phones) corner text with a check-mark icon",
+   "file": "app/globals.css",
+   "line": 1154,
+   "problem": "Every workspace save failure surfaces only through the toast in app-shell.tsx:398-414, styled at 11px (globals.css:1154) and 10px at mobile widths (globals.css:2628), and app-shell.tsx:403 renders the same <Check/> icon for errors as for successes. A failed save looks, at a glance, exactly like a successful one.",
+   "proposed_change": "Raise toast text to 14px at all widths, give .toast-error an alert icon and distinct weight, and add aria-atomic=\"true\" to the toast container.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 9,
+   "title": "The global error screen tells connected users something false about where their work is",
+   "file": "app/error.tsx",
+   "line": 9,
+   "problem": "'Your locally saved decisions are still in your browser.' is hardcoded and shown in both modes. In connected mode her decisions are in Supabase, not the browser, and the screen says nothing about whether anything she had typed survived. There is also no route out except 'Try again'.",
+   "proposed_change": "Mode-accurate copy that separates saved records ('safe \u2014 in your account' / 'safe \u2014 in this browser') from unsaved typing ('may not have survived; check before retyping'), plus a 'Back to Mission Control' link.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 10,
+   "title": "The export omits more than it admits, and nothing can be imported back",
+   "file": "components/kira/settings-page.tsx",
+   "line": 133,
+   "problem": "exportWorkspace() (demo-store.tsx:410-424) serializes only approvals, feedback, dismissed, recommendations and last_run_at. Manuscripts, extracted book knowledge and marketing plans are silently absent; the copy names only 'Ask Raven answers and account connections' as excluded. There is no importer anywhere in the tree, yet the reset dialog at settings-page.tsx:171 offers 'Export your workspace first if you want to keep it.'",
+   "proposed_change": "Complete the exclusion list, and either add a demo-mode importer (file picker \u2192 workspaceSchema.parse \u2192 saveLocal) or change the reset dialog to say the file is a records copy that cannot be loaded back.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 11,
+   "title": "'The minions are working. Go write.' asserts background work that does not exist",
+   "file": "components/kira/desk-page.tsx",
+   "line": 110,
+   "problem": "Shown in the demo desk empty state and again at mission-control.tsx:94. Nothing is running; AGENTS.md forbids fake autonomous agent status. It is also the only line in the app that talks down to her, in an app whose whole voice is 'you are the expert'.",
+   "proposed_change": "'Nothing is waiting on you right now. Go write.' in both places. No e2e test pins this string.",
+   "fixable_in_code": true
+  }
+ ],
+ "what_works": [
+  "The three-way draft warning at manual-review-form.tsx:228, studio-page.tsx:186 and learn-page.tsx:175 is the best save-state copy I have read in a product like this: it names the exact hazards (reloading, closing the tab, signing out) instead of saying 'unsaved changes'. Keep the wording, and extend the same treatment to the Edit dialog and the book-details form rather than diluting it.",
+  "clearScratchpad(submitted) at demo-store.tsx:250-254 with the comment 'A completed save must never erase words entered after that submission' \u2014 a real race condition someone thought about and closed. Do not refactor it away.",
+  "WorkspaceProvider is keyed on `${mode}:${viewerEmail}` (demo-store.tsx:443) so a different signed-in account cannot inherit the previous person's private notes. Same pattern in LibraryProvider (library-provider.tsx:65).",
+  "Optimistic concurrency done properly: `version` on decide (api/workspace/route.ts:28), `expectedUpdatedAt` on book metadata (connected-library.tsx:31), `expected` on plans, and the changedSinceOpening guard at approval-card.tsx:41 with the 'This brief changed while you were reviewing it' alert at line 210. This is the part of the app that would have saved my 40k words.",
+  "The sign-out confirmation exists at all (app-shell.tsx:415-429), defaults focus to 'Keep working', and completeSignOut only clears scratchpads after the server confirms a real logout \u2014 with an honest failure message at line 270 ('Your unfinished work is still here').",
+  "Background manuscript reading is genuinely well-handled: durable progress, a real pause control, 'Completed passages stay saved', a stalled-job detector (connected-book-detail.tsx:75), and error copy that distinguishes 'your upload is saved, retry the reading' from 'the upload did not finish, select the same file'. Do not simplify these messages.",
+  "Spoiler gating defaults to off and is stated numerically \u2014 book-knowledge.tsx:89 shows 'N findings with potential spoilers are hidden', and the manuscript search requires a separate opt-in checkbox before any excerpt appears (connected-book-detail.tsx:135).",
+  "Citation discipline: every extracted finding links to the exact passage, the panel says findings whose quotations cannot be matched are omitted, and 'Interpretation \u00b7 verify with source' is labelled distinctly from 'Manuscript-supported' (book-knowledge.tsx:102).",
+  "Destructive-action styling is already correct in settings-page.tsx:175-179 (Reset demo) and access-page.tsx:157-158 (Remove access) \u2014 use those two as the template when fixing the sign-out and studio dialogs.",
+  "Focus management is consistently thought through: error paragraphs are focusable with role=alert and get focus on failure (manual-review-form.tsx:83, learn-page.tsx:94), dialogs restore focus to their trigger or a sensible fallback (approval-card.tsx:170-175), and the permission notice returns focus to main after a successful retry (workspace-permission-notice.tsx:9-14)."
+ ]
+}

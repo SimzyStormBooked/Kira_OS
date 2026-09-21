@@ -1,0 +1,664 @@
+{
+ "judge": "Priya \u2014 WCAG 2.2 AA auditor (screen-reader & keyboard-only usability sessions)",
+ "files_read": [
+  "/home/user/Kira_OS/app/globals.css",
+  "/home/user/Kira_OS/app/layout.tsx",
+  "/home/user/Kira_OS/app/page.tsx",
+  "/home/user/Kira_OS/app/loading.tsx",
+  "/home/user/Kira_OS/app/error.tsx",
+  "/home/user/Kira_OS/app/not-found.tsx",
+  "/home/user/Kira_OS/app/[module]/page.tsx",
+  "/home/user/Kira_OS/app/login/page.tsx",
+  "/home/user/Kira_OS/app/welcome/page.tsx",
+  "/home/user/Kira_OS/components/kira/app-shell.tsx",
+  "/home/user/Kira_OS/components/kira/mission-control.tsx",
+  "/home/user/Kira_OS/components/kira/connected-home.tsx",
+  "/home/user/Kira_OS/components/kira/getting-started.tsx",
+  "/home/user/Kira_OS/components/kira/metric-card.tsx",
+  "/home/user/Kira_OS/components/kira/origin-badge.tsx",
+  "/home/user/Kira_OS/components/kira/agent-status.tsx",
+  "/home/user/Kira_OS/components/kira/desk-page.tsx",
+  "/home/user/Kira_OS/components/kira/manual-review-form.tsx",
+  "/home/user/Kira_OS/components/kira/approval-card.tsx",
+  "/home/user/Kira_OS/components/kira/context-help.tsx",
+  "/home/user/Kira_OS/components/kira/workspace-guide.tsx",
+  "/home/user/Kira_OS/components/kira/workspace-permission-notice.tsx",
+  "/home/user/Kira_OS/components/kira/inspiration-shelf.tsx",
+  "/home/user/Kira_OS/components/kira/daily-quote.tsx",
+  "/home/user/Kira_OS/components/kira/universe-catalog.tsx",
+  "/home/user/Kira_OS/components/kira/book-card.tsx",
+  "/home/user/Kira_OS/components/kira/book-detail.tsx",
+  "/home/user/Kira_OS/components/kira/connected-book-detail.tsx",
+  "/home/user/Kira_OS/components/kira/book-knowledge.tsx",
+  "/home/user/Kira_OS/components/kira/connected-library.tsx",
+  "/home/user/Kira_OS/components/kira/studio-page.tsx",
+  "/home/user/Kira_OS/components/kira/learn-page.tsx",
+  "/home/user/Kira_OS/components/kira/plans-page.tsx",
+  "/home/user/Kira_OS/components/kira/opportunities-page.tsx",
+  "/home/user/Kira_OS/components/kira/settings-page.tsx",
+  "/home/user/Kira_OS/components/kira/setup-status.tsx",
+  "/home/user/Kira_OS/components/kira/password-settings.tsx",
+  "/home/user/Kira_OS/components/kira/access-page.tsx",
+  "/home/user/Kira_OS/components/kira/connections-page.tsx",
+  "/home/user/Kira_OS/components/kira/login-form.tsx",
+  "/home/user/Kira_OS/components/kira/one-time-sign-in.tsx",
+  "/home/user/Kira_OS/components/kira/ads/overview.tsx",
+  "/home/user/Kira_OS/components/kira/ads/dashboard.tsx",
+  "/home/user/Kira_OS/components/ui/button.tsx",
+  "/home/user/Kira_OS/components/ui/dialog.tsx",
+  "/home/user/Kira_OS/components/ui/tabs.tsx",
+  "/home/user/Kira_OS/components/ui/input.tsx",
+  "/home/user/Kira_OS/components/ui/textarea.tsx",
+  "/home/user/Kira_OS/lib/db/demo-store.tsx",
+  "/home/user/Kira_OS/lib/data/seed.ts",
+  "/home/user/Kira_OS/lib/knowledge/provenance.ts",
+  "/home/user/Kira_OS/node_modules/lucide-react/dist/esm/Icon.mjs",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots/mobile-home.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots/desktop-desk.png"
+ ],
+ "first_five_minutes": "Cassy opens /login on her phone. The form itself is the best-built thing in the app: real <label for>, autoComplete=\"username\"/\"current-password\", an error wired to the password field with aria-describedby, focus moved to it, and the password field cleared on failure (components/kira/login-form.tsx:45-52). She taps the email field \u2014 and because app/globals.css:167 forces [data-slot=\"input\"] to 12px, iOS Safari zooms the page in. She types, pinches back out, and repeats it on the password field. That is her first physical interaction with the product, and it is a papercut the Tailwind base (text-base md:text-sm, components/ui/input.tsx:10) was written specifically to prevent before globals.css overrode it.\n\nShe lands on / and gets the good part: \"Good afternoon, Cassandra.\" in 42px Cormorant, warm and unmistakably hers. Then her eye drops to the metrics row and the honesty layer disappears. Six DEMO badges render at 5px on her phone (app/globals.css:2334), metric labels at 8px (:2330), \"Illustrative 30-day snapshot\" at 7px (:2321). In shots/mobile-home.png those badges are a smudge. Everything the product depends on for trust \u2014 DEMO, MANUAL SNAPSHOT, PENDING, NEEDS VERIFICATION, the whole eyebrow system at 8px/0.17em uppercase \u2014 is set smaller than anything else on the page. The palette is genuinely well-chosen (I computed every pair: #85887b on #121312 is 5.15:1, #a6a79c is 7.65:1, the gold focus ring is 8.77:1 \u2014 someone cared about contrast), which makes the type scale more frustrating: they solved the hard problem and lost the easy one.\n\nShe scrolls past The Raven card to \"A few thingsneed your instinct.\" \u2014 a rendered text corruption, visible in mobile-home.png, caused by app/globals.css:2111 hiding the <br> that components/kira/mission-control.tsx:72-75 relies on. It fires at every viewport \u22641020px, i.e. the entire tablet and phone range, i.e. the demo tomorrow.\n\nFirst click: she taps the hamburger; the sheet opens correctly. Every nav item shows a helpful subtitle \u2014 \"Ideas, decisions & your guidance\" \u2014 and every one is aria-hidden, with the link's accessible name hard-overridden to the bare title (app-shell.tsx:133,150,165 plus aria-label at :121,139,161). The \"3\" pending-decisions badge she can see is silently dropped from that name (:152-157). If she ever hands the phone to someone using VoiceOver, they get a strictly poorer version of the same page. She taps \"Cassandra's Desk\", reads three demo briefs, and the desk is where the app is at its best \u2014 but the character counter on \"Your idea\" (manual-review-form.tsx:197) is not associated with the textarea, and `required` at :186/:207 means the browser's generic bubble fires before the carefully written \"Give your idea a title and add the idea you want to review.\" at :82 can ever appear.",
+ "scores": [
+  {
+   "criterion": "agency_control",
+   "score": 6,
+   "verdict": "Consent points are real and default-safe \u2014 the manuscript permission checkbox is required and the spoiler gate is opt-in with a count of what is being withheld \u2014 but the control a sighted mouse user has is not equally available to a keyboard or screen-reader user, and the app offers no control over its own presentation despite shipping 3\u20138px type.",
+   "evidence": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 130,
+     "quote": "<input type=\"checkbox\" name=\"permission\" value=\"true\" required disabled={uploading || reading} />I have permission to upload this manuscript and have Kira\u2019s AI services analyze it privately for book knowledge."
+    },
+    {
+     "file": "components/kira/book-knowledge.tsx",
+     "line": 89,
+     "quote": "<input type=\"checkbox\" checked={spoilers} onChange={...}/>Reveal plot details and potential spoilers</label>{!spoilers && <p className=\"quiet-note\">{...} findings with potential spoilers are hidden.</p>}"
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 152,
+     "quote": "<span className=\"count-badge\" aria-label={`${count} pending decisions`}>{count}</span>"
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 139,
+     "quote": "aria-label=\"Cassandra\u2019s Desk\""
+    },
+    {
+     "file": "components/kira/book-knowledge.tsx",
+     "line": 87,
+     "quote": "<div className=\"knowledge-view-nav\" role=\"group\" aria-label=\"Explore book knowledge\">{...<button key={key} aria-pressed={view === key} onClick={() => changeView(key)}>"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 139,
+     "change": "Delete aria-label={title} / aria-label=\"Cassandra\u2019s Desk\" from the nav Links (lines 121, 139, 161) and remove aria-hidden=\"true\" from the <small> descriptions (133, 150, 165). The computed name becomes \"Cassandra\u2019s Desk Ideas, decisions & your guidance 3\" \u2014 the same information a sighted user gets.",
+     "rationale": "aria-label on the Link overrides all descendant content, so the description AND the pending count are both invisible to AT (WCAG 1.3.1 / 4.1.2). tests/e2e/workspace.spec.ts pins link \"Settings\" (unaffected); re-run the desk-nav assertions."
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 154,
+     "change": "Replace the aria-label on the count <span> with visible-plus-hidden text: <span className=\"count-badge\">{count}<span className=\"sr-only\"> pending decisions</span></span>.",
+     "rationale": "aria-label is prohibited on an element with the implicit generic role, so it is dropped by most AT even before the parent link overrides it."
+    },
+    {
+     "file": "components/kira/book-knowledge.tsx",
+     "line": 87,
+     "change": "Convert the three mutually-exclusive view buttons from role=\"group\" + aria-pressed to role=\"radiogroup\" with role=\"radio\" aria-checked (or Radix Tabs). Same for .knowledge-facets (line 93), .catalog-filters (universe-catalog.tsx:69, connected-library.tsx:70), .inspiration-filters (inspiration-shelf.tsx:42), and the ads pickers (ads/overview.tsx:36,47).",
+     "rationale": "aria-pressed on a mutually-exclusive set announces \"toggle button, pressed\" with no set size or position, so she cannot tell how many options exist or that choosing one deselects the others. Most-repeated SR-usability defect here (8+ sites)."
+    },
+    {
+     "file": "components/kira/universe-catalog.tsx",
+     "line": 69,
+     "change": "Add role=\"group\" to <div className=\"catalog-filters\" aria-label=\"Filter by series\">; same at connected-library.tsx:70 and plans-page.tsx:63 (.plan-presets).",
+     "rationale": "aria-label on a role=generic div is ignored, so these three filter groups are unnamed. The equivalent divs at inspiration-shelf.tsx:42 and ads/overview.tsx:36 already do this correctly \u2014 an inconsistency, not a philosophy."
+    }
+   ]
+  },
+  {
+   "criterion": "safe_to_experiment_undo",
+   "score": 6,
+   "verdict": "Draft protection is genuinely thoughtful \u2014 sign-out confirmation, idea-replace confirmation, optimistic-version conflict detection, scratchpad survival across navigation. The gap is that the guardrails are not exposed to assistive tech: the 10,000-character limit truncates silently with no announced counter, and every custom validation message in the app is unreachable because native required fires first.",
+   "evidence": [
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 417,
+     "quote": "onOpenAutoFocus={(event) => { event.preventDefault(); keepWorkingRef.current?.focus(); }}\n          onCloseAutoFocus={(event) => { event.preventDefault(); signOutButtonRef.current?.focus(); }}"
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 41,
+     "quote": "const changedSinceOpening = modal !== null && modal !== \"teach\" && (approval.version !== editVersion || approval.status !== \"pending\");"
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 197,
+     "quote": "<span>{draft.length.toLocaleString(\"en-US\")} / 10,000</span>"
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 186,
+     "quote": "required\n            maxLength={200}"
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 82,
+     "quote": "setError(\"Give your idea a title and add the idea you want to review.\");"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 197,
+     "change": "Give the counter an id and a live region and reference it from the textarea: <span id=\"manual-draft-count\" role=\"status\" aria-live=\"polite\">{draft.length.toLocaleString(\"en-US\")} of 10,000 characters</span>, then extend line 211 to aria-describedby=\"manual-brief-help manual-draft-state manual-draft-count\". Throttle announcements to 90% and 100%.",
+     "rationale": "The only warning before silent truncation at maxLength is an 11px visual counter with no programmatic association (WCAG 1.3.1, 3.3.2). Leave #manual-draft-state untouched \u2014 tests/e2e/experience.spec.ts asserts it contains \"Not saved yet\"."
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 186,
+     "change": "Replace required with aria-required={true} on both fields (186 and 207) so the JS validation at 81-85 actually runs, and set aria-invalid plus aria-errormessage pointing at the error paragraph (line 220). Same for studio-page.tsx:85 and connected-book-detail.tsx:130.",
+     "rationale": "With native required the browser blocks submit and shows an unstyled bubble, so manual-review-form.tsx:82 and studio-page.tsx:111 are dead code. Errors are also never programmatically tied to their fields (WCAG 3.3.1)."
+    },
+    {
+     "file": "components/kira/studio-page.tsx",
+     "line": 207,
+     "change": "Move the role=\"alert\" error paragraph from the page bottom into .studio-question-card immediately after the #studio-question textarea, and reference it with aria-errormessage on the textarea.",
+     "rationale": "studio-page.tsx:111 focuses the textarea on validation failure while rendering the error several sections below it; a sighted keyboard user sees no error near their cursor (WCAG 3.3.1, 2.4.3)."
+    },
+    {
+     "file": "app/error.tsx",
+     "line": 7,
+     "change": "Wrap in role=\"alert\" and move focus to the <h1> on mount: const h = useRef<HTMLHeadingElement>(null); useEffect(() => h.current?.focus(), []); with tabIndex={-1} on the heading.",
+     "rationale": "When the error boundary swaps the page out, focus falls to <body> and nothing is announced \u2014 a screen-reader user simply loses the page (WCAG 4.1.3, 2.4.3)."
+    }
+   ]
+  },
+  {
+   "criterion": "clarity_self_explanation",
+   "score": 5,
+   "verdict": "The writing is outstanding \u2014 honest, specific, jargon-free, and it distinguishes demo / manual snapshot / sourced / needs-verification with real care. It is undone by presentation: every honesty marker is rendered at the smallest size on the page, and one heading is visibly corrupted at every viewport \u22641020px.",
+   "evidence": [
+    {
+     "file": "app/globals.css",
+     "line": 2334,
+     "quote": ".metric-top .origin-badge {\n    font-size: 5px;\n    padding: 1px 3px;\n  }"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2561,
+     "quote": ".verification-label {\n    font-size: 7px;\n  }"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2111,
+     "quote": ".desk-preview h2 br {\n    display: none;\n  }"
+    },
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 72,
+     "quote": "A few things\n            <br />\n            need <em>your instinct.</em>"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 486,
+     "quote": ".eyebrow {\n  display: inline-flex;\n  align-items: center;\n  gap: 8px;\n  font-size: 8px;\n  line-height: 1.6;\n  font-weight: 600;\n  letter-spacing: 0.17em;\n  text-transform: uppercase;"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "app/globals.css",
+     "line": 2111,
+     "change": "Delete the .desk-preview h2 br { display: none; } rule, or put an explicit space in the JSX: A few things{\" \"}<br />need <em>your instinct.</em> in components/kira/mission-control.tsx:72.",
+     "rationale": "JSX strips the whitespace-only line around <br />, so hiding it concatenates the strings into \"A few thingsneed your instinct.\" \u2014 reproducible in shots/mobile-home.png. It is also the heading's accessible name."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2334,
+     "change": "Delete the mobile .metric-top .origin-badge { font-size: 5px } override and its 6px siblings at :1975 and :2010, and raise base .origin-badge at :555 from 7px to 11px with letter-spacing: 0.06em.",
+     "rationale": "\"DEMO\" at 5px on a 390pt phone is decoration, not disclosure. AGENTS.md requires \"visible DEMO treatment\"; the rendered result does not meet the product's own rule. tests/e2e/workspace.spec.ts pins six DEMO badges by text, not size \u2014 test-safe."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 486,
+     "change": "Raise .eyebrow to 11px and reduce letter-spacing to 0.12em; delete the mobile shrinks at :2312, :2318, :2321, :2440, :2504, :2554, :3274, :3319. Do the same for .verification-label (:1495 \u2192 11px, delete :2561), .status-pill (:1229 \u2192 11px, delete :2591) and .agent-state (:996 \u2192 11px, delete :2034 and :2484).",
+     "rationale": "These four classes carry the entire provenance vocabulary \u2014 NEEDS VERIFICATION, MANUAL SNAPSHOT, PENDING, WAITING. Uppercase at 0.17em tracking needs more size than body text, not less; at 7\u20138px the word shapes readers rely on are destroyed. Keep the strings identical so workspace.spec.ts stays green."
+    },
+    {
+     "file": "components/kira/book-card.tsx",
+     "line": 13,
+     "change": "Add aria-hidden=\"true\" to the .book-cover wrapper div (it already declares itself a placeholder at line 24).",
+     "rationale": "Every book-card link name is currently ~25 words: \"THE KIRA STANLEY COLLECTION <Title> KIRA STANLEY CATALOG PLACEHOLDER \u00b7 NOT OFFICIAL COVER <Series> / 01 <Title> Metadata needs verification\", repeated 8\u00d7. A links-list read of /universe is unusable. Verify against tests/e2e/workspace.spec.ts, which asserts link \"Crazy People Book\" and 8 .book-card elements."
+    }
+   ]
+  },
+  {
+   "criterion": "tone_dignity",
+   "score": 6,
+   "verdict": "The voice is peer-level and specific nearly everywhere \u2014 \"Approve or reject records a final decision\", \"it does not retrain a model\", \"your judgment leads the way\". Two things pull it down from my seat: the \"minions\" line, and the structural fact that a screen-reader or low-vision user is served a measurably thinner product than a sighted mouse user, which is its own dignity problem.",
+   "evidence": [
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 186,
+     "quote": "\"Tell Raven what the numbers missed. Your guidance is saved for future use; it does not retrain a model.\""
+    },
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 94,
+     "quote": "The minions are working. Go write. \ud83d\udda4"
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 110,
+     "quote": "? \"The minions are working. Go write. \ud83d\udda4\""
+    },
+    {
+     "file": "components/kira/getting-started.tsx",
+     "line": 120,
+     "quote": "<Button type=\"button\" variant=\"ghost\" size=\"sm\" onClick={hideSteps} aria-label=\"Hide getting started\"><X size={14} aria-hidden=\"true\" /><span>Hide for now</span></Button>"
+    },
+    {
+     "file": "components/kira/workspace-guide.tsx",
+     "line": 29,
+     "quote": "className=\"learning-guide-trigger\" aria-label=\"Open workspace guide\"><Compass size={16} aria-hidden=\"true\" /><span>Guide</span>"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 94,
+     "change": "Replace \"The minions are working. Go write. \ud83d\udda4\" with \"Nothing is waiting on you. Go write.\" in both places (also components/kira/desk-page.tsx:110).",
+     "rationale": "\"Minions\" contradicts AGENTS.md rule 2 and agent-status.tsx:49's own disclaimer, and \ud83d\udda4 is announced as \"black heart\" mid-sentence. Neither string is pinned \u2014 the demo seed always has 3 pending briefs, so this empty state never renders in workspace.spec.ts or experience.spec.ts."
+    },
+    {
+     "file": "components/kira/getting-started.tsx",
+     "line": 120,
+     "change": "Delete aria-label=\"Hide getting started\"; the visible <span>Hide for now</span> already names the button.",
+     "rationale": "WCAG 2.5.3 Label in Name (Level A): the accessible name does not contain the visible label, so a voice-control user saying \"Hide for now\" cannot activate it."
+    },
+    {
+     "file": "components/kira/workspace-guide.tsx",
+     "line": 29,
+     "change": "Either drop aria-label=\"Open workspace guide\" and let \"Guide\" name the button, or change the visible text to \"Open guide\". If you drop the aria-label you MUST update tests/e2e/experience.spec.ts, which asserts button \"Open workspace guide\".",
+     "rationale": "Second 2.5.3 Level A failure: accessible name \"Open workspace guide\" does not contain the visible label \"Guide\". This one has a pinned test, so it needs a deliberate test update in the same commit."
+    },
+    {
+     "file": "app/welcome/page.tsx",
+     "line": 22,
+     "change": "Remove aria-label=\"KIRA OS sign in\" and let the visible brand text name the link; same for aria-label=\"KIRA OS home\" at app/login/page.tsx:27.",
+     "rationale": "Third and fourth 2.5.3 failures \u2014 visible text is \"KIRA OS AUTHOR INTELLIGENCE\", accessible name is \"KIRA OS sign in\"."
+    }
+   ]
+  },
+  {
+   "criterion": "respect_creative_material",
+   "score": 7,
+   "verdict": "The strongest surface in the product and close to shippable. Permission is required before upload, spoilers are opt-in and the app tells her how many findings it is withholding, every finding cites a chunk back to her own words, unmatched quotations are dropped, and the reading job has a real pause control. The one serious defect is technical: the whole reading-progress panel is a live region that re-announces on every poll.",
+   "evidence": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 136,
+     "quote": "These are AI-extracted findings for your review. Findings with quotations that cannot be matched exactly to the manuscript are omitted."
+    },
+    {
+     "file": "components/kira/connected-library.tsx",
+     "line": 67,
+     "quote": "Private to your workspace. Your manuscript is never rewritten."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 123,
+     "quote": "{latest && <Card className=\"library-panel library-progress\" aria-live=\"polite\"><div><span className=\"eyebrow\">MANUSCRIPT VERSION {latest.version}</span><h2>{...}</h2><p>{latest.filename} \u00b7 {latest.completed_chunks} of {latest.chunk_count} passages read</p>{latest.chunk_count > 0 && <progress aria-label=\"Manuscript reading progress\" max={latest.chunk_count} value={latest.completed_chunks} />}"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 135,
+     "quote": "{searchAllowed && searchResults && <div aria-live=\"polite\">{!searchResults.length && <p>No matching passages."
+    },
+    {
+     "file": "components/kira/book-knowledge.tsx",
+     "line": 89,
+     "quote": "{!spoilers && <p className=\"quiet-note\">{knowledge.facts.filter(i => i.spoiler).length + knowledge.characters.filter(i => i.spoiler).length} findings with potential spoilers are hidden.</p>}"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 123,
+     "change": "Remove aria-live=\"polite\" from the <Card className=\"library-panel library-progress\">. Replace with one dedicated region holding only a throttled sentence: <p role=\"status\">{latest.completed_chunks} of {latest.chunk_count} passages read.</p>, updated at most every ~20s and on state transitions (queued \u2192 processing \u2192 ready \u2192 paused).",
+     "rationale": "The card holds an <h2>, a <progress>, and up to four caveat paragraphs. The component polls, so every increment of completed_chunks re-announces the entire panel. On a novel-length manuscript this makes the page unusable with a screen reader for the whole read \u2014 precisely on the surface handling her most intimate material."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 135,
+     "change": "Render the search-results live region unconditionally and lead with a count: <div role=\"status\"><p>{searchResults ? `${searchResults.length} passage${searchResults.length === 1 ? \"\" : \"s\"} found.` : \"\"}</p>\u2026</div>.",
+     "rationale": "A live region inserted into the DOM together with its content is unreliably announced. She also never hears how many passages matched \u2014 only the excerpts, read end to end."
+    },
+    {
+     "file": "components/kira/book-knowledge.tsx",
+     "line": 89,
+     "change": "Wrap the hidden-spoiler count in role=\"status\" and keep the paragraph mounted (render an empty string when spoilers are shown) rather than conditionally mounting it.",
+     "rationale": "The spoiler toggle silently rebuilds the entire observation list. The role=\"status\" caption at line 90 announces the entry count but never says whether spoilers are now revealed."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 130,
+     "change": "Give the constraint note (\"DOCX, text-based PDF, EPUB, TXT or Markdown \u00b7 up to 4 MB\u2026\") an id and reference it with aria-describedby from the file <Input type=\"file\">.",
+     "rationale": "WCAG 3.3.2: format and 4 MB size constraints are visually adjacent but not programmatically associated, so an AT user discovers them only by failing the upload."
+    }
+   ]
+  },
+  {
+   "criterion": "visual_craft_warmth",
+   "score": 4,
+   "verdict": "The colour work, the Cormorant/Manrope pairing, the dark-theme depth and the card rhythm are genuinely lovely, and the palette's contrast maths is better than most production apps I audit. But the type scale is not a design system \u2014 it is 130+ ad-hoc font-size declarations below 12px, bottoming out at 3px, plus a live text-corruption bug. No amount of palette craft survives that.",
+   "evidence": [
+    {
+     "file": "app/globals.css",
+     "line": 2671,
+     "quote": ".cover-placeholder {\n    font-size: 3px;\n  }"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2552,
+     "quote": ".cover-placeholder {\n    font-size: 4px;\n  }"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2034,
+     "quote": ".agent-state {\n    font-size: 5px;\n  }"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2699,
+     "quote": "/* Legibility refinements for compact editorial surfaces. */\n.nav-item {\n  font-size: 12px;\n}\n.metric-top {\n  font-size: 10px;\n}"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2720,
+     "quote": "  .metric-top {\n    font-size: 8px;\n  }"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "app/globals.css",
+     "line": 2699,
+     "change": "Replace the four ad-hoc rules in the \"Legibility refinements\" block with a real floor. Define --text-xs: 11px; --text-sm: 12px; --text-base: 13px on :root (lines 9-32), then sweep every font-size below 11px to var(--text-xs). There are ~130. Delete rather than raise only the purely decorative cover rules (:1401, :1445, :1453, :2205-2211, :2546-2552, :2671), whose container should get aria-hidden instead.",
+     "rationale": "The \"Legibility refinements\" block shows someone already noticed and patched four selectors \u2014 then the media query at :2712-2721 re-shrinks .metric-top back to 8px three lines later. A token floor is the only fix that holds."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2111,
+     "change": "Delete .desk-preview h2 br { display: none; }.",
+     "rationale": "Renders \"A few thingsneed your instinct.\" at every viewport \u22641020px \u2014 the tablet and phone range, i.e. the demo tomorrow. Confirmed in shots/mobile-home.png."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 167,
+     "change": "Move [data-slot=\"input\"], [data-slot=\"textarea\"] { font-size: 12px; } behind @media (min-width: 761px), leaving 16px on mobile \u2014 or drop the override and let the component's own text-base md:text-sm stand.",
+     "rationale": "iOS Safari auto-zooms on focus for any input under 16px. components/ui/input.tsx:10 ships text-base md:text-sm precisely to prevent this; globals.css:167 defeats it, so every field in the app zooms the page on her phone."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1140,
+     "change": "Add bottom: max(22px, env(safe-area-inset-bottom) + 22px) and, inside @media (max-width: 760px), make the toast full-width (left: 12px; right: 12px; max-width: none) so it cannot sit on top of a focused control.",
+     "rationale": "The toast is position: fixed; bottom: 22px; right: 22px with no auto-dismiss (verified \u2014 no setTimeout in lib/db/demo-store.tsx), so it persists indefinitely over whatever is beneath it. On a phone that is WCAG 2.2 SC 2.4.11 Focus Not Obscured (Minimum, AA)."
+    }
+   ]
+  },
+  {
+   "criterion": "accessibility",
+   "score": 4,
+   "verdict": "There is real, competent accessibility engineering here \u2014 focus return in dialogs, persistent empty live regions, a skip link, prefers-reduced-motion, an 8.77:1 gold focus ring, mobile 40px/44px targets, fieldset/legend, lang=\"en\", sr-only detail on metric cards. The existing axe pass is not the reason; someone thought about this. But the defects axe cannot see are numerous and several are Level A: four 2.5.3 Label-in-Name failures, meaningful text hidden with aria-hidden, an accessible-name override erasing the pending count, a polling panel wrapped in aria-live, and a type scale reaching 3px.",
+   "evidence": [
+    {
+     "file": "app/globals.css",
+     "line": 2689,
+     "quote": "@media (prefers-reduced-motion: reduce) {\n  *,\n  *::before,\n  *::after {\n    scroll-behavior: auto !important;\n    animation-duration: 0.01ms !important;\n    transition-duration: 0.01ms !important;\n  }\n}"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2740,
+     "quote": "@media (max-width: 760px) {\n  button,\n  a[data-slot=\"button\"] {\n    min-height: 40px;\n  }\n  .nav-item {\n    min-height: 44px;\n  }"
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 398,
+     "quote": "{(state.notice || state.error) && (\n        <div\n          className={cn(\"toast\", state.error && \"toast-error\")}\n          role={state.error ? \"alert\" : \"status\"}\n        >\n          <Check size={16} />"
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 444,
+     "quote": "<div className=\"search-results\">\n            {results.map((r) => ("
+    },
+    {
+     "file": "components/kira/setup-status.tsx",
+     "line": 50,
+     "quote": "return <Card id=\"setup\" className=\"settings-card setup-card\" aria-labelledby=\"setup-heading\" aria-busy={loading}>"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 398,
+     "change": "Mount the toast container unconditionally with two persistent siblings \u2014 <div role=\"status\" aria-live=\"polite\">{state.notice ?? \"\"}</div> and <div role=\"alert\">{state.error ?? \"\"}</div> \u2014 rendering the visual chrome inside whichever is non-empty. Make the icon conditional: {state.error ? <AlertCircle size={16}/> : <Check size={16}/>}.",
+     "rationale": "Two bugs in one block. (1) A live region created at the same moment as its content is unreliably announced; the app already uses the correct persistent-empty pattern at studio-page.tsx:208, learn-page.tsx:195 and manual-review-form.tsx:238 \u2014 the global toast is the one place that does not. (2) Line 403 renders a green check icon on error toasts, contradicting the message."
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 444,
+     "change": "Add a live count inside .search-results: <p role=\"status\" aria-live=\"polite\" className=\"sr-only\">{query.trim() ? `${results.length} result${results.length === 1 ? \"\" : \"s\"}` : \"\"}</p>.",
+     "rationale": "\u2318K search filters live with zero feedback to AT \u2014 typing narrows 30 results to 0 and nothing is announced, including the \"No matches\" paragraph at line 459, which is itself conditionally mounted (WCAG 4.1.3)."
+    },
+    {
+     "file": "components/kira/setup-status.tsx",
+     "line": 50,
+     "change": "Add role=\"region\" tabIndex={-1} to <Card id=\"setup\">, matching password-settings.tsx:50 which already does this for #account-password.",
+     "rationale": "settings-page.tsx:59 links to #setup. Without a tabindex the fragment scrolls but does not move focus, so a keyboard user's next Tab returns to the top of the page. The sibling link works correctly \u2014 a 2.4.3 focus-order defect and an internal inconsistency."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 88,
+     "change": "Wrap literal arrow glyphs in aria-hidden spans or replace with lucide icons (which auto-hide \u2014 verified in node_modules/lucide-react/dist/esm/Icon.mjs:42, hasA11yProp adds aria-hidden when no a11y prop is passed). Sites: plans-page.tsx:88 (\"\u2190 All marketing plans\"), :47 (\"Draft \u2192 owner review \u2192 active tasks \u2192 results\"), book-knowledge.tsx:91 (\"\u2190 Back to\u2026\"), :104 (\"Open my Desk \u2192\"), desk-page.tsx:97, opportunities-page.tsx:15 (\u00d72).",
+     "rationale": "NVDA and VoiceOver announce U+2190/U+2192 as \"leftwards arrow\"/\"rightwards arrow\" inside link names. Ten occurrences, all trivially fixable."
+    },
+    {
+     "file": "app/[module]/page.tsx",
+     "line": 129,
+     "change": "Add aria-hidden=\"true\" to <span>0{Number(item.phase)}</span> in .future-art (it renders at 250px per app/globals.css:1881 as decoration). Also aria-hide .little-star (mission-control.tsx:35, connected-home.tsx:59) and .footer-cross (app-shell.tsx:388).",
+     "rationale": "A bare \"03\" is announced before the section heading with no context; \u2726 is announced as \"black four-pointed star\" in the page kicker and footer."
+    },
+    {
+     "file": "components/kira/access-page.tsx",
+     "line": 119,
+     "change": "Split the dual-purpose element into two persistent regions: <p role=\"alert\">{error ?? \"\"}</p> and <p role=\"status\" aria-live=\"polite\">{notice ?? \"\"}</p>. Same at password-settings.tsx:68.",
+     "rationale": "Swapping role between \"alert\" and \"status\" on a live element mid-update is not reliably handled by AT, and role=\"alert\" combined with an explicit aria-live=\"polite\" downgrades the implicit assertive politeness, so errors queue behind other speech."
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 79,
+     "change": "Add aria-label=\"Brief status\" to <TabsList>.",
+     "rationale": "An unnamed tablist gives no orientation when reached via rotor or landmark navigation. Minor, but it is the primary control on the desk."
+    }
+   ]
+  },
+  {
+   "criterion": "trust_honesty",
+   "score": 6,
+   "verdict": "No dark patterns, no fabricated status, and the claims genuinely match the implementation \u2014 I checked several (\"it does not retrain a model\", \"Approve records a decision only\", \"Kira cannot read or sync your notebooks\", the sr-only \"Demo data.\" on every metric card). The failure is perceptual, not editorial: the disclosures are rendered at 5\u20138px, so the honesty is real for screen readers and effectively absent for a low-vision or ordinary phone user.",
+   "evidence": [
+    {
+     "file": "components/kira/metric-card.tsx",
+     "line": 42,
+     "quote": "<span className=\"sr-only\">{metric.detail}. Demo data.</span>"
+    },
+    {
+     "file": "lib/knowledge/provenance.ts",
+     "line": 7,
+     "quote": "export function originLabel(origin: DataOrigin): string {\n  return {\n    demo: \"DEMO\",\n    manual: \"MANUAL SNAPSHOT\",\n    public_verified: \"PUBLIC SOURCE\",\n  }[origin];"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 555,
+     "quote": ".origin-badge {\n  flex-shrink: 0;\n  display: inline-flex;\n  align-items: center;\n  padding: 2px 5px;\n  border: 1px solid #6a593e;\n  border-radius: 3px;\n  color: #d0b987;\n  font-size: 7px;"
+    },
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 158,
+     "quote": "<span>Snapshot date unknown \u00b7 Not live</span>"
+    },
+    {
+     "file": "components/kira/agent-status.tsx",
+     "line": 49,
+     "quote": "Specialists are foundations, not running agents. Raven synthesizes\n        seeded findings when you ask."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "app/globals.css",
+     "line": 555,
+     "change": "Raise .origin-badge from 7px to 11px and delete the three shrinks at :1975 (6px), :2010 and :2334 (5px).",
+     "rationale": "AGENTS.md rule 3 requires \"visible DEMO treatment\". A 5px badge on the device Cassy will actually hold is not visible treatment; the rule is satisfied in the DOM and not on screen."
+    },
+    {
+     "file": "components/kira/agent-status.tsx",
+     "line": 39,
+     "change": "Replace the empty <i /> decorative dot at line 42 with <span aria-hidden=\"true\" />, and do the same at book-card.tsx:43 and book-detail.tsx:83.",
+     "rationale": "<i> carries idiomatic-text semantics; an empty one is a semantic no-op some AT still traverses. Trivial correctness fix in the three places provenance dots are drawn."
+    },
+    {
+     "file": "components/kira/origin-badge.tsx",
+     "line": 12,
+     "change": "Prefix the badge for AT: <span className=\"sr-only\">Provenance: </span>{originLabel(origin)}. Keep the visible string byte-identical.",
+     "rationale": "\"DEMO\" / \"PUBLIC SOURCE\" / \"MANUAL SNAPSHOT\" read as orphan tokens with no indication of what they qualify. Byte-identical visible text keeps tests/e2e/workspace.spec.ts (six DEMO badges, \"MANUAL SNAPSHOT\") green."
+    }
+   ]
+  }
+ ],
+ "top_findings": [
+  {
+   "priority": 1,
+   "title": "Sub-12px type is systemic (130+ declarations, floor 3px) and the provenance layer shrinks most",
+   "file": "app/globals.css",
+   "line": 2334,
+   "problem": ".metric-top .origin-badge { font-size: 5px } at \u2264760px; .cover-placeholder 4px at \u2264760px and 3px at \u2264380px; .agent-state 5px; .eyebrow 8px at 0.17em uppercase; .verification-label and .status-pill 7px. A scan of app/globals.css finds ~130 font-size declarations below 12px against a 13px body. Every one of the product's honesty markers \u2014 DEMO, MANUAL SNAPSHOT, NEEDS VERIFICATION, PENDING, WAITING \u2014 lands in that band. Contrast is not the problem (I computed every pair: 4.5:1 to 15:1); size is the whole problem. A partial patch exists at :2699 (\"Legibility refinements\") and is immediately undone by the media query at :2712.",
+   "proposed_change": "Add --text-xs: 11px / --text-sm: 12px tokens at :root (app/globals.css:9-32) and sweep every sub-11px font-size to var(--text-xs), deleting the mobile shrink overrides rather than raising them. Exempt only genuinely decorative cover text (.cover-top/.cover-author/.cover-placeholder), whose container should get aria-hidden instead. No user-visible strings change, so tests/e2e/workspace.spec.ts and experience.spec.ts stay green \u2014 but re-run the axe assertions on /, /universe, /desk, /settings since layout shifts.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 2,
+   "title": "\"A few thingsneed your instinct.\" \u2014 rendered text corruption at every viewport \u22641020px",
+   "file": "app/globals.css",
+   "line": 2111,
+   "problem": ".desk-preview h2 br { display: none; } hides the <br /> that components/kira/mission-control.tsx:72-75 relies on to separate \"A few things\" from \"need your instinct.\" JSX strips the whitespace-only lines around the <br />, so the two strings concatenate. Visible in shots/mobile-home.png. It is also the heading's accessible name.",
+   "proposed_change": "Delete app/globals.css:2111-2113, or write the JSX as A few things{\" \"}<br />need <em>your instinct.</em>. Prefer the JSX fix so the heading is correct whether or not the br is displayed.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 3,
+   "title": "The nav suppresses its own descriptions and the pending-decision count from assistive tech",
+   "file": "components/kira/app-shell.tsx",
+   "line": 139,
+   "problem": "The three primary nav Links carry aria-label={title} (lines 121, 139, 161), which overrides all descendant content. The helpful <small> descriptions are additionally aria-hidden=\"true\" (133, 150, 165). The .count-badge at 152-157 tries to compensate with aria-label on a bare <span> \u2014 an ARIA-prohibited attribute on role=generic \u2014 and is overridden by the parent label regardless. Net effect: a screen-reader user hears \"Cassandra's Desk\" and never learns there are 3 decisions waiting.",
+   "proposed_change": "Remove the three aria-labels and the three aria-hiddens; change the badge to <span className=\"count-badge\">{count}<span className=\"sr-only\"> pending decisions</span></span>. The link name becomes \"Cassandra's Desk Ideas, decisions & your guidance 3 pending decisions\".",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 4,
+   "title": "The manuscript reading panel is an aria-live region that re-announces on every poll",
+   "file": "components/kira/connected-book-detail.tsx",
+   "line": 123,
+   "problem": "<Card className=\"library-panel library-progress\" aria-live=\"polite\"> wraps an <h2>, a <progress>, the filename, the chunk counters and up to four caveat paragraphs. The component polls while background reading runs, so every increment of completed_chunks re-announces the whole panel. On a novel-length manuscript this makes the page unusable with a screen reader for the entire read \u2014 precisely on the surface handling her most intimate material.",
+   "proposed_change": "Remove aria-live from the Card. Add one dedicated <p role=\"status\"> containing only a throttled sentence (\"142 of 310 passages read.\"), updated at most every ~20 seconds and on state transitions. Add aria-valuetext to the <progress> on the same line.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 5,
+   "title": "Four WCAG 2.5.3 Label in Name failures (Level A)",
+   "file": "components/kira/workspace-guide.tsx",
+   "line": 29,
+   "problem": "Accessible names that do not contain the visible label, so voice-control users cannot activate the controls by reading them: workspace-guide.tsx:29 (visible \"Guide\", name \"Open workspace guide\"); getting-started.tsx:120 (visible \"Hide for now\", name \"Hide getting started\"); app/welcome/page.tsx:22 (visible \"KIRA OS AUTHOR INTELLIGENCE\", name \"KIRA OS sign in\"); app/login/page.tsx:27 (same, name \"KIRA OS home\").",
+   "proposed_change": "Drop the redundant aria-label in all four places and let the visible text name the control. tests/e2e/experience.spec.ts pins button \"Open workspace guide\" \u2014 update that assertion to button \"Guide\" in the same commit, or change the visible text to \"Open guide\" and keep the test green.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 6,
+   "title": "Every text input is 12px, so iOS Safari zooms the page on focus",
+   "file": "app/globals.css",
+   "line": 167,
+   "problem": "[data-slot=\"input\"], [data-slot=\"textarea\"] { font-size: 12px; } overrides the text-base md:text-sm in components/ui/input.tsx:10 and textarea.tsx:9, which exists specifically to keep mobile inputs at 16px. Below 16px iOS auto-zooms on focus. This fires on the login form \u2014 her first interaction \u2014 and on every field in the desk, studio, learn, plans, connections and access forms.",
+   "proposed_change": "Scope the 12px to @media (min-width: 761px) in app/globals.css:165-169, leaving mobile at 16px; or delete the override entirely and let the component classes apply.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 7,
+   "title": "Native required makes every custom validation message unreachable, and no field is ever marked aria-invalid",
+   "file": "components/kira/manual-review-form.tsx",
+   "line": 186,
+   "problem": "manual-review-form.tsx:186/:207, studio-page.tsx:85, connected-book-detail.tsx:130, connections-page.tsx and login-form.tsx all use native required. Browser constraint validation blocks submit before the onSubmit handler runs, so the carefully-written messages at manual-review-form.tsx:82 (\"Give your idea a title and add the idea you want to review.\") and studio-page.tsx:111 (\"Write a question of 10 to 6,000 characters.\") never appear. Nothing anywhere sets aria-invalid or aria-errormessage, so error paragraphs are never tied to the fields they describe.",
+   "proposed_change": "Swap required \u2192 aria-required={true} on fields whose components implement their own validation, add aria-invalid on failure, and give each error <p> an id referenced by aria-errormessage. Keep native required only where there is no custom message (login-form.tsx). Also give the character counter at manual-review-form.tsx:197 an id, add it to line 211's aria-describedby, and make it a throttled role=\"status\".",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 8,
+   "title": "Every book-card link has a ~25-word accessible name built from decorative placeholder cover text",
+   "file": "components/kira/book-card.tsx",
+   "line": 13,
+   "problem": "BookCover renders \"THE KIRA STANLEY COLLECTION\", the title again, \"KIRA STANLEY\" and \"CATALOG PLACEHOLDER \u00b7 NOT OFFICIAL COVER\" inside the <Link className=\"book-card\"> (book-card.tsx:31-47, and again in connected mode at connected-library.tsx:73). Only .cover-ornament is aria-hidden (line 18). A links-list read of /universe returns 8 near-identical 25-word names. The component itself declares the cover a placeholder, so none of that text is informative.",
+   "proposed_change": "Add aria-hidden=\"true\" to the .book-cover div at book-card.tsx:13. Names collapse to \"My Alpha Team / 01 Crazy People Book Metadata needs verification\". Re-check tests/e2e/workspace.spec.ts, which asserts 8 .book-card elements (unaffected, CSS selector) and link \"Crazy People Book\" (may now match the book card as well as the search result \u2014 disambiguate with a scoped locator).",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 9,
+   "title": "Mutually-exclusive filters are built as aria-pressed toggles in 8+ places; three filter groups are unnamed",
+   "file": "components/kira/book-knowledge.tsx",
+   "line": 87,
+   "problem": ".knowledge-view-nav (3 views), .knowledge-facets (4 facets, line 93), .catalog-filters (universe-catalog.tsx:69, connected-library.tsx:70), .inspiration-filters (inspiration-shelf.tsx:42), .ads-chart-controls / .ads-day-picker / .ads-book-shelf (ads/overview.tsx:36,47,69) and .ads-tabs (ads/dashboard.tsx:35) all use aria-pressed for single-select. AT announces \"toggle button, pressed\" with no set size or position, so the user cannot tell how many options exist or that selecting one clears the others. Separately, universe-catalog.tsx:69, connected-library.tsx:70 and plans-page.tsx:63 put aria-label on a role=generic <div>, where it is ignored \u2014 those three groups have no accessible name at all.",
+   "proposed_change": "Convert single-select sets to role=\"radiogroup\" + role=\"radio\" aria-checked with a roving tabindex, or to Radix Tabs where a panel follows. At minimum add the missing role=\"group\" to the three unnamed divs tonight \u2014 that part is a five-minute fix. tests/e2e/workspace.spec.ts asserts filter button \"My Alpha Team\" by role=button, so a radio conversion in universe-catalog.tsx requires updating that assertion.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 10,
+   "title": "Global toast is a conditionally-mounted live region, shows a success checkmark on errors, and can obscure focus",
+   "file": "components/kira/app-shell.tsx",
+   "line": 398,
+   "problem": "The toast mounts only when state.notice || state.error is truthy, so the live region and its content appear in the same DOM mutation \u2014 unreliably announced. Line 403 renders <Check size={16} /> unconditionally, so an error toast displays a checkmark. It never auto-dismisses (confirmed: no setTimeout in lib/db/demo-store.tsx) and is position: fixed; bottom: 22px; right: 22px (app/globals.css:1140), so on a phone it can permanently cover a focused control \u2014 WCAG 2.2 SC 2.4.11 Focus Not Obscured (AA).",
+   "proposed_change": "Mount two persistent empty regions (role=\"status\" and role=\"alert\") as the app already does correctly at studio-page.tsx:208 and learn-page.tsx:195; make the icon conditional on state.error; and make the toast full-width above the safe-area inset at \u2264760px.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 11,
+   "title": "\"The minions are working. Go write. \ud83d\udda4\" \u2014 tone, product-rule and AT-announcement problem in one string",
+   "file": "components/kira/mission-control.tsx",
+   "line": 94,
+   "problem": "Duplicated at desk-page.tsx:110. \"Minions\" implies running autonomous agents, which AGENTS.md rule 2 and agent-status.tsx:49 both explicitly deny; the tone is the one place the voice slips from peer to cute; and \ud83d\udda4 is announced mid-sentence as \"black heart\".",
+   "proposed_change": "Replace both with \"Nothing is waiting on you. Go write.\" Neither string is pinned \u2014 the demo seed always has 3 pending briefs, so this empty state never renders in tests/e2e/workspace.spec.ts or experience.spec.ts.",
+   "fixable_in_code": true,
+   "owner_decision_needed": "Whether the in-group warmth vocabulary (\"the coven\" at mission-control.tsx:143, \"the minions\") is Michael-and-Cassy shorthand she will enjoy or filler that should go. I would cut \"minions\" regardless because it contradicts the no-running-agents rule; \"the coven\" is a taste call only the owner can make."
+  },
+  {
+   "priority": 12,
+   "title": "#setup quick link scrolls without moving focus, unlike its sibling anchor",
+   "file": "components/kira/setup-status.tsx",
+   "line": 50,
+   "problem": "settings-page.tsx:58-59 offers two in-page anchors. #account-password works because password-settings.tsx:50 has role=\"region\" tabIndex={-1}. #setup (setup-status.tsx:50) has neither, so activating \"Your connections\" scrolls the viewport but leaves focus on the link \u2014 the keyboard user's next Tab goes to the third quick link, not into the section they just requested.",
+   "proposed_change": "Add role=\"region\" tabIndex={-1} to <Card id=\"setup\"> at setup-status.tsx:50, matching the existing pattern one file over.",
+   "fixable_in_code": true
+  }
+ ],
+ "what_works": [
+  "Focus management in dialogs is better than most shipped React apps. app-shell.tsx:417-418 sends focus to \"Keep working\" on open and back to the sign-out button on close; approval-card.tsx:167-175 focuses Cancel for approve/reject and, when the card unmounts because the brief moved to the Reviewed tab, falls back to #desk-reviewed-tab; book-detail.tsx:215 returns to the Prepare button. Do not regress this.",
+  "The persistent-empty live-region pattern is used correctly in five places: studio-page.tsx:208, learn-page.tsx:195, manual-review-form.tsx:238, book-knowledge.tsx:90 (a role=\"status\" index caption that updates as she searches) and connections-page.tsx:109. Keep this and make the global toast match it, not the reverse.",
+  "Focus-to-error with tabIndex={-1} + ref.focus() is implemented consistently \u2014 login-form.tsx:30/52, manual-review-form.tsx:83/220, learn-page.tsx:194, connections-page.tsx:106, one-time-sign-in.tsx:112, access-page.tsx:95/119.",
+  "components/kira/getting-started.tsx is a model dismissible-panel implementation: aria-labelledby, focus to the reopen button on hide (line 65), focus to the heading on show (line 70), icons aria-hidden, and an sr-only \"Complete: \" prefix at line 131.",
+  "The colour system genuinely passes. I computed every token pair from app/globals.css: #85887b/#121312 = 5.15:1, #a6a79c = 7.65:1, #959982 = 6.35:1, #949782 = 6.22:1 \u2014 all above 4.5:1 on all three surface colours; the gold focus ring #c7af83 is 8.77:1; white on --destructive #b35460 is 4.82:1. Nothing needs recolouring, only resizing.",
+  "Mobile touch targets are already handled at app/globals.css:2740-2747 (button, a[data-slot=\"button\"] { min-height: 40px }, .nav-item { min-height: 44px }) \u2014 above the 24px SC 2.5.8 AA floor and close to the 44px AAA target. Preserve this when refactoring the type scale.",
+  "prefers-reduced-motion is handled globally and correctly at app/globals.css:2689-2697, including neutralising html { scroll-behavior: smooth } (line 64) via the * selector. desk-page.tsx:27 additionally uses behavior: \"instant\" for its programmatic scroll.",
+  "Native semantics are used where they belong: <details>/<summary> for every disclosure (context-help.tsx:49, approval-card.tsx:83, learn-page.tsx nested lessons, daily-quote.tsx:16), <fieldset>/<legend> for grouped inputs (learn-page.tsx:61, studio-page.tsx:83, plans-page.tsx), <dl> in book-detail.tsx:91, <figure>/<figcaption>/<blockquote>/<cite> in daily-quote.tsx, and a real <progress> element rather than a div.",
+  "components/kira/login-form.tsx is the best-built form in the app: real label associations, correct autoComplete tokens, aria-describedby on the password field conditional on the error, role=alert, focus to the error, and the password cleared on failure (line 29).",
+  "External links consistently carry <span className=\"sr-only\"> (opens in a new tab)</span> (connections-page.tsx:96, :137), and daily-quote.tsx:12 builds the warning into an aria-label that still contains the visible text \u2014 2.5.3-compliant, unlike the four cases flagged above.",
+  "lucide-react v1.47's hasA11yProp adds aria-hidden automatically when no a11y prop is passed (node_modules/lucide-react/dist/esm/Icon.mjs:42), so the hundreds of bare <Icon size={n} /> calls are already safe. Do not bulk-add redundant aria-hidden; it is noise.",
+  "The skip link (app-shell.tsx:324 + app/globals.css:1909-1921), <main tabIndex={-1}> (app-shell.tsx:382), <html lang=\"en\"> (app/layout.tsx:91), the <nav aria-label=\"Main navigation\"> landmark, and the correct aria-expanded/aria-controls/hidden disclosure on \"Coming later\" (app-shell.tsx:170-183) are all in place.",
+  "metric-card.tsx:42 supplies <span className=\"sr-only\">{metric.detail}. Demo data.</span>, so provenance that is visually 5px is at least correct for screen readers; and inspiration-shelf.tsx:49-61 implements a real APG carousel \u2014 sr-only key instructions, aria-roledescription=\"carousel\", arrow/Home/End handling that defers to nested controls, and a scoped aria-live position readout that includes the idea title."
+ ]
+}
