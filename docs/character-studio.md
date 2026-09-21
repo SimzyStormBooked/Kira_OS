@@ -1,6 +1,6 @@
 # Character Studio — phase 1 schema
 
-Phase 1 adds the database foundation for author-owned character identity, private portraits, and author-written notes. It is schema only. There is no Character Studio page, upload route, gallery, home showcase, or relationship map in the application yet, and the migration has not been applied to the hosted database. The design preview in [design/character-studio-preview.html](design/character-studio-preview.html) remains a standalone concept.
+Phase 1 adds the database foundation for author-owned character identity, private portraits, and author-written notes. It is schema only. There is no Character Studio page, upload route, gallery, home showcase, or relationship map in the application yet, and the migration was applied to the hosted database on September 21, 2026. The design preview in [design/character-studio-preview.html](design/character-studio-preview.html) remains a standalone concept.
 
 ## Why new tables were required
 
@@ -50,7 +50,7 @@ The `kira-character-portraits` bucket is private, limited to 8 MB, and limited t
 
 `tests/character-studio-database.test.ts` runs the real migrations in PGlite and covers tenant isolation, viewer denial, alias normalization, server-advanced versions and stale-edit detection, single reversible links, rejected foreign-book links, note kinds, direct-write refusal on portraits and on `book_characters`, capability and role requirements, registration idempotency, the sanitization requirement, bucket privacy and path binding, primary-portrait containment, and survival of portraits, notes, and links across a second manuscript reading. The full `npm run check` passes: TypeScript, ESLint, 525 unit/API/database tests, and the production build.
 
-Not verified, because it does not exist yet: any hosted behavior. The migration is pending for the hosted database, no EXIF-stripping upload route is implemented, and no image has been stored.
+The migration was applied transactionally to the hosted database on September 21, 2026. All five new tables have RLS enabled and the private portrait bucket enforces its 8 MB/type limits; see [the hosted checkpoint](character-studio-hosted-checkpoint.json). No EXIF-stripping upload route or UI exists yet, no image has been stored, and no hosted upload workflow is claimed.
 
 ## Remaining in the sequence
 

@@ -1,0 +1,36 @@
+{
+  "appliedAt": "2026-09-21T12:51:33.728Z",
+  "file": "202609210001_character_studio.sql",
+  "sqlSha256": "400eda128c59931173aea10198d6ad0d113d9afcea5ef9fd38e00a797cb82462",
+  "tables": [
+    {
+      "relname": "character_notes",
+      "relrowsecurity": true
+    },
+    {
+      "relname": "character_portraits",
+      "relrowsecurity": true
+    },
+    {
+      "relname": "character_profile_aliases",
+      "relrowsecurity": true
+    },
+    {
+      "relname": "character_profile_links",
+      "relrowsecurity": true
+    },
+    {
+      "relname": "character_profiles",
+      "relrowsecurity": true
+    }
+  ],
+  "bucket": {
+    "public": false,
+    "file_size_limit": "8388608",
+    "allowed_mime_types": [
+      "image/png",
+      "image/jpeg",
+      "image/webp"
+    ]
+  }
+}

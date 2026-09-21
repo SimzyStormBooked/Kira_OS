@@ -1,5 +1,8 @@
 # KIRA OS continuation handoff — September 20, 2026
 
+> September 21 update: both Claude branches are now integrated in the release checkout. Character Studio phase 1 is applied to the hosted database; the gallery/upload UI remains unbuilt. Round-one and round-two adversarial results are now in `docs/ux-review/`; round two still contains open findings. The September 20 snapshot below is historical.
+
+
 ## Safe starting point
 
 All 14 existing migrations are committed on main and recorded in production. The three September 20 SQL files match their stored migration statements exactly. No database changes were needed for this checkpoint. See VERIFICATION.md and the sanitized migration-checkpoint JSON for evidence. No email delivery, ad authorization, paid AI generation, or manuscript reprocessing was triggered.

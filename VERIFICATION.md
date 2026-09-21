@@ -1,5 +1,12 @@
 # KIRA OS verification
 
+## Integration checkpoint — September 21, 2026
+
+Claude’s Character Studio schema branch (`868dabf`) and UX branch (`5f3afc7`) have been integrated. The new `202609210001_character_studio.sql` migration was applied transactionally to production at 2026-09-21 12:51 UTC; all five new tables have RLS enabled and the portrait bucket remains private with the required type and size limits. See [the hosted schema check](docs/character-studio-hosted-checkpoint.json). This supersedes the older pending-migration status below.
+
+Character Studio remains schema-only: no gallery, portrait-upload route, home showcase or Quiet Room is introduced by this integration. The merged UX includes two-step manuscript save/read consent, per-tab draft recovery, session-end copy controls, clearer connection/plan framing, and typography/mobile improvements. The saved round-two review has outstanding findings and is not an 8+ acceptance sign-off. Automatic email remains deferred. Live Meta Ads configuration and account consent are still external activation requirements.
+
+
 ## Current checkpoint — September 20, 2026
 
 Production migration history was checked directly over verified TLS at **2026-09-21 05:31 UTC (September 20, 10:31 PM Arizona)**. All **14** SQL migrations in this repository are recorded in `supabase_migrations.schema_migrations`; there are **zero pending migrations**. The stored SQL for the three September 20 migrations exactly matches the repository files:
