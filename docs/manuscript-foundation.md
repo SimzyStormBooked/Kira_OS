@@ -1,6 +1,6 @@
 # Manuscript foundation: author and operator guide
 
-This release adds a private, editable book library and versioned manuscript reference knowledge to **The Universe**. Kira reads existing writing to help understand the books; it does not write or rewrite fiction. The foundation is deployed and the real upload → AI extraction → persisted findings/characters → reload → citation → text-search flow passed with an explicitly synthetic operator document on September 18, 2026. The test records and private file were then removed; the eight existing catalog books and six saved briefs remain. See [VERIFICATION.md](../VERIFICATION.md) for the tested scope.
+This release adds a private, editable book library and versioned manuscript reference knowledge to **The Universe**. Raven reads existing writing to help understand the books; it does not write or rewrite fiction. The foundation is deployed and the real upload → AI extraction → persisted findings/characters → reload → citation → text-search flow passed with an explicitly synthetic operator document on September 18, 2026. The test records and private file were then removed; the eight existing catalog books and six saved briefs remain. See [VERIFICATION.md](../VERIFICATION.md) for the tested scope.
 
 ## For Cassandra
 
@@ -13,16 +13,16 @@ This release adds a private, editable book library and versioned manuscript refe
 
 Existing publicly sourced titles retain their author-site source links until you replace their details with member-provided information. Edits create attributed sources, and prior source records remain stored. Book descriptions and manuscript findings are separate records. If another person edits the same book first, reload before saving again; the application rejects overwriting a newer edit.
 
-### Upload and let Kira read
+### Save a manuscript, then let Raven read it
 
 1. Open the book and choose its manuscript file. Supported formats are **DOCX, text-based PDF, EPUB, UTF-8 TXT, and Markdown (.md)**.
-2. Confirm that you have permission to upload the manuscript and let Kira's AI services analyze it privately for book knowledge. This permission does **not** authorize publishing excerpts.
-3. Choose **Upload & let Kira read**. The file is parsed and saved privately before paid reading starts.
-4. After the file is saved and background reading starts, leave the page or close the tab. Progress counts completed passages. **Pause reading** prevents additional groups from starting; up to two in-flight groups can still finish. **Resume reading** continues only unfinished passages.
+2. Read **What happens to your file**, then confirm that you have permission to upload the manuscript and to let Raven read it privately for book knowledge. This permission does **not** authorize publishing excerpts.
+3. Choose **Save manuscript**. The file is parsed and saved privately; nothing is read yet.
+4. Choose **Start reading with Raven** when you are ready. Reading uses workspace AI credits. After reading starts, leave the page or close the tab. Progress counts completed passages. **Pause reading** prevents additional groups from starting; up to two in-flight groups can still finish. **Resume reading** continues only unfinished passages.
 
 Each reading step uses workspace AI credits. A durable Vercel Workflow continues after the page closes. Reopen the book to see saved progress or completed findings. Errors pause the job for an explicit retry; progress is retained. Do not assume processing has completed merely because the upload finished.
 
-The screen says “4 MB”; the enforced file limit is **4 MiB (4,194,304 bytes)**. Scans without embedded text, encrypted/protected documents, unsupported encodings, and oversized or malformed archives need a clean text export. Kira does not run OCR or remove document protection.
+The screen says “4 MB”; the enforced file limit is **4 MiB (4,194,304 bytes)**. Scans without embedded text, encrypted/protected documents, unsupported encodings, and oversized or malformed archives need a clean text export. The application does not run OCR or remove document protection.
 
 ### If reading pauses or an upload fails
 
@@ -37,9 +37,9 @@ The screen says “4 MB”; the enforced file limit is **4 MiB (4,194,304 bytes)
 
 Retrying an identical upload recovers a lost upload response by checking the stored file's size and checksum before attaching passages. A failed reading step is retried only after an explicit resume/retry request; there is no automatic paid retry loop after an error.
 
-### Check what Kira learned
+### Check what Raven learned
 
-**What Kira learned** contains extracted observations and possible marketing directions, with model, reading date, and manuscript version. The extraction is selective; it is not a complete editorial analysis or a guarantee that every character or theme was found.
+**What Raven learned** contains extracted observations and possible marketing directions, with model, reading date, and manuscript version. The extraction is selective; it is not a complete editorial analysis or a guarantee that every character or theme was found.
 
 - **Manuscript-supported · unreviewed** is an AI claim tied to a cited passage, not author verification. Exact quote checks establish that the quote exists in this version; you still judge whether it supports the conclusion.
 - **Marketing / interpretive inference** is an interpretation or proposed direction for your judgment. It is not evidence of sales, audience response, or market performance.
@@ -55,7 +55,7 @@ Use **Find it in your manuscript** for names or words in the active completed ve
 
 Upload a changed file to the same book. A different file checksum creates a new numbered version; the same file checksum reuses the existing version. Even a file with identical prose can count as a revision if its document bytes changed.
 
-The previous completed version remains active while the replacement is being uploaded or read. The replacement becomes active only when all of its passages finish successfully. A late completion of an older version cannot replace a newer active version. **Manuscript history** lists the saved versions and their statuses. This release does not provide a version-rollback, file-deletion, or older-version knowledge-switching interface.
+The previous completed version remains active while the replacement is being uploaded or read. The replacement becomes active only when all of its passages finish successfully. A late completion of an older version cannot replace a newer active version. **Where your manuscript lives** lists the saved versions, their statuses, and which version the current findings came from. This release does not provide a version-rollback, file-deletion, or older-version knowledge-switching interface.
 
 ## Privacy and authority
 
