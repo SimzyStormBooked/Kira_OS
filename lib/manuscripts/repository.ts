@@ -36,7 +36,7 @@ function recordingKey() {
 }
 function singleComposite(value: unknown) { return Array.isArray(value) && value.length === 1 ? value[0] : value; }
 export function manuscriptSummary(row: StoredManuscript) {
-  return { id: row.id, version: row.version, filename: row.filename, status: row.status,
+  return { id: row.id, version: row.version, filename: row.filename, size_bytes: row.size_bytes, status: row.status,
     chunk_count: row.chunk_count, completed_chunks: row.completed_chunks, created_at: row.created_at, error_code: row.error_code };
 }
 /** Every query uses a verified caller client and explicit author scope, in addition to RLS. */

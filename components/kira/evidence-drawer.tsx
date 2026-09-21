@@ -12,6 +12,16 @@ import { Button } from "@/components/ui/button";
 import { DemoBadge } from "./origin-badge";
 import { evidenceUrl } from "@/lib/knowledge/provenance";
 import type { Evidence } from "@/types/domain";
+import "./desk.css";
+/** Provenance in plain words. The raw identifier stays available under Technical details. */
+const sourceTypeLabels: Record<Evidence["source_type"], string> = {
+  synthetic: "Invented example",
+  website: "Author website",
+  manual_snapshot: "Manual snapshot",
+  human_feedback: "Your own words",
+  document: "Document you provided",
+  api: "Connected service",
+};
 export function EvidenceDrawer({
   evidence,
   label = "Show me why",
@@ -31,7 +41,7 @@ export function EvidenceDrawer({
       </SheetTrigger>
       <SheetContent className="evidence-sheet">
         <SheetHeader>
-          <span className="eyebrow">PROVENANCE / OPEN FILE</span>
+          <span className="eyebrow">Provenance / Open file</span>
           <SheetTitle className="serif text-3xl">{title}</SheetTitle>
           <SheetDescription>
             Every conclusion should leave a paper trail. Here’s exactly what
@@ -46,18 +56,27 @@ export function EvidenceDrawer({
               <p>{e.excerpt_or_metric}</p>
               <dl className="detail-list">
                 <div>
-                  <dt>Source type</dt>
-                  <dd>{e.source_type.replaceAll("_", " ")}</dd>
+                  <dt>Where this came from</dt>
+                  <dd>{sourceTypeLabels[e.source_type]}</dd>
                 </div>
                 <div>
                   <dt>Recorded</dt>
                   <dd>{e.retrieved_at.slice(0, 10)}</dd>
                 </div>
-                <div>
-                  <dt>Source ID</dt>
-                  <dd className="mono break-all text-[10px]">{e.source_id}</dd>
-                </div>
               </dl>
+              <details className="evidence-technical">
+                <summary>Technical details</summary>
+                <dl className="detail-list">
+                  <div>
+                    <dt>Source ID</dt>
+                    <dd className="mono break-all">{e.source_id}</dd>
+                  </div>
+                  <div>
+                    <dt>Source type as stored</dt>
+                    <dd className="mono break-all">{e.source_type}</dd>
+                  </div>
+                </dl>
+              </details>
               {evidenceUrl(e) && (
                 <a
                   href={evidenceUrl(e)}

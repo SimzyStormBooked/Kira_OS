@@ -8,6 +8,12 @@ async function addBook(page: Page, title: string) {
   await dialog.getByRole("button",{name:"Add book",exact:true}).click();await expect(page.getByRole("heading",{name:title,exact:true})).toBeVisible();
   const body=await page.evaluate(async()=>{const response=await fetch("/api/library");if(!response.ok)throw new Error(`Library read failed: ${response.status}`);return response.json();}); return body.books.find((book:{title:string})=>book.title===title) as {id:string;slug:string};
 }
+async function confirmSave(page: Page) {
+  const confirm=page.getByRole("dialog",{name:"Save this manuscript version?",exact:true});
+  await expect(confirm).toContainText("cannot be removed from inside this app");
+  await confirm.getByRole("button",{name:"Save this version",exact:true}).click();
+  await expect(confirm).not.toBeVisible();
+}
 test.beforeEach(async({page,request})=>{
   expect((await request.post(`${fixture.supabaseUrl}/__test/reset`)).ok()).toBe(true);
   await page.goto("/login");await page.getByLabel("Email address").fill(fixture.memberEmail);await page.getByLabel("Password",{exact:true}).fill(fixture.password);await page.getByRole("button",{name:"Enter your workspace",exact:true}).click();await expect(page.locator(".app-shell")).toBeVisible();
@@ -24,14 +30,16 @@ test("upload requires permission, preserves queued work when AI is disabled and 
   const book=await addBook(page,"Synthetic Upload Book");const text="Synthetic reference text: Rowan is a coordinator. An archive stores the project records for the team.";
   await page.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"reference.txt",mimeType:"text/plain",buffer:Buffer.from(text)});
   const save=page.getByRole("button",{name:"Save manuscript",exact:true});await save.click();
+  await expect(page.locator(".library-form-error")).toHaveText("Confirm your permission before uploading.");
   expect((await page.evaluate(async(id)=>(await fetch(`/api/library/${id}`)).json(),book.id)).manuscripts).toHaveLength(0);
-  // Saving the file and sending its text to a model are two separate consents.
-  await page.getByLabel(/I have permission to upload/).check();await save.click();await expect(page.getByRole("heading",{name:"Ready to read",exact:true})).toBeVisible();
+  // Saving the file and sending its text to a model are two separate consents,
+  // and storing a permanent version asks once more before anything is written.
+  await page.getByLabel(/I have permission to upload/).check();await save.click();await confirmSave(page);await expect(page.getByRole("heading",{name:"Ready to read",exact:true})).toBeVisible();
   await expect(page.locator(".library-success[role=status]")).toContainText("Nothing has been read yet");await expect(page.locator(".library-error[role=alert]")).toHaveCount(0);
   const start=page.getByRole("button",{name:"Start reading with Raven",exact:true});await expect(start).toBeEnabled();await start.click();await expect(page.locator(".library-error[role=alert]")).toContainText("AI setup");
-  await page.reload();await expect(page.getByText("reference.txt · 0 of 1 passages read",{exact:true})).toBeVisible();await expect(page.getByRole("button",{name:"Resume reading",exact:true})).toBeEnabled();
+  await page.reload();await expect(page.locator("#main-content").getByText("reference.txt · 0 of 1 passages read",{exact:true})).toBeVisible();await expect(page.getByRole("button",{name:"Resume reading",exact:true})).toBeEnabled();
   const detail=await page.evaluate(async(id)=>(await fetch(`/api/library/${id}`)).json(),book.id);expect(detail.manuscripts).toHaveLength(1);expect(detail.intelligence).toBeNull();
-  await page.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"reference.txt",mimeType:"text/plain",buffer:Buffer.from(text)});await page.getByLabel(/I have permission to upload/).check();await save.click();
+  await page.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"reference.txt",mimeType:"text/plain",buffer:Buffer.from(text)});await page.getByLabel(/I have permission to upload/).check();await save.click();await confirmSave(page);
   await expect(page.locator(".library-success[role=status]")).toContainText("Nothing has been read yet");expect((await page.evaluate(async(id)=>(await fetch(`/api/library/${id}`)).json(),book.id)).manuscripts).toHaveLength(1);
 });
 test("learned knowledge has private citations, hides spoilers, searches text, and retains the good version during replacement",async({page,request},testInfo)=>{
@@ -71,8 +79,8 @@ test("learned knowledge has private citations, hides spoilers, searches text, an
   await page.getByLabel(/Show manuscript excerpts/).check();await expect(page.locator(".library-search-result")).toHaveCount(0);
   await page.unroute("**/api/library/search?**");
   expect((await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa"]).analyze()).violations).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  await page.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"revision.txt",mimeType:"text/plain",buffer:Buffer.from(text+" This is a revised source record.")});await page.getByLabel(/I have permission to upload/).check();await page.getByRole("button",{name:"Save manuscript",exact:true}).click();await expect(page.getByRole("heading",{name:"Ready to read",exact:true})).toBeVisible();await expect(page.getByText("The previous completed version remains available below until this version is ready.",{exact:true})).toBeVisible();
-  await expect(page.getByRole("heading",{name:"What Raven learned",exact:true})).toBeVisible();await page.reload();await expect(page.getByText("The previous completed version remains available below until this version is ready.",{exact:true})).toBeVisible();
+  await page.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"revision.txt",mimeType:"text/plain",buffer:Buffer.from(text+" This is a revised source record.")});await page.getByLabel(/I have permission to upload/).check();await page.getByRole("button",{name:"Save manuscript",exact:true}).click();await confirmSave(page);await expect(page.getByRole("heading",{name:"Ready to read",exact:true})).toBeVisible();await expect(page.locator("#main-content").getByText("The previous completed version remains available below until this version is ready.",{exact:true})).toBeVisible();
+  await expect(page.getByRole("heading",{name:"What Raven learned",exact:true})).toBeVisible();await page.reload();await expect(page.locator("#main-content").getByText("The previous completed version remains available below until this version is ready.",{exact:true})).toBeVisible();
 });
 
 

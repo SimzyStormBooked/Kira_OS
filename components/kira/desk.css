@@ -74,3 +74,47 @@
   flex-wrap: wrap;
   row-gap: 8px;
 }
+/* The desk status line stays in the DOM so its message is announced, not silently inserted. */
+.desk-status {
+  margin: 14px 0 0;
+}
+.desk-status:empty {
+  margin: 0;
+}
+/* Shown only when this browser refused to hold an unsaved draft. */
+.draft-storage-warning {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #f0c4c7;
+}
+.draft-storage-warning:not(:empty) {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--destructive);
+  border-radius: 6px;
+  background: #2a1b1e;
+}
+/* Identifiers an auditor needs, out of the way of the provenance she actually reads. */
+.evidence-technical {
+  margin-top: 12px;
+}
+.evidence-technical > summary {
+  cursor: pointer;
+  min-height: 24px;
+  padding: 3px 0;
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  color: var(--muted-foreground);
+}
+.evidence-technical > summary:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.evidence-technical .detail-list {
+  margin-top: 8px;
+}
+.evidence-technical .detail-list dd {
+  font-size: var(--text-sm);
+}

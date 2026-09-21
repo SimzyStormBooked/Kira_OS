@@ -16,7 +16,8 @@ export default function ErrorPage({ reset }: { reset: () => void }) {
         Something didn’t load.
       </h1>
       <p>
-        Nothing you saved has been lost. Try loading this workspace again.
+        Anything you had already saved is untouched. Unsaved text in the page
+        you were on may not have survived — check before retyping.
       </p>
       <Button onClick={reset}>Try again</Button>
       <Link className="text-link" href="/">

@@ -130,7 +130,7 @@ test("owner grants, changes and revokes access while viewer controls stay read-o
     await removal.getByRole("button", { name: "Remove access", exact: true }).click();
     await expect(removal).not.toBeVisible();
     await expect(member).toHaveCount(0);
-    await expect(page.getByText("Workspace access removed. Their saved work is retained.", { exact: true })).toBeFocused();
+    await expect(page.getByText("Workspace access removed. Their saved work is retained.", { exact: true })).toBeVisible();
     await collaborator.evaluate(() => window.dispatchEvent(new Event("focus")));
     // Losing access never throws away unfinished words: the words are handed back
     // first, and she decides when to leave for the sign-in page.

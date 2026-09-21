@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Copy, TriangleAlert } from "lucide-react";
+import { Copy, Download, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,13 +17,15 @@ import { keptEditFor, useWorkspace } from "@/lib/db/demo-store";
 import "./desk.css";
 type KeptDraft = { id: string; label: string; text: string };
 /**
- * A lapsed session and an unreadable demo file are the two moments the app could take
- * unsaved words away from her. Both stop and hand the words back before anything is cleared.
+ * A lapsed session, an unreadable demo file and an unreadable stored draft are the three
+ * moments the app could take unsaved words away from her. Each one stops and hands the
+ * words back before anything is cleared or written over.
  */
 export function SessionEndedDialog() {
   const {
-    sessionEnded, corruptWorkspace, scratchpad, learnScratchpad, studioScratchpad,
-    approvals, editDrafts, leaveEndedSession, downloadCorruptWorkspace, startFreshDemoWorkspace, showError,
+    sessionEnded, corruptWorkspace, unreadableDrafts, scratchpad, learnScratchpad, studioScratchpad,
+    approvals, editDrafts, keptRegisteredDrafts, leaveEndedSession, downloadCorruptWorkspace,
+    downloadUnreadableDrafts, dismissUnreadableDrafts, startFreshDemoWorkspace, showError,
   } = useWorkspace();
   const [copied, setCopied] = useState<string | null>(null);
   const kept: KeptDraft[] = [];
@@ -54,10 +56,13 @@ export function SessionEndedDialog() {
     const [, unsaved] = keptEditFor(editDrafts, approval);
     if (unsaved !== null) kept.push({ id: `brief-${approval.id}`, label: `Your edits to “${approval.title}”`, text: unsaved });
   }
-  async function copyDraft(draft: KeptDraft) {
+  // Every field that joined the draft guard — plan forms, book metadata, notes — is offered back too.
+  for (const registered of keptRegisteredDrafts())
+    kept.push({ id: `registered-${registered.key}`, label: registered.label, text: registered.text });
+  async function copyText(label: string, text: string) {
     try {
-      await navigator.clipboard.writeText(draft.text);
-      setCopied(draft.label);
+      await navigator.clipboard.writeText(text);
+      setCopied(label);
     } catch {
       setCopied(null);
       showError(new Error("This browser blocked copying. Select the text in the box and copy it yourself."));
@@ -80,7 +85,7 @@ export function SessionEndedDialog() {
           onInteractOutside={(event) => event.preventDefault()}
         >
           <DialogHeader>
-            <span className="eyebrow">YOUR WORKSPACE</span>
+            <span className="eyebrow">Your workspace</span>
             <DialogTitle className="serif text-3xl">Your session ended</DialogTitle>
             <DialogDescription>
               Your sign-in expired, so nothing can be saved to your workspace right now. Your
@@ -93,7 +98,7 @@ export function SessionEndedDialog() {
               <div className="session-ended-draft" key={draft.id}>
                 <div className="session-ended-draft-top">
                   <label htmlFor={`kept-${draft.id}`}>{draft.label}</label>
-                  <Button variant="outline" size="sm" onClick={() => void copyDraft(draft)}>
+                  <Button variant="outline" size="sm" onClick={() => void copyText(draft.label, draft.text)}>
                     <Copy size={14} />
                     Copy
                   </Button>
@@ -118,7 +123,7 @@ export function SessionEndedDialog() {
         >
           <DialogHeader>
             <span className="eyebrow">
-              <TriangleAlert size={13} aria-hidden="true" /> DEMO WORKSPACE
+              <TriangleAlert size={13} aria-hidden="true" /> Demo workspace
             </span>
             <DialogTitle className="serif text-3xl">This browser holds a demo file we cannot read</DialogTitle>
             <DialogDescription>
@@ -132,6 +137,53 @@ export function SessionEndedDialog() {
               Download the unreadable workspace file
             </Button>
             <Button onClick={startFresh}>Start a fresh demo workspace</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={unreadableDrafts !== null && !sessionEnded && corruptWorkspace === null}>
+        <DialogContent
+          showCloseButton={false}
+          className="session-ended-dialog"
+          onEscapeKeyDown={(event) => event.preventDefault()}
+          onInteractOutside={(event) => event.preventDefault()}
+        >
+          <DialogHeader>
+            <span className="eyebrow">
+              <TriangleAlert size={13} aria-hidden="true" /> Unfinished words
+            </span>
+            <DialogTitle className="serif text-3xl">We could not reopen the draft this tab was holding</DialogTitle>
+            <DialogDescription>
+              This tab had unfinished words stored from an earlier visit, and this version of the
+              workspace cannot read the file they were in. Nothing you saved to your workspace is
+              affected. The stored text is below exactly as it was found. Copy or download it if
+              you want it, then continue — continuing removes this unreadable copy.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="session-ended-drafts">
+            <div className="session-ended-draft">
+              <div className="session-ended-draft-top">
+                <label htmlFor="unreadable-drafts">The stored text, as found</label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void copyText("The stored text, as found", unreadableDrafts ?? "")}
+                >
+                  <Copy size={14} />
+                  Copy
+                </Button>
+              </div>
+              <Textarea id="unreadable-drafts" readOnly rows={10} value={unreadableDrafts ?? ""} />
+            </div>
+          </div>
+          <p className="session-ended-status" role="status">
+            {copied ? `Copied to your clipboard: ${copied}` : ""}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={downloadUnreadableDrafts}>
+              <Download size={15} />
+              Download the unreadable draft file
+            </Button>
+            <Button onClick={dismissUnreadableDrafts}>Continue without them</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

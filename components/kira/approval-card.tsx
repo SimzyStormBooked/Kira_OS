@@ -19,7 +19,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { keptEditFor, useWorkspace } from "@/lib/db/demo-store";
+import { keptEditFor, useRegisteredDraft, useWorkspace } from "@/lib/db/demo-store";
 import type { ApprovalRequest } from "@/types/domain";
 import { DemoBadge } from "./origin-badge";
 import { EvidenceDrawer } from "./evidence-drawer";
@@ -38,8 +38,10 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
   const submitLock = useRef(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const decisionTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const { ready, feedback, mode, busy, canEdit, roleError, editDrafts } = useWorkspace();
+  const { ready, feedback, mode, busy, canEdit, roleError, editDrafts, draftStorageFailed } = useWorkspace();
   const { decideApproval, showError, teachRaven, setEditDraft, clearEditDrafts } = useWorkspace();
+  // An unsaved lesson joins the same guard as her other unfinished words.
+  useRegisteredDraft(`lesson-${approval.id}`, `Your unsaved lesson for “${approval.title}”`, lesson);
   // Her rewrite lives in the workspace store, keyed to the draft she edited, so closing the
   // dialog, reloading the tab or signing out can never quietly replace it with the stored brief.
   const [keptEdit, unsavedEdit, keptVersion] = keptEditFor(editDrafts, approval);
@@ -152,7 +154,9 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
       {unsavedEdit !== null && approval.status === "pending" && (
         <p className="approval-unsaved">
           <span>
-            You have unsaved edits to this brief, kept in this tab until you save them.
+            {draftStorageFailed
+              ? "You have unsaved edits to this brief. This browser could not hold your draft — copy it before you reload or close this tab."
+              : "You have unsaved edits to this brief, kept in this tab until you save them."}
             {keptVersion !== approval.version && ` You wrote them against Draft ${keptVersion + 1}; this brief is now Draft ${approval.version + 1}.`}
           </span>
           <Button
@@ -174,7 +178,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
       {lessons.length > 0 && (
         <div className="saved-lessons">
           <span className="eyebrow">
-            YOUR GUIDANCE · {lessons.length} SAVED
+            Your guidance · {lessons.length} saved
           </span>
           {lessons.map((l) => (
             <p key={l.id}>
@@ -204,16 +208,20 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
             if (target) { event.preventDefault(); target.focus(); }
           }}>
           <DialogHeader>
-            <span className="eyebrow">CASSANDRA’S DESK</span>
+            <span className="eyebrow">Cassandra’s Desk</span>
             <DialogTitle className="serif text-3xl">
               {isDecision ? modal === "approve" ? "Approve this brief?" : "Reject this brief?" : modal === "edit"
                 ? "Make it yours."
-                : "What did the numbers miss?"}
+                : "What should this brief have known?"}
             </DialogTitle>
             <DialogDescription>
-              {isDecision ? `You are about to ${modal} “${approval.title}”. This decision is final: the brief becomes read-only and cannot be reopened or edited. You can still add a lesson. Nothing will be published, sent, purchased, or changed outside this workspace.` : modal === "edit"
+              {isDecision ? `You are about to ${modal} “${approval.title}”. This decision is final: the brief becomes read-only and cannot be reopened or edited. You can still add a lesson. Nothing will be published, sent, purchased, or changed outside this workspace.${
+                unsavedEdit !== null
+                  ? ` You have unsaved edits to this brief. ${modal === "approve" ? "Approving" : "Rejecting"} records Draft ${approval.version + 1} as it is saved now and discards those edits. Save the draft first if you want them included.`
+                  : ""
+              }` : modal === "edit"
                 ? "Save an edited brief for review. Editing does not approve it."
-                : "Tell Raven what the numbers missed. Your guidance is saved for future use; it does not retrain a model."}
+                : "Tell Raven what this brief got wrong or left out. Your guidance is saved for future use; it does not retrain a model."}
             </DialogDescription>
           </DialogHeader>
           {!isDecision && <><label
@@ -236,7 +244,13 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
                 : setLesson(e.target.value)
             }
             placeholder="Those readers aren’t my audience. Here’s what matters…"
-          /></>}
+          />
+          {modal === "teach" && (
+            <p className="quiet-note">
+              Not saved yet. This note stays in this tab until you choose Save lesson, and you are
+              warned before a reload or sign-out can take it.
+            </p>
+          )}</>}
           {changedSinceOpening && <p role="alert" className="form-error">This brief changed while you were reviewing it. Cancel, read the latest version, then choose your next step.</p>}
           {!canEdit && <p role="alert" className="form-error">{roleError ? "Your permissions could not be checked. Close this dialog and retry the permission check before making a decision." : "Your access no longer allows changes. You can cancel and read this brief."}</p>}
           {formError && (
@@ -248,6 +262,19 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
             <Button ref={cancelRef} variant="ghost" disabled={saving} onClick={() => setModal(null)}>
               Cancel
             </Button>
+            {isDecision && unsavedEdit !== null && (
+              <Button
+                variant="outline"
+                disabled={!ready || pending || !canEdit}
+                onClick={() => {
+                  setEditVersion(approval.version);
+                  setFormError(null);
+                  setModal("edit");
+                }}
+              >
+                Save my draft first
+              </Button>
+            )}
             <Button
               disabled={!ready || pending || !canEdit || changedSinceOpening || (!isDecision && !(modal === "edit" ? draft : lesson).trim())}
               onClick={save}

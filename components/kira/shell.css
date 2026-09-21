@@ -63,3 +63,69 @@
   color: #b7b3a6;
   margin-top: 4px;
 }
+
+/* Sign-out with unfinished work: the same words the expiry dialog protects, handed
+   back before the destructive button, so backing out is not the only way to keep them. */
+.signout-drafts {
+  display: grid;
+  gap: 16px;
+  max-height: min(42vh, 360px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.signout-copy-all {
+  justify-self: start;
+}
+.signout-draft {
+  display: grid;
+  gap: 8px;
+}
+.signout-draft-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.signout-draft label {
+  font-size: 13px;
+  color: #ded8cf;
+}
+.signout-draft textarea {
+  font-size: 13px;
+  line-height: 1.7;
+}
+.signout-copy-status {
+  margin: 0;
+  min-height: 18px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+@media (max-width: 760px) {
+  .signout-drafts {
+    max-height: 38vh;
+  }
+}
+
+/* The account belongs under her name, and an email can be long in a 225px rail. */
+.user-profile > span {
+  min-width: 0;
+}
+.user-profile small {
+  overflow-wrap: anywhere;
+}
+
+/* A metric tile must be able to show a decline: direction comes from the record. */
+.metric-card .metric-change.metric-down {
+  color: #d7ae90;
+}
+/* Invented series read as quieter lines than measured ones would. */
+.metric-card[data-origin="demo"] .sparkline {
+  color: #6b7355;
+  opacity: 0.6;
+}
+
+/* The community card lost its decorative kicker; keep the icon where it was. */
+.community-card .section-heading {
+  justify-content: flex-end;
+}
