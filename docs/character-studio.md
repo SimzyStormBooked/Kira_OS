@@ -1,6 +1,6 @@
 # Character Studio — phase 1 schema
 
-Phase 1 adds the database foundation for author-owned character identity, private portraits, and author-written notes. It is schema only. There is no Character Studio page, upload route, gallery, home showcase, or relationship map in the application yet. The migration is applied and recorded in the hosted database as of 2026-09-21; see VERIFICATION.md, including the note that an undocumented integration applied it on merge. The design preview in [design/character-studio-preview.html](design/character-studio-preview.html) remains a standalone concept.
+Phase 1 adds the database foundation for author-owned character identity, private portraits, and author-written notes, plus the server upload route that sanitizes an image before it is stored. There is no Character Studio page, gallery, home showcase, or relationship map yet, so nothing in the interface reaches the upload route. The migration is applied and recorded in the hosted database as of 2026-09-21; see VERIFICATION.md, including the note that an undocumented integration applied it on merge. The design preview in [design/character-studio-preview.html](design/character-studio-preview.html) remains a standalone concept.
 
 ## Why new tables were required
 
@@ -50,11 +50,19 @@ The `kira-character-portraits` bucket is private, limited to 8 MB, and limited t
 
 `tests/character-studio-database.test.ts` runs the real migrations in PGlite and covers tenant isolation, viewer denial, alias normalization, server-advanced versions and stale-edit detection, single reversible links, rejected foreign-book links, note kinds, direct-write refusal on portraits and on `book_characters`, capability and role requirements, registration idempotency, the sanitization requirement, bucket privacy and path binding, primary-portrait containment, and survival of portraits, notes, and links across a second manuscript reading. The full `npm run check` passes: TypeScript, ESLint, 525 unit/API/database tests, and the production build.
 
-Not verified, because it does not exist yet: any hosted behavior. No EXIF-stripping upload route is implemented and no image has been stored. The hosted objects were inspected directly and match this document; that is schema verification, not feature verification.
+Not verified: any hosted behavior. No image has been uploaded to the hosted bucket, and the route has no caller in the interface, so it is covered by unit tests only. The hosted objects were inspected directly and match this document; that is schema verification, not feature verification.
+
+## Upload route
+
+`POST /api/characters/portraits` accepts a multipart form with `profileId`, `file`, `permission`, and optional `usagePermission`, `sourceCredit`, and `caption`. It requires a same-origin request and an owner or editor, refuses an unknown field, and refuses a file whose name and declared type disagree or that exceeds 8 MB. `promotional_approved` is refused without a recorded source credit, in the route and again in SQL.
+
+The order is deliberate: metadata is removed first, so an image that cannot be cleaned never produces a database row and never reaches storage; then the sanitized bytes are hashed and registered; then the object is uploaded; only then is the image marked stored. If the upload reports an error, the route downloads the object and compares its hash before deciding between success and `storage_error`, so a lost response cannot be mistaken for a lost file. The response carries no storage path and lists what was removed.
+
+`lib/characters/image.ts` rewrites the container rather than re-encoding pixels. JPEG loses every `APPn` and comment segment, PNG keeps only an allowlist of chunks (dropping `eXIf`, `tEXt`, `zTXt`, `iTXt`, `tIME`, `iCCP`), and WebP loses `EXIF` and `XMP ` chunks with the advertising flags cleared in `VP8X` and the RIFF length rebuilt. All three drop anything appended after the image's own end marker, which is where an appended payload would hide. A container the sanitizer cannot fully parse is rejected with 422 rather than stored. Colour profiles go with the rest, which can shift rendered colour slightly; that is the accepted trade for not storing an uninspected ICC blob.
 
 ## Remaining in the sequence
 
-1. Server upload route that strips location metadata, hashes the image, and calls the three RPCs; the Studio gallery, search by name and alias, and the profile view.
+1. The Studio gallery, search by name and alias, the profile view, and the client that calls the upload route (including signed URLs for reading a private portrait back).
 2. Author-selected home showcase.
 3. Optional Quiet Room.
 
