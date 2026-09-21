@@ -72,7 +72,7 @@ export function EvidenceDrawer({
           ))}
           <div className="quiet-note">
             Confidence is a review aid, not a prediction of revenue or sales.
-            Demo evidence cannot establish facts about Kira’s readers or books.
+            Demo evidence cannot establish facts about your readers or books.
           </div>
         </div>
       </SheetContent>

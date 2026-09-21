@@ -11,6 +11,9 @@ async function login(page: Page) {
   await expect(page.locator(".app-shell")).toBeVisible();
 }
 async function navigate(page: Page, href: string) {
+  // On phones a drawer left over from the previous navigation is still closing,
+  // and it hides the rest of the page from assistive tech. Wait for it to go.
+  await expect.poll(() => page.locator('[data-slot="sheet-content"]').count()).toBe(0);
   const menu = page.getByRole("button", { name: "Open navigation", exact: true });
   if (await menu.isVisible() && await menu.getAttribute("aria-expanded") !== "true") await menu.click();
   await page.locator(`a.nav-item[href="${href}"]:visible`).first().click();
@@ -53,7 +56,9 @@ test("workshop fields, recipe previews and explicit saved state survive Desk nav
   await expect(page.getByLabel("What should it know first? Optional", { exact: true })).toHaveValue("Private working context that must stay out of browser storage.");
   await expect(page.getByLabel("Prompt to copy or adapt", { exact: true })).toHaveValue(built);
   expect(mutations).toEqual([]);
-  expect(await page.evaluate(() => [localStorage, sessionStorage].some(storage => Object.values(storage).some(value => String(value).includes("private workshop marker"))))).toBe(false);
+  // Unfinished words are kept for this tab only: never in durable browser storage, never sent.
+  expect(await page.evaluate(() => Object.values(localStorage).some(value => String(value).includes("private workshop marker")))).toBe(false);
+  expect(await page.evaluate(() => Object.values(sessionStorage).some(value => String(value).includes("private workshop marker")))).toBe(true);
   await page.getByRole("button", { name: "Save blueprint to my desk", exact: true }).click();
   await expect(page.getByRole("button", { name: "Saved to my desk", exact: true })).toBeDisabled();
   await navigate(page, "/desk"); await navigate(page, "/learn");
@@ -68,6 +73,12 @@ test("workshop fields, recipe previews and explicit saved state survive Desk nav
   await expect(page).toHaveURL(/\/desk$/);
   await navigate(page, "/learn");
   await expect(name).toHaveValue("My private workshop marker");
+  // A reload she does confirm keeps the same unfinished words in this tab.
+  const reloadWarning = page.waitForEvent("dialog");
+  const reloading = page.reload();
+  await (await reloadWarning).accept();
+  await reloading;
+  await expect(page.getByLabel("Give your idea a name", { exact: true })).toHaveValue("My private workshop marker");
 });
 
 test("unsent Studio questions survive navigation and are preserved if AI becomes unavailable", async ({ page }) => {
@@ -92,7 +103,8 @@ test("unsent Studio questions survive navigation and are preserved if AI becomes
   await expect(page.getByRole("link", { name: "Explore Learn & Create", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Finish workspace setup", exact: true })).toHaveAttribute("href", "/settings#setup");
   expect(writes).toEqual([]);
-  expect(await page.evaluate(() => [localStorage, sessionStorage].some(storage => Object.values(storage).some(value => String(value).includes("Private question:"))))).toBe(false);
+  expect(await page.evaluate(() => Object.values(localStorage).some(value => String(value).includes("Private question:")))).toBe(false);
+  expect(await page.evaluate(() => Object.values(sessionStorage).some(value => String(value).includes("Private question:")))).toBe(true);
 });
 
 test("session loss clears every private scratchpad without preventing sign-out", async ({ page, context }) => {
@@ -108,7 +120,14 @@ test("session loss clears every private scratchpad without preventing sign-out",
   await otherTab.getByRole("button", { name: "Sign out", exact: true }).click();
   await expect(otherTab).toHaveURL(/\/login$/);
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  const ended = page.getByRole("dialog", { name: "Your session ended" });
+  await expect(ended).toBeVisible();
+  await expect(ended.getByLabel(/Your unfinished idea/)).toHaveValue(/Private unfinished idea must disappear/);
+  await expect(ended.getByLabel(/Your unsent question for Ask Raven/)).toHaveValue("Private unsent question must disappear after session loss.");
+  await expect(ended.getByLabel(/Your notes in Learn & Create/).first()).toHaveValue(/Must disappear after session loss/);
+  await ended.getByRole("button", { name: "Sign in again", exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
+  expect(await page.evaluate(() => Object.values(sessionStorage).some(value => String(value).includes("Must disappear after session loss")))).toBe(false);
   await login(page);
   await navigate(page, "/learn");
   await expect(page.getByLabel("Give your idea a name", { exact: true })).toHaveValue("My business brainstorm partner");

@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWorkspace } from "@/lib/db/demo-store";
 import { ManualReviewForm } from "./manual-review-form";
 import { ApprovalCard } from "./approval-card";
+import "./desk.css";
 export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: string }) {
   const { approvals, feedback, ready, mode } = useWorkspace();
   const { exportWorkspace, showError } = useWorkspace();
@@ -35,14 +36,14 @@ export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: strin
       <div className="page-heading">
         <div>
           <span className="eyebrow page-kicker">
-            HUMAN CONTROL / CASSANDRA’S DESK
+            YOUR DECISIONS / CASSANDRA’S DESK
           </span>
           <h1>
-            They bring the evidence.
+            The evidence is here.{" "}
             <br />
-            <em>You bring the instinct.</em>
+            <em>The call is yours.</em>
           </h1>
-          <p>Approve, adjust, or teach the team what only you know.</p>
+          <p>Approve, adjust, or record what only you know.</p>
         </div>
         <Button
           variant="outline"
@@ -68,6 +69,15 @@ export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: strin
           Nothing is posted, sent, purchased, or applied to the live catalog.
         </span>
       </div>
+      {mode === "connected" && (
+        <p className="desk-access-note">
+          Everyone with access to this workspace can read these briefs and your decisions.{" "}
+          <Link className="text-link" href="/access">
+            See who under Workspace access
+          </Link>
+          .
+        </p>
+      )}
       <ManualReviewForm ideaId={ideaId} />
       {briefId && ready && !selectedBrief && <p role="status" className="quiet-note">That brief is not available in your workspace. You can search your saved briefs or browse the desk below.</p>}
       <div className="desk-layout">
@@ -76,7 +86,7 @@ export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: strin
             setSelection({ tab: value });
             if (briefId) router.replace("/desk", { scroll: false });
           }}>
-            <TabsList>
+            <TabsList aria-label="Brief status">
               <TabsTrigger value="pending">
                 Needs your eye ({pending.length})
               </TabsTrigger>
@@ -94,7 +104,7 @@ export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: strin
                 <TabsContent value={panel} key={panel} {...(panel === "reviewed" ? { "aria-labelledby": "desk-reviewed-tab" } : {})}>
                   <div className="approval-list">
                     {items.map((a) => (
-                      <div key={a.id}><ApprovalCard approval={a} />{mode === "connected" && <Link className="text-link" href={`/plans?request=${a.id}`}>Turn this idea into a marketing plan →</Link>}</div>
+                      <div key={a.id}><ApprovalCard approval={a} />{mode === "connected" && <Link className="text-link" href={`/plans?request=${a.id}`}>Turn this idea into a marketing plan <span aria-hidden="true">→</span></Link>}</div>
                     ))}
                     {items.length === 0 && (
                       <div className="empty-state">
@@ -107,7 +117,7 @@ export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: strin
                         <p>
                           {panel === "pending"
                             ? mode === "demo"
-                              ? "The minions are working. Go write. 🖤"
+                              ? "Nothing needs you right now. Go write."
                               : "Add an idea or request above when you have a decision to make."
                             : "Your reviewed requests will stay here, along with your decisions."}
                         </p>
@@ -122,7 +132,7 @@ export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: strin
         <aside className="desk-memory">
           <Card className="memory-card">
             <Lightbulb size={24} strokeWidth={1.2} />
-            <span className="eyebrow">INSTITUTIONAL MEMORY</span>
+            <span className="eyebrow">WHAT YOU’VE TAUGHT RAVEN</span>
             <h2>
               Teach the Raven.
               <br />
@@ -134,7 +144,7 @@ export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: strin
               original recommendation.
             </p>
             <div className="memory-count">
-              <strong>{feedback.length.toString().padStart(2, "0")}</strong>
+              <strong>{feedback.length}</strong>
               <span>
                 lessons saved
                 <br />
@@ -142,8 +152,8 @@ export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: strin
               </span>
             </div>
             <span className="quiet-note">
-              Feedback is persistable, exportable, and designed for future
-              retrieval. No live synthesis is connected yet.
+              Your notes are saved with the decision and you can export them any
+              time. Raven does not learn from them automatically.
             </span>
           </Card>
         </aside>
