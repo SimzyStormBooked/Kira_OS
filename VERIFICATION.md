@@ -24,7 +24,9 @@ Verified present in the hosted database: all five tables (`character_profiles`, 
 
 Two honest limits on that check. The connection used TLS but did not verify the certificate chain, because Supabase's CA is not available on this machine; this is a weaker guarantee than the September 20 audit recorded. And the migration was **not** applied by hand here: it was already recorded when this workspace first connected, roughly ten minutes after the merge and the 17:26 UTC production deployment. No GitHub Actions workflow, build migration step, or deploy hook in this repository applies migrations, so an external integration does. **That mechanism is undocumented and should be confirmed in the Supabase dashboard**, because it means merging to `main` can change production schema without an explicit apply step — the opposite of what earlier handoffs assumed.
 
-Still absent: any Character Studio interface, the sanitizing upload route, a stored image, and any browser or hosted behavioral check for this feature. Schema in production is not a working feature.
+The sanitizing upload route was added afterwards (`POST /api/characters/portraits`), covered by 15 unit tests: metadata removal for JPEG, PNG, and WebP including appended-payload stripping and refusal of unparseable containers, plus route-level cross-origin and viewer refusal, permission and promotional-credit requirements, sanitize-before-register-before-store ordering, hash verification after a failed upload, duplicate handling, and absence of the storage path from the response.
+
+Still absent: any Character Studio interface. Nothing in the app calls the upload route, no image has been stored in the hosted bucket, and there is no browser or hosted behavioral check for this feature. Schema and a route in production are not a working feature.
 
 ## Character Studio phase 1 — local schema checks
 
