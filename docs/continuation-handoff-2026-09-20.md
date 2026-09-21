@@ -35,7 +35,7 @@ The screenshot’s “all three migrations unrecorded” wording is stale: the d
 
 - Automatic Monday/Thursday reports: owner explicitly deferred email setup. Do not enable sending or subscriptions as part of this checkpoint. Resend domain DNS/sender verification remains setup work; existing preview/report code does not prove delivery readiness.
 - Meta Ads: dashboard/import/preview code exists, but developer-app credentials and consent are still activation gates. Do not imply live Facebook account analytics or advertising changes.
-- Character Studio: concept only. No portrait-storage schema, identity-linking migration, or production upload feature has been added.
+- Character Studio: concept only when this checkpoint was written. Phase 1 schema was added afterwards in `202609210001_character_studio.sql` (September 21) and is pending on the hosted database; there is still no upload feature, gallery, or stored image. See [character-studio.md](character-studio.md).
 - Production manuscript snapshot contained one ready and one failed version; no processing was active and no retries were attempted in this migration audit. That aggregate alone does not identify a new failure or supersede the available completed knowledge.
 
 ## Review artifacts retained in the workspace

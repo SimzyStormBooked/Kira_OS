@@ -14,7 +14,13 @@ The audit was read-only. No migrations were re-applied, no migration history was
 
 The most recently verified application release is `131c4ed` (Vercel `dpl_4U9qGTk28nKBvxv33yDy7NNDEDnJ`), deployed at the canonical production alias. It includes the focused manuscript knowledge interface and evidence-carrying Raven/Desk actions. Release checks passed 515 unit/API/database tests, TypeScript, ESLint and the production build; all eight targeted manuscript desktop/mobile browser tests passed after the final changes, including automated accessibility checks. The authenticated production check confirmed the new UI bundle, available Celine knowledge, and anonymous API access denial. These are recorded results from that release, not a claim that a new adversarial review or physical-device study has completed.
 
-Current scope and open review items are captured in [the continuation handoff](docs/continuation-handoff-2026-09-20.md). **Character Studio remains a design preview, not a deployed feature or pending migration.** Automatic report emails remain explicitly deferred by the owner. Meta Ads activation still requires provider configuration and consent; no live Meta account connection is claimed.
+Current scope and open review items are captured in [the continuation handoff](docs/continuation-handoff-2026-09-20.md). **Character Studio has a phase 1 schema migration pending for the hosted database and no deployed feature; its interface remains a design preview.** Automatic report emails remain explicitly deferred by the owner. Meta Ads activation still requires provider configuration and consent; no live Meta account connection is claimed.
+
+## Character Studio phase 1 — verified locally, not deployed
+
+`202609210001_character_studio.sql` adds author-owned character profiles, aliases, reversible author-confirmed book links, author notes, and private portraits with retained source, credit, and usage permission. `tests/character-studio-database.test.ts` applies the real migrations in PGlite and passes 10 checks covering tenant isolation and viewer denial, server-advanced versions and stale-edit detection, single reversible links, rejected foreign-book links, refusal of direct portrait and `book_characters` writes, the server-capability requirement, registration idempotency, the location-metadata requirement before an image counts as stored, bucket privacy and path binding, and survival of portraits, notes, and links across a second manuscript reading. The full `npm run check` passed: TypeScript, ESLint, 525 unit/API/database tests across 41 files, and the production build.
+
+This is a local schema result only. The migration has **not** been applied to the hosted database, no Character Studio interface or upload route exists, no image has been uploaded or sanitized, and no browser or hosted check was run for it.
 
 ## Historical verification entries
 

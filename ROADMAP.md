@@ -17,6 +17,7 @@ The current implementation adds optional guidance, inspiration, a local Learn & 
 - Ask Raven’s Gateway adapter, private history, strict structured output, creative policy, recording capability, and daily request limits are implemented. Gateway currently has zero credits; the account must finish verification/funding before a live model check and enablement. There is no successful live generation to claim yet.
 - Meta OAuth/account-verification/disconnection code is implemented. App credentials, allowed callbacks, provider permissions, and real consent verification remain. Saved links work independently and do not sync accounts.
 - Verify owner/editor/viewer behavior, password change, and the latest migrations on the final deployment before completing the handoff.
+- Character Studio phase 1 is the schema in `202609210001_character_studio.sql`: author-owned character identity, reversible author-confirmed book links, author notes, and private portraits with retained rights. It is verified locally and pending on the hosted database. The Studio interface, the sanitizing upload route, the home showcase, and the Quiet Room are not built. See [docs/character-studio.md](docs/character-studio.md).
 
 No autonomous specialists, publishing, outreach sending, scheduled execution, or learned-feedback retrieval are enabled. Agent blueprints remain planning documents. Only a deliberately submitted, enabled AI request consumes model credits.
 
