@@ -189,7 +189,7 @@ test("search and responsive navigation work without overflow", async ({
 });
 
 test("primary pages meet automated accessibility checks", async ({ page }) => {
-  for (const route of ["/", "/universe", "/desk", "/settings"]) {
+  for (const route of ["/", "/universe", "/characters", "/desk", "/settings"]) {
     await page.goto(route);
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])

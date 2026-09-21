@@ -26,7 +26,11 @@ Two honest limits on that check. The connection used TLS but did not verify the 
 
 The sanitizing upload route was added afterwards (`POST /api/characters/portraits`), covered by 15 unit tests: metadata removal for JPEG, PNG, and WebP including appended-payload stripping and refusal of unparseable containers, plus route-level cross-origin and viewer refusal, permission and promotional-credit requirements, sanitize-before-register-before-store ordering, hash verification after a failed upload, duplicate handling, and absence of the storage path from the response.
 
-Still absent: any Character Studio interface. Nothing in the app calls the upload route, no image has been stored in the hosted bucket, and there is no browser or hosted behavioral check for this feature. Schema and a route in production are not a working feature.
+The gallery and profile view were added afterwards at `/characters` and `/characters/[id]`, with `GET`/`POST /api/characters` and `GET`/`PATCH /api/characters/[id]`. Portraits are read through five-minute signed URLs and no storage path appears in any response. 23 new unit tests cover the sanitizer, the upload route, and the gallery routes; the full `npm run check` passes with 548 tests across 44 files, and the 20-test demo browser suite passes, now including `/characters` in the automated accessibility sweep with zero violations on desktop and mobile.
+
+One flake worth recording: `search and responsive navigation work without overflow` failed once in a parallel run against a 5-second timeout, then passed in isolation both with and without these changes and passed in a full re-run. It is first-compile latency, not a regression.
+
+Still absent: the connected path has never run in a browser. Exercising the real gallery, upload, and signed URLs requires the hosted credentials or Character Studio support in the simulated Supabase fixture, and neither has been done. No image has been stored in the hosted bucket, and notes and book links are read-only in the interface. Schema, a route, and a rendered page are not the same as a verified working feature.
 
 ## Character Studio phase 1 — local schema checks
 

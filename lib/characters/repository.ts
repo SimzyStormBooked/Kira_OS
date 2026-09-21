@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { ManuscriptError } from "@/lib/manuscripts/http";
 import { checkLibraryError } from "@/lib/manuscripts/repository";
-import { PORTRAIT_USAGE_PERMISSIONS } from "./contract";
+import { PORTRAIT_URL_TTL_SECONDS, PORTRAIT_USAGE_PERMISSIONS, type CharacterProfileInput } from "./contract";
 
 export const storedPortraitSchema = z.object({
   id: z.uuid(), author_id: z.uuid(), profile_id: z.uuid(), storage_path: z.string(),
@@ -41,6 +41,31 @@ export function createCharacterRepository(supabase: SupabaseClient, authorId: st
     checkLibraryError(error);
     return storedPortraitSchema.parse(singleComposite(data));
   }
+  /** Portraits are private: a member receives a short-lived signed URL, never a path. */
+  async function signedUrls(rows: { id: string; storage_path: string }[]) {
+    if (!rows.length) return new Map<string, string>();
+    const { data } = await supabase.storage.from("kira-character-portraits")
+      .createSignedUrls(rows.map(row => row.storage_path), PORTRAIT_URL_TTL_SECONDS);
+    const byPath = new Map((data ?? []).map(entry => [entry.path ?? "", entry.signedUrl]));
+    return new Map(rows.flatMap(row => {
+      const url = byPath.get(row.storage_path);
+      return url ? [[row.id, url] as [string, string]] : [];
+    }));
+  }
+  async function readyPortraits(profileIds: string[] | null) {
+    let query = supabase.from("character_portraits").select("*").eq("author_id", authorId).eq("status", "ready");
+    if (profileIds) query = query.in("profile_id", profileIds);
+    const { data, error } = await query.order("created_at", { ascending: false }).limit(500);
+    checkLibraryError(error);
+    return (data ?? []).map(row => storedPortraitSchema.parse(row));
+  }
+  async function present(rows: StoredPortrait[]) {
+    const urls = await signedUrls(rows);
+    return rows.map(row => ({
+      id: row.id, caption: row.caption, source_credit: row.source_credit, usage_permission: row.usage_permission,
+      width: row.width, height: row.height, created_at: row.created_at, url: urls.get(row.id) ?? null,
+    }));
+  }
   return {
     async findProfile(profileId: string) {
       const { data, error } = await supabase.from("character_profiles")
@@ -68,6 +93,97 @@ export function createCharacterRepository(supabase: SupabaseClient, authorId: st
     },
     async fail(id: string, code: "storage_error" | "sanitize_error" | "unsupported_image") {
       return rpc("character_portrait_fail", { p_id: id, p_error_code: code });
+    },
+    async listProfiles() {
+      const { data, error } = await supabase.from("character_profiles")
+        .select("id,display_name,normalized_name,universe_id,summary,primary_portrait_id,version,updated_at")
+        .eq("author_id", authorId).order("normalized_name").limit(500);
+      checkLibraryError(error);
+      const profiles = (data ?? []).map(row => characterProfileSchema.parse(row));
+      if (!profiles.length) return [];
+      const ids = profiles.map(profile => profile.id);
+      const [aliases, portraits, links] = await Promise.all([
+        supabase.from("character_profile_aliases").select("profile_id,alias").eq("author_id", authorId).in("profile_id", ids),
+        readyPortraits(ids),
+        supabase.from("character_profile_links").select("profile_id,book_id").eq("author_id", authorId).in("profile_id", ids),
+      ]);
+      checkLibraryError(aliases.error); checkLibraryError(links.error);
+      // Only a cover needs a signed URL on the gallery; the rest are signed on the profile.
+      const covers = profiles.flatMap(profile => {
+        const owned = portraits.filter(portrait => portrait.profile_id === profile.id);
+        const cover = owned.find(portrait => portrait.id === profile.primary_portrait_id) ?? owned[0];
+        return cover ? [cover] : [];
+      });
+      const presented = new Map((await present(covers)).map(portrait => [portrait.id, portrait]));
+      return profiles.map(profile => {
+        const owned = portraits.filter(portrait => portrait.profile_id === profile.id);
+        const cover = owned.find(portrait => portrait.id === profile.primary_portrait_id) ?? owned[0];
+        return {
+          ...profile,
+          aliases: (aliases.data ?? []).filter(row => row.profile_id === profile.id).map(row => String(row.alias)),
+          portrait_count: owned.length,
+          book_count: new Set((links.data ?? []).filter(row => row.profile_id === profile.id).map(row => String(row.book_id))).size,
+          cover: cover ? presented.get(cover.id) ?? null : null,
+        };
+      });
+    },
+    async profileDetail(profileId: string) {
+      const profile = await this.findProfile(profileId);
+      const [aliases, portraits, notes, links] = await Promise.all([
+        supabase.from("character_profile_aliases").select("alias").eq("author_id", authorId).eq("profile_id", profileId).order("normalized_alias"),
+        readyPortraits([profileId]),
+        supabase.from("character_notes").select("id,kind,body,book_id,version,created_at").eq("author_id", authorId).eq("profile_id", profileId).order("created_at", { ascending: false }).limit(200),
+        supabase.from("character_profile_links").select("id,book_id,character_id,note,confirmed_at").eq("author_id", authorId).eq("profile_id", profileId),
+      ]);
+      for (const result of [aliases, notes, links]) checkLibraryError(result.error);
+      const linkRows = links.data ?? [];
+      // Composite tenant keys are not embeddable, so titles and names are fetched by ID.
+      const [books, characters] = await Promise.all([
+        linkRows.length ? supabase.from("books").select("id,title").eq("author_id", authorId).in("id", linkRows.map(row => String(row.book_id))) : Promise.resolve({ data: [], error: null }),
+        linkRows.length ? supabase.from("characters").select("id,name").eq("author_id", authorId).in("id", linkRows.map(row => String(row.character_id))) : Promise.resolve({ data: [], error: null }),
+      ]);
+      checkLibraryError(books.error); checkLibraryError(characters.error);
+      const titles = new Map((books.data ?? []).map(row => [String(row.id), String(row.title)]));
+      const names = new Map((characters.data ?? []).map(row => [String(row.id), String(row.name)]));
+      const presented = await present(portraits);
+      const aliasList = (aliases.data ?? []).map(row => String(row.alias));
+      return {
+        profile: {
+          ...profile, aliases: aliasList, portrait_count: portraits.length,
+          book_count: new Set(linkRows.map(row => String(row.book_id))).size,
+          cover: presented.find(portrait => portrait.id === profile.primary_portrait_id) ?? presented[0] ?? null,
+        },
+        portraits: presented,
+        notes: notes.data ?? [],
+        links: linkRows.map(row => ({ ...row, book_title: titles.get(String(row.book_id)) ?? null, character_name: names.get(String(row.character_id)) ?? null })),
+      };
+    },
+    async createProfile(input: CharacterProfileInput) {
+      const { data, error } = await supabase.from("character_profiles")
+        .insert({ author_id: authorId, display_name: input.displayName, summary: input.summary })
+        .select("id,display_name,normalized_name,universe_id,summary,primary_portrait_id,version,updated_at").single();
+      checkLibraryError(error);
+      const profile = characterProfileSchema.parse(data);
+      if (input.aliases.length) {
+        const { error: aliasError } = await supabase.from("character_profile_aliases")
+          .insert(input.aliases.map(alias => ({ author_id: authorId, profile_id: profile.id, alias })));
+        checkLibraryError(aliasError);
+      }
+      return profile;
+    },
+    /** The stored version must still match, so a stale edit fails instead of overwriting. */
+    async updateProfile(profileId: string, changes: { displayName?: string; summary?: string | null; primaryPortraitId?: string | null }, expectedVersion: number) {
+      const patch: Record<string, unknown> = {};
+      if (changes.displayName !== undefined) patch.display_name = changes.displayName;
+      if (changes.summary !== undefined) patch.summary = changes.summary;
+      if (changes.primaryPortraitId !== undefined) patch.primary_portrait_id = changes.primaryPortraitId;
+      if (!Object.keys(patch).length) return this.findProfile(profileId);
+      const { data, error } = await supabase.from("character_profiles").update(patch)
+        .eq("author_id", authorId).eq("id", profileId).eq("version", expectedVersion)
+        .select("id,display_name,normalized_name,universe_id,summary,primary_portrait_id,version,updated_at").maybeSingle();
+      checkLibraryError(error);
+      if (!data) throw new ManuscriptError("40001", 409, "This character changed since you opened it. Reload before saving again.");
+      return characterProfileSchema.parse(data);
     },
   };
 }
