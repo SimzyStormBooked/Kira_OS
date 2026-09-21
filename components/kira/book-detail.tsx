@@ -192,17 +192,17 @@ export function BookDetail({ book }: { book: Book }) {
                   <span className="verification-label">NEEDS VERIFICATION</span>
                   <h2>
                     {s === "Overview"
-                      ? "The story belongs to Kira."
+                      ? "The story is yours."
                       : `${s}, with receipts.`}
                   </h2>
                   <p>
                     {s === "Overview"
-                      ? "No description has been imported. Approved author copy will become read-only reference knowledge for the business team."
+                      ? "No description has been imported. Approved author copy will become read-only reference material for your business work."
                       : `No verified ${s.toLowerCase()} have been imported for this book. Nothing has been inferred from its title or cover.`}
                   </p>
                   <span className="quiet-note">
-                    Future Vault ingestion will attach source documents and
-                    Cassandra’s verification to this section.
+                    Later, approved source documents and your verification will
+                    attach here.
                   </span>
                 </>
               )}

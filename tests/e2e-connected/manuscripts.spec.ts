@@ -13,7 +13,7 @@ test.beforeEach(async({page,request})=>{
   await page.goto("/login");await page.getByLabel("Email address").fill(fixture.memberEmail);await page.getByLabel("Password",{exact:true}).fill(fixture.password);await page.getByRole("button",{name:"Enter your workspace",exact:true}).click();await expect(page.locator(".app-shell")).toBeVisible();
 });
 test("a private book, series and audio details survive reload and appear in catalog and global search",async({page})=>{
-  const book=await addBook(page,"Synthetic Library Book");await page.getByRole("button",{name:"Edit book details",exact:true}).click();
+  const book=await addBook(page,"Synthetic Library Book");await page.getByRole("button",{name:"Edit book details",exact:true}).first().click();
   const dialog=page.getByRole("dialog",{name:"Edit book details",exact:true});await dialog.getByLabel("Series or collection").selectOption("new");await dialog.getByLabel("New series name").fill("Fixture Series");await dialog.getByLabel("Book number").fill("2");await dialog.getByLabel("Author-approved description").fill("A synthetic catalog description for browser verification.");
   await dialog.locator("summary").click();await dialog.getByLabel("Audiobook available",{exact:true}).check();await dialog.getByLabel("Narrator",{exact:true}).fill("Fixture Narrator");await dialog.getByLabel("Runtime in minutes").fill("360");await dialog.getByRole("button",{name:"Save book details",exact:true}).click();await expect(dialog).not.toBeVisible();
   await expect(page.locator("#main-content").getByText("Narrated by Fixture Narrator · 360 minutes",{exact:true})).toBeVisible();await page.reload();await expect(page.locator("#main-content").getByText("Narrated by Fixture Narrator · 360 minutes",{exact:true})).toBeVisible();
@@ -23,13 +23,16 @@ test("a private book, series and audio details survive reload and appear in cata
 test("upload requires permission, preserves queued work when AI is disabled and can be reopened",async({page})=>{
   const book=await addBook(page,"Synthetic Upload Book");const text="Synthetic reference text: Rowan is a coordinator. An archive stores the project records for the team.";
   await page.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"reference.txt",mimeType:"text/plain",buffer:Buffer.from(text)});
-  const upload=page.getByRole("button",{name:"Upload & let Kira read",exact:true});await upload.click();
+  const save=page.getByRole("button",{name:"Save manuscript",exact:true});await save.click();
   expect((await page.evaluate(async(id)=>(await fetch(`/api/library/${id}`)).json(),book.id)).manuscripts).toHaveLength(0);
-  await page.getByLabel(/I have permission to upload/).check();await upload.click();await expect(page.getByRole("heading",{name:"Ready to read",exact:true})).toBeVisible();await expect(page.locator(".library-error[role=alert]")).toContainText("AI setup");
+  // Saving the file and sending its text to a model are two separate consents.
+  await page.getByLabel(/I have permission to upload/).check();await save.click();await expect(page.getByRole("heading",{name:"Ready to read",exact:true})).toBeVisible();
+  await expect(page.locator(".library-success[role=status]")).toContainText("Nothing has been read yet");await expect(page.locator(".library-error[role=alert]")).toHaveCount(0);
+  const start=page.getByRole("button",{name:"Start reading with Raven",exact:true});await expect(start).toBeEnabled();await start.click();await expect(page.locator(".library-error[role=alert]")).toContainText("AI setup");
   await page.reload();await expect(page.getByText("reference.txt · 0 of 1 passages read",{exact:true})).toBeVisible();await expect(page.getByRole("button",{name:"Resume reading",exact:true})).toBeEnabled();
   const detail=await page.evaluate(async(id)=>(await fetch(`/api/library/${id}`)).json(),book.id);expect(detail.manuscripts).toHaveLength(1);expect(detail.intelligence).toBeNull();
-  await page.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"reference.txt",mimeType:"text/plain",buffer:Buffer.from(text)});await page.getByLabel(/I have permission to upload/).check();await upload.click();
-  await expect(page.locator(".library-error[role=alert]")).toContainText("AI setup");expect((await page.evaluate(async(id)=>(await fetch(`/api/library/${id}`)).json(),book.id)).manuscripts).toHaveLength(1);
+  await page.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"reference.txt",mimeType:"text/plain",buffer:Buffer.from(text)});await page.getByLabel(/I have permission to upload/).check();await save.click();
+  await expect(page.locator(".library-success[role=status]")).toContainText("Nothing has been read yet");expect((await page.evaluate(async(id)=>(await fetch(`/api/library/${id}`)).json(),book.id)).manuscripts).toHaveLength(1);
 });
 test("learned knowledge has private citations, hides spoilers, searches text, and retains the good version during replacement",async({page,request},testInfo)=>{
   const book=await addBook(page,"Synthetic Knowledge Book");
@@ -68,8 +71,8 @@ test("learned knowledge has private citations, hides spoilers, searches text, an
   await page.getByLabel(/Show manuscript excerpts/).check();await expect(page.locator(".library-search-result")).toHaveCount(0);
   await page.unroute("**/api/library/search?**");
   expect((await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa"]).analyze()).violations).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  await page.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"revision.txt",mimeType:"text/plain",buffer:Buffer.from(text+" This is a revised source record.")});await page.getByLabel(/I have permission to upload/).check();await page.getByRole("button",{name:"Upload & let Kira read",exact:true}).click();await expect(page.getByRole("heading",{name:"Ready to read",exact:true})).toBeVisible();await expect(page.getByText("The previous completed version remains available below until this version is ready.",{exact:true})).toBeVisible();
-  await expect(page.getByRole("heading",{name:"What Kira learned",exact:true})).toBeVisible();await page.reload();await expect(page.getByText("The previous completed version remains available below until this version is ready.",{exact:true})).toBeVisible();
+  await page.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"revision.txt",mimeType:"text/plain",buffer:Buffer.from(text+" This is a revised source record.")});await page.getByLabel(/I have permission to upload/).check();await page.getByRole("button",{name:"Save manuscript",exact:true}).click();await expect(page.getByRole("heading",{name:"Ready to read",exact:true})).toBeVisible();await expect(page.getByText("The previous completed version remains available below until this version is ready.",{exact:true})).toBeVisible();
+  await expect(page.getByRole("heading",{name:"What Raven learned",exact:true})).toBeVisible();await page.reload();await expect(page.getByText("The previous completed version remains available below until this version is ready.",{exact:true})).toBeVisible();
 });
 
 
@@ -85,6 +88,6 @@ test("knowledge actions carry the selected evidence, preserve unfinished Raven w
  await page.route("**/api/studio",async route=>{if(route.request().method()==="GET")await route.fulfill({json:{role:"editor",availability:{available:true,reason:"ready",message:"Synthetic test availability"},generations:[],generation:null}});else throw new Error("Preparing a question must not submit an AI request");});
  await dialog.getByRole("button",{name:"Open in Ask Raven",exact:true}).click();await expect(page).toHaveURL(/\/studio$/);await expect(page.getByLabel("Your question and useful context",{exact:true})).toHaveValue(/late-match-signal/);await expect(page.getByRole("checkbox",{name:"Synthetic Action Book",exact:true})).toBeChecked();
  if(await page.getByRole("button",{name:"Open navigation",exact:true}).isVisible())await page.getByRole("button",{name:"Open navigation",exact:true}).click();
- await page.getByRole("link",{name:"The Universe",exact:true}).click();await page.locator(`a[href="/universe/${book.slug}"]`).first().click();await page.getByRole("button",{name:"Explore this character with Raven",exact:true}).click();dialog=page.getByRole("dialog");await expect(dialog.getByRole("button",{name:"Open in Ask Raven",exact:true})).toBeDisabled();await expect(dialog).toContainText("will not overwrite");await page.keyboard.press("Escape");
+ await page.getByRole("link",{name:/^The Universe/}).first().click();await page.locator(`a[href="/universe/${book.slug}"]`).first().click();await page.getByRole("button",{name:"Explore this character with Raven",exact:true}).click();dialog=page.getByRole("dialog");await expect(dialog.getByRole("button",{name:"Open in Ask Raven",exact:true})).toBeDisabled();await expect(dialog).toContainText("will not overwrite");await page.keyboard.press("Escape");
  await page.getByRole("button",{name:"Marketing",exact:true}).click();await page.locator(".book-knowledge").screenshot({path:testInfo.outputPath("knowledge-workbench.png")});expect((await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa"]).analyze()).violations).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
