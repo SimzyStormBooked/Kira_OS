@@ -5,7 +5,7 @@ import { fixture } from "./fixture-data";
 test.use({ reducedMotion: "reduce" });
 
 async function visitThroughGuide(page: Page, href: string) {
-  await page.getByRole("button", { name: "Open workspace guide", exact: true }).click();
+  await page.getByRole("button", { name: "Guide", exact: true }).click();
   await page.getByRole("dialog", { name: "Make yourself at home." }).locator(`a[href="${href}"]`).click();
 }
 
@@ -22,8 +22,8 @@ test("book details lead with sources and prepare a review brief only on request"
   await page.goto("/universe/crazy-people");
   await expect(page.getByRole("heading", { name: "Crazy People", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "View author source", exact: true })).toHaveAttribute("href", "https://www.kirastanleyauthor.com/myalphateam");
-  await expect(page.getByRole("heading", { name: "What Kira learned", exact: true })).toBeVisible();
-  await expect(page.getByText("Once Kira finishes reading, its findings and characters will appear here with the passages behind them.", { exact: true }).filter({visible:true})).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What Raven learned", exact: true })).toBeVisible();
+  await expect(page.getByText("Once Raven finishes reading, its findings and characters will appear here with the passages behind them.", { exact: true }).filter({visible:true})).toBeVisible();
   await expect(page.getByLabel("Manuscript file", { exact: true }).filter({visible:true})).toBeVisible();
   expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -75,15 +75,18 @@ test("collecting catalog materials protects an unfinished desk brief", async ({ 
   expect(saved.approvals).toHaveLength(0);
 });
 
-test("shared starter work is not personal onboarding completion and Raven does not imply monitoring", async ({ page }) => {
+test("shared starter work is named as shared in first steps and Raven does not imply monitoring", async ({ page }) => {
   await page.evaluate(async () => {
     const response = await fetch("/api/workspace", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "create", title: "Shared starter brief", draft: "This fixture represents work already in the shared workspace." }) });
     if (!response.ok) throw new Error("The shared fixture brief could not be saved.");
   });
   await page.reload();
   await expect(page.getByRole("heading", { name: "Add to your shared desk", exact: true })).toBeVisible();
-  await expect(page.getByText("1 shared brief is already here", { exact: true })).toBeVisible();
-  await expect(page.locator(".learning-step-complete")).toHaveCount(0);
+  await expect(page.getByText(/1 shared brief is already here/)).toBeVisible();
+  // The desk step reads as done because shared work exists, and says so; the
+  // steps that depend on this browser and on a recorded decision do not.
+  await expect(page.locator(".learning-step-complete")).toHaveCount(1);
+  await expect(page.getByText("A good place to begin", { exact: true })).toBeVisible();
   await page.goto("/raven");
   await expect(page.getByText("NO CONNECTED FINDINGS YET", { exact: true })).toBeVisible();
   await expect(page.getByText(/Raven is not monitoring your accounts/)).toBeVisible();

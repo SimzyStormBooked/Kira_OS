@@ -53,7 +53,7 @@ export function LoginForm({ next }: { next: string }) {
       <Button type="submit" className="login-submit" disabled={pending}>
         {pending ? "Opening your workspace…" : "Enter your workspace"}<ArrowUpRight size={16} />
       </Button>
-      <p className="quiet-note login-privacy"><LockKeyhole size={13} /> Private access, by invitation. Your workspace owner can help with access or a password reset.</p>
+      <p className="quiet-note login-privacy"><LockKeyhole size={13} aria-hidden="true" /> Private workspace. Accounts are added by the workspace owner; no invitations are sent. Ask them if you need access or a password reset.</p>
     </form>
   );
 }

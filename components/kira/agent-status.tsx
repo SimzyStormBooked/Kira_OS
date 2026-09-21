@@ -15,11 +15,15 @@ export function AgentStatus() {
     <Card className="agent-card">
       <div className="section-heading">
         <div>
-          <span className="eyebrow">YOUR BUSINESS TEAM</span>
-          <h2>Eyes on the universe.</h2>
+          <span className="eyebrow">SPECIALISTS ON THE ROADMAP</span>
+          <h2>Not running. Not pretending to.</h2>
         </div>
         <DemoBadge />
       </div>
+      <p className="agent-disclaimer">
+        Specialists are foundations, not running agents. Raven synthesizes
+        seeded findings when you ask.
+      </p>
       <div className="agent-grid">
         {agents.map((a, i) => {
           const Icon = icons[i];
@@ -30,26 +34,20 @@ export function AgentStatus() {
               </div>
               <div>
                 <strong>{a.name}</strong>
-                <small>
-                  {a.mode === "deterministic"
-                    ? "Demo engine ready"
-                    : "Not connected"}
-                </small>
+                <small>{a.role}</small>
               </div>
               <span
-                className={`agent-state ${a.status === "WAITING" ? "waiting" : ""}`}
+                className={`agent-state ${a.mode === "deterministic" ? "waiting" : ""}`}
               >
-                <i />
-                {a.status}
+                <span aria-hidden="true" />
+                {a.mode === "deterministic"
+                  ? "Demo engine · runs when you ask"
+                  : "Not built yet"}
               </span>
             </div>
           );
         })}
       </div>
-      <p className="agent-disclaimer">
-        Specialists are foundations, not running agents. Raven synthesizes
-        seeded findings when you ask.
-      </p>
     </Card>
   );
 }

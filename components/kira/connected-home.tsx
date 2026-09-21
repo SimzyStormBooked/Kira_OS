@@ -16,6 +16,9 @@ import { GettingStarted } from "./getting-started";
 import { InspirationShelf } from "./inspiration-shelf";
 import { DailyQuote } from "./daily-quote";
 import { useWorkspace } from "@/lib/db/demo-store";
+import { inspirationIdeas } from "@/lib/data/inspiration";
+
+const starterIdeas = inspirationIdeas.slice(0, 2);
 
 export function ConnectedHome({ dateKey }: { dateKey?: string }) {
   const library = useLibrary();
@@ -29,24 +32,28 @@ export function ConnectedHome({ dateKey }: { dateKey?: string }) {
       label: "Your books",
       value: books.length,
       detail: "Your private book library",
+      empty: "No books in this workspace yet",
       known: !!library.data,
     },
     {
       label: "Awaiting your eye",
       value: pending.length,
       detail: "Private briefs to review",
+      empty: "Nothing waiting yet",
       known: ready,
     },
     {
       label: "Decisions kept",
       value: reviewed,
       detail: "Your reviewed history",
+      empty: "No decisions recorded yet",
       known: ready,
     },
     {
       label: "Lessons saved",
       value: feedback.length,
       detail: "Your judgment, remembered",
+      empty: "No lessons saved yet",
       known: ready,
     },
   ];
@@ -56,7 +63,10 @@ export function ConnectedHome({ dateKey }: { dateKey?: string }) {
       <div className="page-heading">
         <div>
           <span className="eyebrow page-kicker">
-            KIRA // YOUR AUTHOR WORKSPACE <span className="little-star">✦</span>
+            KIRA // YOUR AUTHOR WORKSPACE{" "}
+            <span className="little-star" aria-hidden="true">
+              ✦
+            </span>
           </span>
           <h1>
             Welcome home, <em>Cassandra.</em>
@@ -80,7 +90,7 @@ export function ConnectedHome({ dateKey }: { dateKey?: string }) {
           <h2>
             {pending.length ? (
               <>
-                A little of <em>your instinct.</em>
+                Waiting on <em>your call.</em>
               </>
             ) : (
               <>
@@ -117,9 +127,26 @@ export function ConnectedHome({ dateKey }: { dateKey?: string }) {
               <div className="connected-clear">
                 <CheckCheck size={19} aria-hidden="true" />
                 <span>
-                  Your desk is clear. Make a little space for what’s next.
+                  Your desk is clear. Add an idea when one turns up.
                 </span>
               </div>
+              {canEdit && (
+                <>
+                  <p className="connected-starter-label">
+                    Or start from one of these:
+                  </p>
+                  <ul className="connected-pending-list connected-starter-list">
+                    {starterIdeas.map((idea) => (
+                      <li key={idea.id}>
+                        <Link href={`/desk?idea=${encodeURIComponent(idea.id)}`}>
+                          <span>{idea.title}</span>
+                          <ArrowUpRight size={14} aria-hidden="true" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </>
           )}
           <Button asChild variant="outline">
@@ -140,10 +167,12 @@ export function ConnectedHome({ dateKey }: { dateKey?: string }) {
         {counts.map((count) => (
           <div className="connected-stat" key={count.label}>
             <span>{count.label}</span>
-            <strong>
-              {count.known ? String(count.value).padStart(2, "0") : "—"}
+            <strong aria-hidden={count.known && count.value > 0 ? undefined : true}>
+              {count.known && count.value > 0 ? count.value : "—"}
             </strong>
-            <small>{count.detail}</small>
+            <small>
+              {count.known && count.value === 0 ? count.empty : count.detail}
+            </small>
           </div>
         ))}
       </section>
@@ -158,7 +187,7 @@ export function ConnectedHome({ dateKey }: { dateKey?: string }) {
             </h2>
             <p>
               {series.length} series and collections. Open a book to add a manuscript,
-              explore what Kira learned, and check the sources behind it.
+              explore what Raven learned, and check the sources behind it.
             </p>
           </div>
           <Link

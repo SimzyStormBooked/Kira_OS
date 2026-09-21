@@ -41,7 +41,7 @@ export function RavenPage() {
       <div className="page-heading">
         <div>
           <div className="eyebrow page-kicker">
-            EXECUTIVE INTELLIGENCE / THE RAVEN
+            EVIDENCE & RECOMMENDATIONS / THE RAVEN
           </div>
           <h1>
             The long game.
@@ -49,7 +49,7 @@ export function RavenPage() {
             <em>Your next move.</em>
           </h1>
           <p>
-            Evidence first. Instinct always. Keep the reason behind a recommendation.
+            Evidence first. Your judgment decides. Keep the reason behind a recommendation.
           </p>
         </div>
         {state.mode === "connected" ? <Button asChild><Link href="/studio">Ask Raven a question</Link></Button> : <Button

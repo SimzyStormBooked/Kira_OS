@@ -14,7 +14,7 @@ const modules = {
     needs: [
       "Approved review exports",
       "Source and collection dates",
-      "Cassandra’s audience guidance",
+      "Your audience guidance",
     ],
   },
   social: {
@@ -121,12 +121,12 @@ export default async function Page({
           <h1>{item.heading}</h1>
           <p>{item.description}</p>
         </div>
-        <span className="status-pill">PLANNED · PHASE {item.phase}</span>
+        <span className="status-pill">PLANNED</span>
       </div>
       <Card className="future-panel">
         <div className="future-art">
           <Telescope size={72} strokeWidth={0.6} />
-          <span>0{Number(item.phase)}</span>
+          <span aria-hidden="true">0{Number(item.phase)}</span>
         </div>
         <div>
           <span className="eyebrow">

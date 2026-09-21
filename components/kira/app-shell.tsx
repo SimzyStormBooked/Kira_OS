@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   Target,
   Telescope,
+  TriangleAlert,
   Users,
   X,
 } from "lucide-react";
@@ -52,6 +53,8 @@ import { cn } from "@/lib/utils";
 import { WorkspaceGuide } from "./workspace-guide";
 import { InspirationDialogTrigger } from "./inspiration-shelf";
 import { WorkspacePermissionNotice } from "./workspace-permission-notice";
+import { SessionEndedDialog } from "./session-ended-dialog";
+import "./shell.css";
 
 const navigation = [
   {
@@ -72,13 +75,48 @@ const navigation = [
     description: "Your books & their details",
     icon: BookOpen,
   },
-  { href: "/reader-pulse", title: "Reader Pulse", icon: Activity },
-  { href: "/social", title: "Social", icon: Radio },
-  { href: "/discoverability", title: "Discoverability", icon: Telescope },
-  { href: "/hunt", title: "The Hunt", icon: Target },
-  { href: "/campaigns", title: "Campaigns", icon: Megaphone },
-  { href: "/outreach", title: "Outreach", icon: Users },
-  { href: "/vault", title: "The Vault", icon: FolderOpen },
+  {
+    href: "/reader-pulse",
+    title: "Reader Pulse",
+    description: "A future home for verified reviews and reader language",
+    icon: Activity,
+  },
+  {
+    href: "/social",
+    title: "Social",
+    description: "Which existing marketing connects with the readers you want",
+    icon: Radio,
+  },
+  {
+    href: "/discoverability",
+    title: "Discoverability",
+    description: "A source-backed picture of how readers find your books",
+    icon: Telescope,
+  },
+  {
+    href: "/hunt",
+    title: "The Hunt",
+    description: "Relevant creators, reviewers and opportunities, with evidence",
+    icon: Target,
+  },
+  {
+    href: "/campaigns",
+    title: "Campaigns",
+    description: "Approved campaigns with their evidence and results together",
+    icon: Megaphone,
+  },
+  {
+    href: "/outreach",
+    title: "Outreach",
+    description: "A shared memory of reviewer and media relationships",
+    icon: Users,
+  },
+  {
+    href: "/vault",
+    title: "The Vault",
+    description: "Approved source documents and a provenance-backed knowledge graph",
+    icon: FolderOpen,
+  },
 ];
 const creativeNavigation = [
   { href: "/ads", title: "Ads & Next Steps", description: "Facebook results & your next experiment", icon: Megaphone },
@@ -88,9 +126,10 @@ const creativeNavigation = [
   { href: "/learn", title: "Learn & Create", description: "Small lessons. Your own agent ideas.", icon: GraduationCap },
   { href: "/connections", title: "Connections", description: "Your socials & useful tools", icon: Link2 },
 ];
+const roleLabels = { owner: "Owner", editor: "Editor", viewer: "Viewer" } as const;
 function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const path = usePathname();
-  const { approvals, mode, viewerEmail } = useWorkspace();
+  const { approvals, mode, viewerEmail, role } = useWorkspace();
   const [plannedOpen, setPlannedOpen] = useState(false);
   const count = approvals.filter((a) => a.status === "pending").length;
   return (
@@ -107,10 +146,10 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
       <div className="workspace-label">
         <span className="workspace-avatar">KS</span>
         <span>
-          Kira Stanley<small>Author workspace</small>
+          Kira Stanley<small>Cassandra’s author workspace</small>
         </span>
       </div>
-      <div className="nav-label">THE COMMAND CENTER</div>
+      <div className="nav-label">YOUR WORKSPACE</div>
       <nav aria-label="Main navigation">
         {navigation
           .slice(0, 3)
@@ -118,7 +157,6 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
             <Link
               key={href}
               href={href}
-              aria-label={title}
               onClick={onNavigate}
               className={cn(
                 "nav-item nav-item-explained",
@@ -130,13 +168,12 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
               <Icon size={17} strokeWidth={1.6} />
               <span>
                 {title}
-                <small aria-hidden="true">{description}</small>
+                <small>{description}</small>
               </span>
             </Link>
           ))}
         <Link
           href="/desk"
-          aria-label="Cassandra’s Desk"
           onClick={onNavigate}
           className={cn(
             "nav-item nav-item-explained",
@@ -147,22 +184,22 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
           <FileCheck2 size={17} />
           <span>
             Cassandra’s Desk
-            <small aria-hidden="true">Ideas, decisions & your guidance</small>
+            <small>Ideas, decisions & your guidance</small>
           </span>
-          <span
-            className="count-badge"
-            aria-label={`${count} pending decisions`}
-          >
-            {count}
-          </span>
+          {count > 0 && (
+            <span className="count-badge">
+              {count}
+              <span className="sr-only"> briefs waiting for you</span>
+            </span>
+          )}
         </Link>
         <div className="nav-label nav-creative-label">ROOM TO EXPLORE</div>
         {creativeNavigation.map(({ href, title, description, icon: Icon }) => (
-          <Link key={href} href={href} aria-label={title} onClick={onNavigate}
+          <Link key={href} href={href} onClick={onNavigate}
             className={cn("nav-item nav-item-explained", path.startsWith(href) && "active")}
             aria-current={path.startsWith(href) ? "page" : undefined}>
             <Icon size={17} strokeWidth={1.6} />
-            <span>{title}<small aria-hidden="true">{description}</small></span>
+            <span>{title}<small>{description}</small></span>
           </Link>
         ))}
       </nav>
@@ -182,16 +219,18 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
           hidden={!plannedOpen}
         >
           <p>Preview what can grow with your workspace.</p>
-          {navigation.slice(3).map(({ href, title, icon: Icon }) => (
+          {navigation.slice(3).map(({ href, title, description, icon: Icon }) => (
             <Link
-              className={cn("nav-item", path === href && "active")}
+              className={cn("nav-item nav-item-planned", path === href && "active")}
               key={href}
               href={href}
               onClick={onNavigate}
             >
               <Icon size={16} />
-              <span>{title}</span>
-              <small>Preview</small>
+              <span>
+                {title}
+                <small className="nav-planned-desc">{description}</small>
+              </span>
             </Link>
           ))}
         </div>
@@ -220,7 +259,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
         <span className="user-avatar">C</span>
         <span>
           {mode === "connected" ? viewerEmail : "Cassandra"}
-          <small>Human in command</small>
+          <small>{mode === "connected" ? roleLabels[role] : "Exploring the demo"}</small>
         </span>
         <ShieldCheck size={16} />
       </div>
@@ -385,33 +424,49 @@ export function AppShell({
         </main>
         <footer className="app-footer">
           <span>
-            KIRA OS <span className="footer-cross">✦</span> BUILT AROUND YOUR
+            KIRA OS <span className="footer-cross" aria-hidden="true">✦</span> BUILT AROUND YOUR
             WORLD.
           </span>
           <span>
             {state.mode === "demo"
               ? "Demo workspace · Changes saved in this browser"
-              : "Private workspace · Saved securely in Supabase"}
+              : "Saved to your private workspace"}
           </span>
         </footer>
       </div>
-      {(state.notice || state.error) && (
-        <div
-          className={cn("toast", state.error && "toast-error")}
-          role={state.error ? "alert" : "status"}
-        >
-          <Check size={16} />
-          <span>{state.error || state.notice}</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={state.dismissNotice}
-            aria-label="Dismiss notification"
-          >
-            <X size={15} />
-          </Button>
-        </div>
-      )}
+      <div className="toast-region" role="status" aria-atomic="true">
+        {!state.error && state.notice && (
+          <div className="toast">
+            <Check size={16} aria-hidden="true" />
+            <span>{state.notice}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={state.dismissNotice}
+              aria-label="Dismiss notification"
+            >
+              <X size={15} />
+            </Button>
+          </div>
+        )}
+      </div>
+      <div className="toast-region" role="alert" aria-atomic="true">
+        {state.error && (
+          <div className="toast toast-error">
+            <TriangleAlert size={16} aria-hidden="true" />
+            <span>{state.error}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={state.dismissNotice}
+              aria-label="Dismiss notification"
+            >
+              <X size={15} />
+            </Button>
+          </div>
+        )}
+      </div>
+      <SessionEndedDialog />
       <Dialog open={logoutConfirmation} onOpenChange={(open) => { if (!signingOut) setLogoutConfirmation(open); }}>
         <DialogContent showCloseButton={!signingOut}
           onOpenAutoFocus={(event) => { event.preventDefault(); keepWorkingRef.current?.focus(); }}
@@ -422,8 +477,8 @@ export function AppShell({
           </DialogHeader>
           {logoutError && <p className="form-error" role="alert">{logoutError}</p>}
           <DialogFooter>
-            <Button ref={keepWorkingRef} type="button" variant="outline" disabled={signingOut} onClick={() => setLogoutConfirmation(false)}>Keep working</Button>
-            <Button type="button" disabled={signingOut} onClick={() => void completeSignOut()}>{signingOut ? "Signing out…" : "Sign out and discard drafts"}</Button>
+            <Button ref={keepWorkingRef} type="button" disabled={signingOut} onClick={() => setLogoutConfirmation(false)}>Keep working</Button>
+            <Button type="button" variant="destructive" disabled={signingOut} onClick={() => void completeSignOut()}>{signingOut ? "Signing out…" : "Sign out and discard drafts"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -441,6 +496,9 @@ export function AppShell({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
+          <p className="sr-only" role="status">
+            {results.length} {results.length === 1 ? "result" : "results"}
+          </p>
           <div className="search-results">
             {results.map((r) => (
               <Link

@@ -36,7 +36,7 @@ test("sign in → create → edit → teach → approve persists through reload 
   await page.goto("/login");
   await signIn(page);
   await expect(page.getByRole("heading", { name: "Welcome home, Cassandra." })).toBeVisible();
-  await expect(page.getByText("Private workspace · Saved securely in Supabase")).toBeVisible();
+  await expect(page.getByText("Saved to your private workspace")).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("connected-home.png"), fullPage: true });
   const authCookies = (await context.cookies()).filter((cookie) => cookie.name.includes("auth-token"));
   expect(authCookies.length).toBeGreaterThan(0);

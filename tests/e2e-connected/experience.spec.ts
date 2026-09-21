@@ -5,7 +5,7 @@ import { fixture } from "./fixture-data";
 test.use({ reducedMotion: "reduce" });
 
 async function guideTo(page: Page, href: string) {
-  await page.getByRole("button", { name: "Open workspace guide", exact: true }).click();
+  await page.getByRole("button", { name: "Guide", exact: true }).click();
   const guide = page.getByRole("dialog", { name: "Make yourself at home." });
   await guide.locator(`a[href="${href}"]`).click();
   await expect(guide).not.toBeVisible();
@@ -174,14 +174,14 @@ test("first steps and help reopen with keyboard focus and explain the current pa
   await expect(page.getByRole("dialog")).toHaveCount(0);
   const firstSteps = page.getByRole("heading", { name: "Start with one small thing." });
   await expect(firstSteps).toBeVisible();
-  await page.getByRole("button", { name: "Hide getting started", exact: true }).click();
+  await page.getByRole("button", { name: "Hide for now", exact: true }).click();
   const reopen = page.getByRole("button", { name: "Show my first steps", exact: true });
   await expect(reopen).toBeFocused();
   await reopen.press("Enter");
   await expect(firstSteps).toBeVisible();
   await expect(firstSteps).toBeFocused();
 
-  const trigger = page.getByRole("button", { name: "Open workspace guide", exact: true });
+  const trigger = page.getByRole("button", { name: "Guide", exact: true });
   await trigger.focus();
   await trigger.press("Enter");
   const guide = page.getByRole("dialog", { name: "Make yourself at home." });

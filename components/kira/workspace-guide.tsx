@@ -26,13 +26,13 @@ export function WorkspaceGuide() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="ghost" size="sm" className="learning-guide-trigger" aria-label="Open workspace guide"><Compass size={16} aria-hidden="true" /><span>Guide</span></Button>
+        <Button type="button" variant="ghost" size="sm" className="learning-guide-trigger"><Compass size={16} aria-hidden="true" /><span>Guide</span></Button>
       </DialogTrigger>
       <DialogContent className="learning-guide">
         <DialogHeader>
           <span className="learning-kicker">A LITTLE HELP FINDING YOUR WAY</span>
           <DialogTitle className="learning-guide-title">Make yourself at home.</DialogTitle>
-          <DialogDescription>You can learn this one small step at a time. Here is where everything belongs.</DialogDescription>
+          <DialogDescription>Here is where everything lives.</DialogDescription>
         </DialogHeader>
         <div className="learning-guide-body">
           <nav className="learning-guide-places" aria-label="Workspace guide">

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { getWorkspaceSession } from "@/lib/auth/session";
 import { safeRedirectPath } from "@/lib/auth/security";
 
-export const metadata: Metadata = { title: "Welcome home" };
+export const metadata: Metadata = { title: "Sign in" };
 export const dynamic = "force-dynamic";
 
 export default async function LoginPage({
@@ -24,7 +24,7 @@ export default async function LoginPage({
   return (
     <main id="main-content" className="login-stage">
       <div className="login-intro">
-        <Link href="/" className="brand" aria-label="KIRA OS home">
+        <Link href="/" className="brand">
           <span className="brand-symbol">
             K<span>✦</span>
           </span>
@@ -55,7 +55,7 @@ export default async function LoginPage({
       </div>
       <section className="login-card" aria-labelledby="login-title">
         <ShieldCheck size={25} strokeWidth={1.4} />
-        <span className="eyebrow">WELCOME HOME, CASSANDRA</span>
+        <span className="eyebrow">WELCOME HOME</span>
         <h2 id="login-title">Your private workspace.</h2>
         {canSignIn ? (
           <>
@@ -66,7 +66,7 @@ export default async function LoginPage({
           <>
             <p>
               The demo is ready to explore. Private sign-in will be available
-              once your Supabase workspace is connected.
+              once the workspace owner has connected the private workspace.
             </p>
             <Button asChild>
               <Link href="/">Explore the demo</Link>
