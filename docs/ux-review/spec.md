@@ -119,3 +119,20 @@ Files owned: `lib/data/seed.ts`, `lib/data/inspiration.ts`, `supabase/seed.sql` 
 ## Round 2 judging
 
 Same six judges, same brief, same criteria, fresh screenshots. Bar: every judge ≥ 8 on every criterion. Anything below 8 becomes the next fix round; anything the judges tie to D1–D6 is reported as an owner decision, not looped on.
+
+---
+
+## Fix-round guidance (added after round 2, read before acting on judge asks)
+
+Judges' must-fix items are inputs; these rulings settle conflicts between them and the product's deliberate choices.
+
+- **Keep the names.** "Mission Control", "The Universe", "The Raven", "Cassandra’s Desk" stay. Do not rename nav items or page titles. Keep editorial eyebrows (they may be reworded, not removed wholesale).
+- **Greeting stays "Cassandra".** This is her workspace and the app has no display-name field. Never derive a name from the email local part. If a judge wants the account visible, show the signed-in email as a secondary line where it already appears.
+- **Owner decisions D1–D6 remain non-code.** State the limit honestly where she decides. Two code fallbacks are endorsed because they give her a real action tonight: (a) a per-version **"Request removal of this version"** control on the manuscript custody panel that files a desk brief via `createManualReview` naming the book, version, filename and requester, with copy that says it records a request only; (b) an explicit **"Ask for a review"** note is *not* needed — plans enter review automatically; instead name the reviewer (owner email when the access record has it, else "the workspace owner") in the waiting card. Removal copy must say plainly that no one can remove a manuscript from inside the app yet (not "ask the owner").
+- **Draft registry (endorsed, cross-workstream).** W2 adds `registerDraft(key, label, getText)` / `releaseDraft(key)` to the store and includes registered non-empty drafts in `hasPrivateDrafts` and in `SessionEndedDialog`'s copy list; W4 registers the plan form and plan review/result notes, W3 registers the book metadata form, W2 registers the Teach Raven lesson field. Until a form is registered, its hint must say "Not saved yet · This form clears if you reload or your session ends." Also list kept drafts (with Copy) in the sign-out confirmation.
+- **Contrast tokens (W6).** Raise `--input` and `--border` so control outlines meet 3:1 against the background (e.g. `#6f7264` / `#5b5d52`), and introduce `--hairline` for purely decorative separators to keep the current quiet lines. Custom checkbox 24×24. `color-scheme: dark` on `:root`. Touch floor 44px for bare buttons at ≤760px.
+- **Never render an empty state on a failed load** (plans, opportunities): gate on `loaded && !error` and show the error card with retry.
+- **Label maps, not enums.** Plan mode, plan error codes, goal metric/unit options, evidence source types, manuscript model names all render through label records; raw identifiers may sit behind a disclosure.
+- **Demo metric consistency (W5).** "Active campaigns" → value "—" with change "No campaigns in this example"; "Open opportunities" → value "—" with change "Illustrative only". Regenerate `supabase/seed.sql`. The six DEMO badges must still render.
+- **Approve/Reject with an unsaved kept edit** must warn in the dialog that the saved draft, not the edit, is what gets locked.
+- Every change keeps `npm run check`, `test:e2e` and `test:e2e:connected` green; update pinned assertions deliberately in the same change.
