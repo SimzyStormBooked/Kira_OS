@@ -85,9 +85,9 @@ export function SettingsPage({ canChoosePasswordAfterLink = false }: { canChoose
             ))}
           </div>
           <p className="quiet-note">
-            Allowed describes policy permission, not an implemented feature.
-            Repurposing also requires approved source material. All external
-            execution is blocked in Phase One.
+            Allowed means this app is permitted to do it — not that the feature
+            is built yet. Repurposing also requires approved source material.
+            Nothing here posts, sends, buys, or changes your public catalog.
           </p>
         </Card>
         <div className="settings-stack">
@@ -106,7 +106,7 @@ export function SettingsPage({ canChoosePasswordAfterLink = false }: { canChoose
               </div>
             <p className="quiet-note">
               {mode === "demo"
-                ? "Demo mode stores decisions in this browser. Follow SETUP.md to activate a private workspace."
+                ? "Demo mode stores decisions in this browser. A private workspace is set up by the workspace owner."
                 : `Signed in as ${viewerEmail}. Decisions and lessons are saved securely in your workspace.`}
             </p>
             <div className="settings-actions">
@@ -116,7 +116,7 @@ export function SettingsPage({ canChoosePasswordAfterLink = false }: { canChoose
           </Card>
           <Card className="settings-card">
             <div className="section-heading"><h2>A space you choose to share</h2><ShieldCheck size={19} /></div>
-            <p>Give a collaborator a clear role: viewing, editing, or reviewing decisions. Your workspace owner controls access.</p>
+            <p>{mode === "demo" ? "You are exploring the demo. In a private workspace, a collaborator gets a clear role: viewing, editing, or reviewing decisions." : `You are ${role === "owner" ? "the owner" : role === "editor" ? "an editor" : "a viewer"} here. The workspace owner manages who can see this workspace.`}</p>
             <div className="settings-actions"><Button asChild variant="outline"><Link href="/access">{role === "owner" ? "Manage workspace access" : "View my workspace access"}</Link></Button></div>
           </Card>
           {mode === "connected" && <PasswordSettings canChoosePasswordAfterLink={canChoosePasswordAfterLink} />}
@@ -130,7 +130,7 @@ export function SettingsPage({ canChoosePasswordAfterLink = false }: { canChoose
             <p>
               {mode === "demo"
                 ? "Approvals, edits, feedback, and set-aside moves are saved in this browser. Export them before switching devices or clearing site data."
-                : "Download your saved briefs, decisions, source evidence, and lessons. Ask Raven answers and account connections are separate and are not included in this file."}
+                : "Download your saved briefs, decisions, source evidence, and lessons. Manuscripts, extracted book knowledge, marketing plans, Ask Raven answers and account connections are not included in this file."}
             </p>
             <div className="settings-actions">
               <Button
@@ -167,8 +167,8 @@ export function SettingsPage({ canChoosePasswordAfterLink = false }: { canChoose
             <DialogTitle>Reset this demo workspace?</DialogTitle>
             <DialogDescription>
               This removes local decisions, edited briefs, and saved lessons,
-              then restores the starter data. Export your workspace first if you
-              want to keep it.
+              then restores the starter data. Export first if you want a copy
+              for your records. This file cannot be loaded back into KIRA OS.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -47,7 +47,7 @@ export function SetupStatus() {
 
   const aiReady = status.ai?.available === true;
   const metaReady = status.meta?.connection?.status === "authorized";
-  return <Card id="setup" className="settings-card setup-card" aria-labelledby="setup-heading" aria-busy={loading}>
+  return <Card id="setup" role="region" tabIndex={-1} className="settings-card setup-card" aria-labelledby="setup-heading" aria-busy={loading}>
     <div className="section-heading"><h2 id="setup-heading">Your workspace connections</h2><Sparkles size={19} aria-hidden="true" /></div>
     <p>See what is ready and find the next step in one place.</p>
     <div className="setup-services">

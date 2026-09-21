@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useWorkspace } from "@/lib/db/demo-store";
-import { agentRecipes, buildAgentBlueprint, michaelAgentStarter, starterForRecipe, type AgentBlueprintInput, type AgentRecipeId } from "@/lib/data/agent-recipes";
+import { agentRecipes, buildAgentBlueprint, shareableAgentStarter, starterForRecipe, type AgentBlueprintInput, type AgentRecipeId } from "@/lib/data/agent-recipes";
 
 const lessons = [
   { title: "Give it a clear job and some context", text: "Start with the outcome you want, the facts it can use, and your limits. An agent is an assistant set up for a particular job; it still needs good information and your judgment.", example: "Help me explore one way to reintroduce this published book. Here is its approved description. I have two hours this week and no advertising budget." },
@@ -26,12 +26,12 @@ export function LearnPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [michaelChoice, setMichaelChoice] = useState(false);
+  const [shareChoice, setShareChoice] = useState(false);
   const submitLock = useRef(false);
   const outputRef = useRef<HTMLTextAreaElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
-  const michaelStarterRef = useRef<HTMLButtonElement>(null);
+  const shareStarterRef = useRef<HTMLButtonElement>(null);
   const deskLinkRef = useRef<HTMLAnchorElement>(null);
   const workshopId = useId();
   const outputId = useId();
@@ -54,10 +54,10 @@ export function LearnPage() {
     setError(null);
   }
 
-  function applyMichaelStarter() {
-    updateLearnScratchpad((previous) => ({ ...previous, recipeId: "brainstorm-partner", drafts: { ...previous.drafts, "brainstorm-partner": { ...michaelAgentStarter } } }));
-    setMichaelChoice(false);
-    setNotice("A starting point for Michael is ready to edit. Nothing has been sent.");
+  function applyShareableStarter() {
+    updateLearnScratchpad((previous) => ({ ...previous, recipeId: "brainstorm-partner", drafts: { ...previous.drafts, "brainstorm-partner": { ...shareableAgentStarter } } }));
+    setShareChoice(false);
+    setNotice("A starting point is ready to edit. Nothing has been sent.");
     setError(null);
     requestAnimationFrame(() => nameRef.current?.focus());
   }
@@ -138,7 +138,7 @@ export function LearnPage() {
   return (
     <div className="learn-page">
       <div className="page-heading">
-        <div><span className="eyebrow page-kicker">LEARN & CREATE / YOUR IDEAS, YOUR WAY</span><h1>A little curiosity.<br /><em>A useful new skill.</em></h1><p>Learn how to shape an assistant around a real job, then make an idea of your own.</p></div>
+        <div><span className="eyebrow page-kicker">LEARN & CREATE / YOUR IDEAS, YOUR WAY</span><h1>Curiosity first.<br /><em>A useful new skill.</em></h1><p>Learn how to shape an assistant around a real job, then make an idea of your own.</p></div>
         <BookOpen size={29} strokeWidth={1.3} aria-hidden="true" />
       </div>
 
@@ -154,13 +154,13 @@ export function LearnPage() {
       <section className="learn-workshop" aria-labelledby={workshopId}>
         <div className="learn-section-heading"><span className="eyebrow"><PencilRuler size={15} aria-hidden="true" /> YOUR AGENT-IDEA WORKSHOP</span><h2 id={workshopId}>Give an idea <em>a clear job.</em></h2><p>Build a blueprint: a purpose, some context, and a prompt you can use with another assistant. This workshop assembles your notes locally; it does not run an AI agent.</p></div>
 
-        <div className="learn-michael-starter"><div><Lightbulb size={18} aria-hidden="true" /><span>Have something in mind for Michael?</span></div><Button ref={michaelStarterRef} type="button" variant="outline" disabled={pending} onClick={() => { if (hasBrainstormNotes) setMichaelChoice(true); else applyMichaelStarter(); }}>Start an idea for Michael</Button></div>
-        {michaelChoice && <div className="learn-replace-choice" role="region" aria-label="Keep your workshop notes"><p>This replaces the brainstorm recipe’s notes with an editable Michael starter. Your other recipes stay as they are.</p><div><Button type="button" variant="outline" disabled={pending} onClick={() => { setMichaelChoice(false); requestAnimationFrame(() => michaelStarterRef.current?.focus()); }}>Keep my notes</Button><Button type="button" variant="secondary" disabled={pending} onClick={applyMichaelStarter}>Use Michael starter</Button></div></div>}
+        <div className="learn-share-starter"><div><Lightbulb size={18} aria-hidden="true" /><span>Have an idea for a new helper?</span></div><Button ref={shareStarterRef} type="button" variant="outline" disabled={pending} onClick={() => { if (hasBrainstormNotes) setShareChoice(true); else applyShareableStarter(); }}>Start an idea to share</Button></div>
+        {shareChoice && <div className="learn-replace-choice" role="region" aria-label="Keep your workshop notes"><p>This replaces the brainstorm recipe’s notes with an editable starter for an idea you may share. Your other recipes stay as they are.</p><div><Button type="button" variant="outline" disabled={pending} onClick={() => { setShareChoice(false); requestAnimationFrame(() => shareStarterRef.current?.focus()); }}>Keep my notes</Button><Button type="button" variant="secondary" disabled={pending} onClick={applyShareableStarter}>Use the starter</Button></div></div>}
 
         <fieldset className="learn-recipes" disabled={pending}>
           <legend>1. Choose a starting role</legend>
           <p className="learn-field-hint">Each recipe keeps its own notes while you move around this workspace.</p>
-          <div className="learn-recipe-grid">{agentRecipes.map((item) => <label key={item.id} className={`learn-recipe${item.id === recipeId ? " learn-recipe-selected" : ""}`}><input type="radio" name="agent-recipe" value={item.id} checked={item.id === recipeId} onChange={() => { setRecipeId(item.id); setMichaelChoice(false); setError(null); setNotice(null); }} /><span><strong>{item.name}</strong><span>{item.description}</span></span></label>)}</div>
+          <div className="learn-recipe-grid">{agentRecipes.map((item) => <label key={item.id} className={`learn-recipe${item.id === recipeId ? " learn-recipe-selected" : ""}`}><input type="radio" name="agent-recipe" value={item.id} checked={item.id === recipeId} onChange={() => { setRecipeId(item.id); setShareChoice(false); setError(null); setNotice(null); }} /><span><strong>{item.name}</strong><span>{item.description}</span></span></label>)}</div>
         </fieldset>
 
         <div className="learn-workshop-grid">
@@ -172,7 +172,7 @@ export function LearnPage() {
               <div className="learn-field"><label htmlFor="agent-blueprint-context">What should it know first? <span>Optional</span></label><Textarea id="agent-blueprint-context" value={input.context} onChange={(event) => updateField("context", event.target.value)} maxLength={3000} rows={4} disabled={pending} aria-describedby="agent-context-help" placeholder={recipe.contextHint} /><p id="agent-context-help" className="learn-field-hint">Use approved facts or source references. Include only information you want in the final prompt.</p></div>
               <div className="learn-field"><label htmlFor="agent-blueprint-success">What would a useful result look like?</label><Textarea id="agent-blueprint-success" value={input.success} onChange={(event) => updateField("success", event.target.value)} maxLength={1000} required rows={3} disabled={pending} /></div>
               <Button type="submit" disabled={pending}><PencilRuler size={15} aria-hidden="true" />{preview ? "Update my blueprint" : "Build my blueprint"}</Button>
-              <p className="learn-field-hint">Your notes survive workspace navigation in this tab. Save or download before reloading, closing the tab, or signing out; unfinished notes are not saved to your account.</p>
+              <p className="learn-field-hint">Your notes stay in this tab until you save or download them.</p>
             </form>
           </Card>
 

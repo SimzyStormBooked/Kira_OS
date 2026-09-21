@@ -19,12 +19,17 @@ const actionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("task"), ...base, status: z.enum(["todo", "done", "skipped"]) }).strict(),
   z.object({ action: z.literal("result"), id: z.uuid(), result: strategyResultInputSchema }).strict(),
 ]);
-function failure(error: unknown) {
+function failure(error: unknown, intent: "read" | "write" = "write") {
   if (error instanceof WorkspaceAccessError || error instanceof ManuscriptError) return NextResponse.json({ error: error.message }, { status: error.status, headers });
   if (error instanceof StudioPolicyError) return NextResponse.json({ error: error.message }, { status: 422, headers });
   if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Check the plan fields and try again." }, { status: 400, headers });
   const messages: Record<string, [number, string]> = { "42501": [403,"Your role or source permissions do not allow this action."], "40001": [409,"This plan changed. Refresh before trying again."], "55P03": [409,"A plan is being generated. Wait a moment, then refresh."], "54000": [429,"Your workspace has used its 20 plan generations for today. They reset at midnight UTC."], "P0002": [404,"This plan is unavailable."], "22023": [400,"Check the plan, review status and dates before trying again."], "23505": [409,"This item already exists. Refresh your saved plans."] };
-  const [status, message] = error instanceof StrategyError ? messages[error.code] ?? [503,"Marketing Plans could not save this change. Refresh to check your saved work."] : [503,"Marketing Plans is temporarily unavailable. Your saved work is retained."];
+  const unknownFailure: [number, string] = intent === "read"
+    ? [503,"Marketing Plans could not load right now. Your saved work is untouched."]
+    : [503,"Marketing Plans could not save this change. Refresh to check your saved work."];
+  const [status, message] = error instanceof StrategyError ? messages[error.code] ?? unknownFailure : intent === "read"
+    ? [503,"Marketing Plans could not load right now. Your saved work is untouched."]
+    : [503,"Marketing Plans is temporarily unavailable. Your saved work is retained."];
   return NextResponse.json({ error: message }, { status, headers });
 }
 export async function GET(request: Request) {
@@ -33,7 +38,7 @@ export async function GET(request: Request) {
     const id = new URL(request.url).searchParams.get("id"); if (id) z.uuid().parse(id);
     const [role, data] = await Promise.all([getWorkspaceRole(session), id ? repo.detail(id) : repo.list()]);
     return NextResponse.json({ role, ...(id ? { detail: data } : { plans: data }) }, { headers });
-  } catch (error) { return failure(error); }
+  } catch (error) { return failure(error, "read"); }
 }
 export async function POST(request: Request) {
   try {
