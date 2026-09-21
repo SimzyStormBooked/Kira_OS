@@ -47,13 +47,13 @@ test("learned knowledge has private citations, hides spoilers, searches text, an
   await page.locator(".knowledge-field > summary").filter({hasText:/^About/}).click();
   await expect(page.getByText("A second synthetic observation of the same character.",{exact:true})).toBeVisible();
   await page.getByRole("button",{name:"Show source",exact:true}).first().click();const dialog=page.getByRole("dialog");await expect(dialog.locator("blockquote")).toContainText(text);await page.keyboard.press("Escape");
-  await page.getByRole("button",{name:"Story & plot",exact:true}).click();
+  await page.getByRole("button",{name:"Story Arc",exact:true}).click();
   await expect(page.locator(".knowledge-fact-group")).toHaveCount(0);
   await page.getByLabel("Reveal plot details and potential spoilers",{exact:true}).check();
   await expect(page.locator(".knowledge-fact-group")).toHaveCount(1);
   await page.getByLabel("Reveal plot details and potential spoilers",{exact:true}).uncheck();
   await expect(page.getByText("Synthetic spoiler detail for reveal-control verification.",{exact:true})).toHaveCount(0);
-  await page.getByRole("button",{name:"Reader appeal & marketing",exact:true}).click();
+  await page.getByRole("button",{name:"Marketing",exact:true}).click();
   await expect(page.locator(".knowledge-fact-group")).toHaveCount(2);
   await page.locator(".knowledge-fact-group > details > summary").first().click();
   await expect(page.getByText("Manuscript-supported · unreviewed",{exact:true})).toBeVisible();

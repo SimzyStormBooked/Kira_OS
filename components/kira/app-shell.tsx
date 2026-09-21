@@ -81,6 +81,7 @@ const navigation = [
   { href: "/vault", title: "The Vault", icon: FolderOpen },
 ];
 const creativeNavigation = [
+  { href: "/ads", title: "Ads & Next Steps", description: "Facebook results & your next experiment", icon: Megaphone },
   { href: "/opportunities", title: "Catalog Opportunities", description: "Find connections between your books", icon: Telescope },
   { href: "/plans", title: "Marketing Plans", description: "Goals, review & your next steps", icon: Target },
   { href: "/studio", title: "Ask Raven", description: "Think through your next move", icon: Lightbulb },

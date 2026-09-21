@@ -69,4 +69,6 @@ export async function loadMetaView(supabase: SupabaseClient, authorId: string, u
 export async function revokeMetaIdentity(supabase: SupabaseClient, config: MetaConfig, metaUserId: string, deleteData: boolean) {
   const { error } = await supabase.rpc("revoke_meta_identity", { p_server_proof: config.serverProof, p_meta_user_id: metaUserId, p_delete_data: deleteData });
   if (error) throw new MetaAccessError("unavailable");
+  const { adsWorker } = await import("@/lib/ads/repository");
+  await adsWorker("revoke", null, null, { metaUserId });
 }

@@ -1,0 +1,15 @@
+import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
+vi.mock('server-only',()=>({}));
+const graphMock=vi.hoisted(()=>vi.fn());
+vi.mock('@/lib/connections/meta-provider',()=>({graph:graphMock,MetaProviderError:class extends Error{constructor(code:string){super(code)}}}));
+import {fetchAds,exchangeAdsCode,adsConfig} from '@/lib/ads/meta';
+const config={appId:'12345',appSecret:'a'.repeat(32),loginConfigId:'67890',graphVersion:'v24.0',origin:'https://example.com',callbackUrl:'https://example.com/api/ads/meta/callback',credentialKey:Buffer.alloc(32),serverProof:'proof'} as NonNullable<ReturnType<typeof adsConfig>>;
+const account={id:'act_123',name:'Test',currency:'USD',timezone_name:'America/Phoenix'};
+const row={account_id:'123',date_start:'2026-09-19',date_stop:'2026-09-19',ad_id:'456',ad_name:'Ad',campaign_id:'789',campaign_name:'Campaign',spend:'12',impressions:'1000',inline_link_clicks:'20'};
+beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(new Date('2026-09-21T16:00:00Z'));graphMock.mockReset();});afterEach(()=>vi.useRealTimers());
+describe('read-only Meta ad ingestion',()=>{
+ it('keeps missing purchases unknown and uses explicit account-local daily attribution',async()=>{graphMock.mockResolvedValueOnce(account).mockResolvedValueOnce({data:[row]}).mockResolvedValueOnce({data:[]});const result=await fetchAds(config,'secret','act_123');expect(result.rows[0].purchases).toBeNull();expect(result.rows[0].spend).toBe(12);expect(graphMock.mock.calls[1][2]).toMatchObject({level:'ad',time_increment:'1',action_attribution_windows:'["7d_click","1d_view"]'});});
+ it('rejects cross-account metrics and duplicate daily rows',async()=>{graphMock.mockResolvedValueOnce(account).mockResolvedValueOnce({data:[{...row,account_id:'999'}]});await expect(fetchAds(config,'secret','act_123')).rejects.toThrow();graphMock.mockResolvedValueOnce(account).mockResolvedValueOnce({data:[row,row]});await expect(fetchAds(config,'secret','act_123')).rejects.toThrow();});
+ it('follows only cursors through the fixed graph helper and preserves metrics if creative retrieval fails',async()=>{graphMock.mockResolvedValueOnce(account).mockResolvedValueOnce({data:[row],paging:{next:'https://attacker.test/steal',cursors:{after:'cursor'}}}).mockResolvedValueOnce({data:[]}).mockRejectedValueOnce(new Error('unavailable'));const result=await fetchAds(config,'secret','act_123');expect(graphMock.mock.calls[2][1]).toBe('act_123/insights');expect(graphMock.mock.calls[2][2].after).toBe('cursor');expect(result.warning).toContain('creative');expect(result.rows).toHaveLength(1);});
+ it('rejects a token without ads_read before requesting accounts',async()=>{graphMock.mockResolvedValueOnce({access_token:'short'}).mockResolvedValueOnce({access_token:'long'}).mockResolvedValueOnce({data:{app_id:'12345',user_id:'12',type:'USER',is_valid:true,scopes:['public_profile'],expires_at:2000000000}});await expect(exchangeAdsCode(config,'code')).rejects.toThrow('permissions');expect(graphMock).toHaveBeenCalledTimes(3);});
+});

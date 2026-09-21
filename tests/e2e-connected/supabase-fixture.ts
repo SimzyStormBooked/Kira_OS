@@ -12,6 +12,7 @@ import { connectionInputSchema, type ConnectionLink } from "../../lib/connection
 import { books as seedBooks, series as seedSeries, sources as seedSources, seedTime } from "../../lib/data/seed";
 import { libraryInputSchema, type LibraryMetadata } from "../../lib/manuscripts/library-contract";
 import { manuscriptChunkSchema, manuscriptFormat, validateManuscriptExtraction, type ManuscriptChunk, type ManuscriptExtraction } from "../../lib/manuscripts/contract";
+import { adsSnapshotSchema } from "../../lib/ads/contract";
 import { fixture } from "./fixture-data";
 
 const signingSecret = "local-test-fixture-signing-secret-not-for-production";
@@ -47,6 +48,8 @@ let manuscripts: FixtureManuscript[] = [];
 let manuscriptChunks: FixtureChunk[] = [];
 let manuscriptBatches: FixtureBatch[] = [];
 let intelligence: FixtureIntelligence[] = [];
+let adsReports: Array<{id:string;author_id:string;account_id:string;created_at:string;snapshot:unknown}> = [];
+let adsInspiration: Array<{id:string;author_id:string;title:string;url:string;note:string;created_at:string}> = [];
 const storedFiles = new Map<string, Buffer>();
 const fixtureRecordingKey = "a".repeat(64);
 const sha256 = (text: string | Buffer) => createHash("sha256").update(text).digest("hex");
@@ -54,7 +57,7 @@ function resetLibrary() {
   libraryBooks = seedBooks.map(book => ({ ...book, author_id: fixture.authorId, overview: null, metadata: {}, active_manuscript_id: null, created_at: seedTime, updated_at: seedTime }));
   librarySeries = seedSeries.map(item => ({ ...item, author_id: fixture.authorId }));
   librarySources = seedSources.filter(item => item.data_origin !== "demo").map(item => ({ ...item, author_id: fixture.authorId, metadata: {} }));
-  manuscripts = []; manuscriptChunks = []; manuscriptBatches = []; intelligence = []; storedFiles.clear();
+  manuscripts = []; manuscriptChunks = []; manuscriptBatches = []; intelligence = []; adsReports = []; adsInspiration = []; storedFiles.clear();
 }
 resetLibrary();
 function newManuscript(book: FixtureBook, input: { id: string; filename: string; mime: string; bytes: number; hash: string }, actor: string): FixtureManuscript {
@@ -291,6 +294,15 @@ const server = createServer(async (request, response) => {
       if (body.p_author_id !== fixture.authorId) return respond(response, 403, { code: "42501", message: "Fixture tenant mismatch" });
       const method = url.pathname.split("/").pop();
       const now = new Date().toISOString();
+      if (method === "ads_control") {
+        if (body.p_key !== fixtureRecordingKey) return respond(response,403,{code:"42501"});
+        if (body.p_action === "view") return respond(response,200,null);
+        const payload=body.p_payload as Record<string,unknown>;
+        if (body.p_action === "import") { const snapshot=adsSnapshotSchema.parse(payload.snapshot); const id=randomUUID(); adsReports.unshift({id,author_id:fixture.authorId,account_id:snapshot.account.id,created_at:now,snapshot}); return respond(response,200,{id}); }
+        if (body.p_action === "inspiration") { adsInspiration.unshift({id:randomUUID(),author_id:fixture.authorId,title:String(payload.title),url:String(payload.url),note:String(payload.note),created_at:now}); return respond(response,200,{}); }
+        if (body.p_action === "remove_inspiration") { adsInspiration=adsInspiration.filter(i=>i.id!==payload.id);return respond(response,200,{}); }
+        return respond(response,400,{code:"22023"});
+      }
       if (method === "manuscript_search") {
         const query = String(body.p_query ?? "").trim().toLowerCase();
         if (query.length < 2 || query.length > 500) return respond(response, 400, { code: "22023", message: "Invalid simulated search" });
@@ -464,7 +476,7 @@ const server = createServer(async (request, response) => {
     }
     if (url.pathname.startsWith("/rest/v1/")) {
       if (url.searchParams.get("author_id") !== `eq.${fixture.authorId}`) return respond(response, 403, { code: "42501", message: "Expected explicit fixture author filter" });
-      const libraryTables: Record<string, object[]> = { books: libraryBooks, series: librarySeries, sources: librarySources, manuscripts, knowledge_chunks: manuscriptChunks, manuscript_batches: manuscriptBatches, book_intelligence: intelligence };
+      const libraryTables: Record<string, object[]> = { ads_reports: adsReports, ads_jobs: [], ads_subscriptions: [], ads_book_links: [], ads_deliveries: [], ads_inspiration: adsInspiration, books: libraryBooks, series: librarySeries, sources: librarySources, manuscripts, knowledge_chunks: manuscriptChunks, manuscript_batches: manuscriptBatches, book_intelligence: intelligence };
       const table = libraryTables[url.pathname.slice("/rest/v1/".length)];
       if (table) return request.method === "GET" ? respondRows(request, response, url, table) : respond(response, 403, { code: "42501", message: "Simulated library writes require scoped RPCs" });
       if (url.pathname === "/rest/v1/approval_requests") return respond(response, 200, approvals);

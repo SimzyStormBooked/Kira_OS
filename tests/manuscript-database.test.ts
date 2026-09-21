@@ -78,7 +78,7 @@ beforeAll(async () => {
     grant usage on schema storage to authenticated,anon;
     grant select,insert,update,delete on storage.objects to authenticated,anon;
     create policy unrelated_permissive_storage_policy on storage.objects for all to authenticated,anon using(true) with check(true);`);
-  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609200001_background_reading"]) {
+  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609200001_background_reading", "202609200003_character_organization"]) {
     await db.exec(readFileSync(`supabase/migrations/${name}.sql`, "utf8"));
   }
   await db.query("insert into private.workspace_generation_config(singleton,recording_key_hash) values(true,encode(sha256(convert_to($1,'UTF8')),'hex'))", [recordingKey]);

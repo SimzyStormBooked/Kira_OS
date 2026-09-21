@@ -12,7 +12,7 @@ const accessToken = z.string().min(1).max(16000);
 const tokenSchema = z.object({ access_token: accessToken, expires_in: z.number().positive().optional() });
 export const metaCredentialSchema = z.object({ userToken: accessToken });
 
-async function graph(config: MetaConfig, path: string, parameters: Record<string, string>, token?: string, method = "GET"): Promise<unknown> {
+export async function graph(config: MetaConfig, path: string, parameters: Record<string, string>, token?: string, method = "GET"): Promise<unknown> {
   // Every path is constructed internally. Never follow provider pagination or caller URLs.
   const url = new URL(`https://graph.facebook.com/${config.graphVersion}/${path}`);
   for (const [key, value] of Object.entries(parameters)) url.searchParams.set(key, value);

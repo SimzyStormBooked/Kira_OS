@@ -21,7 +21,7 @@ Kira writes. AI runs the business around the books. Do not build novel, manuscri
 
 ## Agent foundation
 
-Domain contracts are in `types/domain.ts`: Agent, AgentRun, AgentFinding, AgentRecommendation, Evidence, ApprovalRequest. Raven is a deterministic executive service consuming seeded specialist findings. Reader Voice, Social Intelligence, Discoverability, The Hunt, and Outreach are disconnected definitions. There is no autonomous business agent scheduler. Manuscript reference reading uses an explicitly started durable background workflow with bounded concurrency, saved progress and a persisted pause control.
+Domain contracts are in `types/domain.ts`: Agent, AgentRun, AgentFinding, AgentRecommendation, Evidence, ApprovalRequest. Raven is a deterministic executive service consuming seeded specialist findings. Reader Voice, Social Intelligence, Discoverability, The Hunt, and Outreach are disconnected definitions. There is no general autonomous business agent scheduler. Explicitly authorized Facebook Ads reports use a daily durable refresh and opt-in Monday/Thursday email delivery; they never modify ads or budgets. See docs/ads-dashboard.md for external activation gates. Manuscript reference reading uses an explicitly started durable background workflow with bounded concurrency, saved progress and a persisted pause control.
 
 The provider gate enforces policy and delegates to an interchangeable implementation. The demo provider calls a pure prioritizer. The demo route returns a completed run and structured recommendations; connected mode cannot run or save demo intelligence. Add real models per job without putting SDK calls in React components.
 

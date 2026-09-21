@@ -41,6 +41,8 @@ export const manuscriptCharacterSchema = z.object({
   name: z.string().trim().min(1).max(120), aliases: z.array(z.string().trim().min(1).max(120)).max(8),
   role: z.string().trim().max(160), description: z.string().trim().max(600), personality: z.string().trim().max(400),
   relationships: z.string().trim().max(600), arc: z.string().trim().max(600), marketing_description: z.string().trim().max(400),
+  physical_traits: z.string().trim().max(400).optional(), backstory: z.string().trim().max(400).optional(),
+  archetype: z.string().trim().max(400).optional(), character_tropes: z.string().trim().max(400).optional(), emotional_growth: z.string().trim().max(400).optional(),
   spoiler: z.boolean(), citations,
 }).strict();
 export const manuscriptExtractionSchema = z.object({
