@@ -1,6 +1,6 @@
 # Character Studio — phase 1 schema
 
-Phase 1 adds the database foundation for author-owned character identity, private portraits, and author-written notes, plus the server upload route that sanitizes an image before it is stored. There is no Character Studio page, gallery, home showcase, or relationship map yet, so nothing in the interface reaches the upload route. The migration is applied and recorded in the hosted database as of 2026-09-21; see VERIFICATION.md, including the note that an undocumented integration applied it on merge. The design preview in [design/character-studio-preview.html](design/character-studio-preview.html) remains a standalone concept.
+Phase 1 adds the database foundation for author-owned character identity, private portraits, and author-written notes; the server upload route that sanitizes an image before it is stored; and the Character Studio gallery and profile view that an author actually uses. The home showcase, Quiet Room, and relationship map are not built, and notes and book links are displayed but not yet editable in the interface. The migration is applied and recorded in the hosted database as of 2026-09-21; see VERIFICATION.md, including the note that an undocumented integration applied it on merge. The design preview in [design/character-studio-preview.html](design/character-studio-preview.html) remains a standalone concept.
 
 ## Why new tables were required
 
@@ -50,7 +50,9 @@ The `kira-character-portraits` bucket is private, limited to 8 MB, and limited t
 
 `tests/character-studio-database.test.ts` runs the real migrations in PGlite and covers tenant isolation, viewer denial, alias normalization, server-advanced versions and stale-edit detection, single reversible links, rejected foreign-book links, note kinds, direct-write refusal on portraits and on `book_characters`, capability and role requirements, registration idempotency, the sanitization requirement, bucket privacy and path binding, primary-portrait containment, and survival of portraits, notes, and links across a second manuscript reading. The full `npm run check` passes: TypeScript, ESLint, 525 unit/API/database tests, and the production build.
 
-Not verified: any hosted behavior. No image has been uploaded to the hosted bucket, and the route has no caller in the interface, so it is covered by unit tests only. The hosted objects were inspected directly and match this document; that is schema verification, not feature verification.
+Verified in a browser: the demo-mode page renders with no console errors on desktop and at 375px, and `/characters` passes the automated accessibility sweep on both viewports with zero violations.
+
+Not verified: the connected path in a browser. Exercising the real gallery, upload, and signed URLs needs either the hosted workspace's credentials or Character Studio support added to the simulated Supabase fixture in `tests/e2e-connected/supabase-fixture.ts`; neither has been done, so the connected UI is covered by route and repository unit tests only. No image has been uploaded to the hosted bucket.
 
 ## Upload route
 
@@ -60,9 +62,24 @@ The order is deliberate: metadata is removed first, so an image that cannot be c
 
 `lib/characters/image.ts` rewrites the container rather than re-encoding pixels. JPEG loses every `APPn` and comment segment, PNG keeps only an allowlist of chunks (dropping `eXIf`, `tEXt`, `zTXt`, `iTXt`, `tIME`, `iCCP`), and WebP loses `EXIF` and `XMP ` chunks with the advertising flags cleared in `VP8X` and the RIFF length rebuilt. All three drop anything appended after the image's own end marker, which is where an appended payload would hide. A container the sanitizer cannot fully parse is rejected with 422 rather than stored. Colour profiles go with the rest, which can shift rendered colour slightly; that is the accepted trade for not storing an uninspected ICC blob.
 
+## Gallery and profile view
+
+`/characters` lists the workspace's characters, searchable by display name **and** alias, because the name a reader uses is often not the author's. `/characters/[id]` shows the portraits, the author's notes, and the confirmed book links, and carries the upload form. Both are connected-mode only: in the shared demo workspace the page explains that a cast lives in a private workspace rather than inventing one.
+
+| Route | Behavior |
+| --- | --- |
+| `GET /api/characters` | The gallery: every profile with its aliases, portrait and book counts, and a signed URL for its cover only |
+| `POST /api/characters` | Creates a character with optional aliases and the author's own description |
+| `GET /api/characters/[id]` | One profile with all portrait URLs, notes, and links resolved to book titles and character names |
+| `PATCH /api/characters/[id]` | Renames, edits the description, or chooses the cover portrait; requires the version the client is holding |
+
+Portraits never travel as paths. A read produces a signed URL valid for five minutes, and the gallery signs only the cover so a long cast does not mint dozens of URLs per view. Next's image optimizer is deliberately bypassed for these: it would proxy and cache private portraits through a shared optimizer. A cover can only be a portrait of that same profile, which the composite foreign key enforces in SQL rather than in the route.
+
+Every edit sends the version the client is holding, so a stale save is refused with a conflict instead of overwriting a change made in another tab. The trigger advances the version on the server, so a client cannot forge one.
+
 ## Remaining in the sequence
 
-1. The Studio gallery, search by name and alias, the profile view, and the client that calls the upload route (including signed URLs for reading a private portrait back).
+1. Writing notes and creating or removing book links from the interface; both are read-only there today.
 2. Author-selected home showcase.
 3. Optional Quiet Room.
 
