@@ -1,0 +1,657 @@
+{
+ "judge": "Theo \u2014 copy & ethics critic (round 2)",
+ "files_read": [
+  "/home/user/Kira_OS/docs/ux-review/brief.md",
+  "/home/user/Kira_OS/components/kira/app-shell.tsx",
+  "/home/user/Kira_OS/components/kira/mission-control.tsx",
+  "/home/user/Kira_OS/components/kira/connected-home.tsx",
+  "/home/user/Kira_OS/components/kira/getting-started.tsx",
+  "/home/user/Kira_OS/components/kira/desk-page.tsx",
+  "/home/user/Kira_OS/components/kira/manual-review-form.tsx",
+  "/home/user/Kira_OS/components/kira/approval-card.tsx",
+  "/home/user/Kira_OS/components/kira/session-ended-dialog.tsx",
+  "/home/user/Kira_OS/components/kira/context-help.tsx",
+  "/home/user/Kira_OS/components/kira/universe-catalog.tsx",
+  "/home/user/Kira_OS/components/kira/connected-library.tsx",
+  "/home/user/Kira_OS/components/kira/book-detail.tsx",
+  "/home/user/Kira_OS/components/kira/connected-book-detail.tsx",
+  "/home/user/Kira_OS/components/kira/book-knowledge.tsx",
+  "/home/user/Kira_OS/components/kira/book-card.tsx",
+  "/home/user/Kira_OS/components/kira/book-details-brief.tsx",
+  "/home/user/Kira_OS/components/kira/studio-page.tsx",
+  "/home/user/Kira_OS/components/kira/learn-page.tsx",
+  "/home/user/Kira_OS/components/kira/plans-page.tsx",
+  "/home/user/Kira_OS/components/kira/opportunities-page.tsx",
+  "/home/user/Kira_OS/components/kira/settings-page.tsx",
+  "/home/user/Kira_OS/components/kira/access-page.tsx",
+  "/home/user/Kira_OS/components/kira/connections-page.tsx",
+  "/home/user/Kira_OS/components/kira/login-form.tsx",
+  "/home/user/Kira_OS/components/kira/one-time-sign-in.tsx",
+  "/home/user/Kira_OS/components/kira/password-settings.tsx",
+  "/home/user/Kira_OS/components/kira/setup-status.tsx",
+  "/home/user/Kira_OS/components/kira/raven-page.tsx",
+  "/home/user/Kira_OS/components/kira/raven-briefing.tsx",
+  "/home/user/Kira_OS/components/kira/recommendation-card.tsx",
+  "/home/user/Kira_OS/components/kira/agent-status.tsx",
+  "/home/user/Kira_OS/components/kira/metric-card.tsx",
+  "/home/user/Kira_OS/components/kira/origin-badge.tsx",
+  "/home/user/Kira_OS/components/kira/workspace-guide.tsx",
+  "/home/user/Kira_OS/components/kira/inspiration-shelf.tsx",
+  "/home/user/Kira_OS/components/kira/daily-quote.tsx",
+  "/home/user/Kira_OS/components/kira/workspace-permission-notice.tsx",
+  "/home/user/Kira_OS/components/kira/evidence-drawer.tsx",
+  "/home/user/Kira_OS/components/kira/ads/dashboard.tsx",
+  "/home/user/Kira_OS/components/kira/ads/overview.tsx",
+  "/home/user/Kira_OS/components/ui/button.tsx",
+  "/home/user/Kira_OS/app/layout.tsx",
+  "/home/user/Kira_OS/app/login/page.tsx",
+  "/home/user/Kira_OS/app/welcome/page.tsx",
+  "/home/user/Kira_OS/app/error.tsx",
+  "/home/user/Kira_OS/app/not-found.tsx",
+  "/home/user/Kira_OS/app/loading.tsx",
+  "/home/user/Kira_OS/app/[module]/page.tsx",
+  "/home/user/Kira_OS/app/globals.css",
+  "/home/user/Kira_OS/lib/data/seed.ts",
+  "/home/user/Kira_OS/lib/data/agent-recipes.ts",
+  "/home/user/Kira_OS/lib/db/demo-store.tsx",
+  "/home/user/Kira_OS/lib/knowledge/provenance.ts",
+  "/home/user/Kira_OS/lib/ai/studio-contract.ts",
+  "/home/user/Kira_OS/lib/manuscripts/contract.ts",
+  "/home/user/Kira_OS/types/domain.ts",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/desktop-home.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/cdesktop-desk.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2/cmobile-home.png"
+ ],
+ "first_five_minutes": "She signs in and lands on \"Welcome home, Cassandra.\" (connected-home.tsx:72) \u2014 warm, and it is her, so the greeting lands. The page is genuinely lovely: serif display type, a restrained olive-and-gold palette, a real quote with a real source, nothing shouting for her attention. The left rail says \"Kira Stanley / Cassandra's author workspace\" (app-shell.tsx:149-150), which reads as the two-facets idea working. Then the eye starts collecting small wrong notes. The top-left brand says \"AUTHOR INTELLIGENCE\" (app-shell.tsx:144), the first nav item is \"Mission Control\" (app-shell.tsx:62), and further down sit \"The Hunt\" (app-shell.tsx:98) and \"Executive intelligence\" (seed.ts:126) \u2014 she opened an app about her novels and it is speaking in the register of a defense contractor. Her first steps are numbered \"01 / 02 / 03\" (getting-started.tsx:148), which is a developer's ordinal, not a person's. On the demo home the card that holds her approvals is titled \"THE HUMAN TOUCH\" (mission-control.tsx:77) sitting beside cards labeled intelligence, evidence and confidence \u2014 the machine gets the reasoning, she gets the touch. She clicks into her desk, opens a brief, and the \"Teach Raven\" dialog asks \"What did the numbers miss?\" (approval-card.tsx:211) with the sidebar telling her \"The nuance belongs here\" (desk-page.tsx:143). She is being cast, politely and repeatedly, as the feelings department of her own business. The moment that would actually decide the demo is the manuscript. She opens a book, and the consent box is honest and well-meant \u2014 \"What happens to your file\", spoilers hidden by default, permission checkbox in plain words \u2014 and then line three reads \"Passages are sent through Vercel AI Gateway to google/gemini-3.8-flash for reading and openai/text-embedding-3-small for search\" (connected-book-detail.tsx:145). At the most intimate moment in the product she is handed a vendor SKU. And the line after it tells her she cannot take the file back: \"Removing a manuscript from the app isn't available yet \u2014 ask your workspace owner if you need a file removed\" (connected-book-detail.tsx:146). She will remember that sentence longer than anything else on the page. If Michael demos it from his own account, he is greeted \"Welcome home, Cassandra.\" too \u2014 the greeting is hard-coded.",
+ "scores": [
+  {
+   "criterion": "agency_control",
+   "score": 7,
+   "verdict": "Defaults genuinely favor her \u2014 nothing runs unasked, spoilers are off, reading is a separate step she starts and can pause, and every replace-my-draft moment asks first. The gap is her manuscript: she can put it in and cannot take it out, and the copy tells her to ask a man for permission. Owner gates elsewhere are explained well but the language around them still leans on 'ask your workspace owner' three times on one page.",
+   "evidence": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 149,
+     "quote": "Saving stores the file only. Reading is a separate step that you start, and you can pause it."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 146,
+     "quote": "Every version you upload is kept. Removing a manuscript from the app isn\u2019t available yet \u2014 ask your workspace owner if you need a file removed."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 170,
+     "quote": "Every version you upload is kept. Removing a manuscript from the app isn\u2019t available yet \u2014 ask your workspace owner if you need a file removed."
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 145,
+     "quote": "Keep your words, or replace them with \u201c{idea.title}\u201d. Nothing changes until you choose."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 132,
+     "quote": "Plans get a second read from the workspace owner before dated tasks go live \u2014 a check on audience, budget and dates, not on you."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 146,
+     "change": "Replace the bare 'ask your workspace owner if you need a file removed' with a copy line that states the mechanism and her standing: 'Removal isn\u2019t built yet. Until it is, the fastest route is a removal request recorded here \u2014 it goes to the workspace owner with the file name and date, and nothing is quoted or published from the file meanwhile.' Add a 'Request removal of this version' button that writes an ordinary desk brief (createManualReview) so the request is hers, timestamped and exportable, rather than a verbal favour.",
+     "rationale": "Today the only exit from her own manuscript is a personal ask to the owner. A recorded, self-service request restores her standing without touching SQL or the hard rules."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 170,
+     "change": "Delete the duplicate sentence in the version-history details and point to the request control instead ('Removal is requested from the panel above').",
+     "rationale": "Saying the same limitation twice on one page reads as the app insisting she cannot have her file back."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 132,
+     "change": "Cut the defensive clause '\u2014 a check on audience, budget and dates, not on you.' and state the rule plainly: 'Dated tasks go live after the workspace owner reviews audience, budget and dates. You can keep editing, regenerate, or work the steps yourself without activating them.'",
+     "rationale": "'not on you' names a doubt she did not raise; the neutral sentence already carries the reassurance."
+    }
+   ]
+  },
+  {
+   "criterion": "safe_to_experiment_undo",
+   "score": 7,
+   "verdict": "The strongest area in the app. Unsaved work is visible, named and handed back \u2014 the session-ended dialog is exemplary, edits survive a version bump with an explicit warning, sign-out with drafts is confirmed, and an unreadable demo file is downloadable before anything overwrites it. Two real leaks remain: the book-metadata dialog discards typed fields on Cancel, Esc or outside click with no guard, and the connected 'Add book' dialog does the same.",
+   "evidence": [
+    {
+     "file": "components/kira/session-ended-dialog.tsx",
+     "line": 86,
+     "quote": "Your sign-in expired, so nothing can be saved to your workspace right now. Your unfinished words are below, exactly as you left them."
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 156,
+     "quote": "You wrote them against Draft ${keptVersion + 1}; this brief is now Draft ${approval.version + 1}."
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 248,
+     "quote": "Not saved yet \u00b7 Kept in this tab until you save."
+    },
+    {
+     "file": "components/kira/connected-library.tsx",
+     "line": 55,
+     "quote": "<Button type=\"button\" variant=\"ghost\" disabled={busy} onClick={onCancel}>Cancel</Button>"
+    },
+    {
+     "file": "components/kira/connected-library.tsx",
+     "line": 76,
+     "quote": "<Dialog open={adding} onOpenChange={setAdding}>"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connected-library.tsx",
+     "line": 55,
+     "change": "Track whether any field in BookMetadataForm differs from its defaultValue and, when it does, make Cancel open the same 'Keep your unfinished\u2026' confirmation pattern already used in book-details-brief.tsx:24 ('Keep my entries' / 'Discard and close') instead of closing silently.",
+     "rationale": "Every other draft surface in the app protects typed words; the metadata form is the one place that throws them away without asking, which breaks the promise the rest of the product makes."
+    },
+    {
+     "file": "components/kira/connected-library.tsx",
+     "line": 76,
+     "change": "Pass onOpenChange={(open)=>{ if(!open && formDirty) return confirmClose(); setAdding(open); }} so Esc and outside-click on the Add-book dialog cannot discard a half-typed title and series.",
+     "rationale": "Radix dismiss gestures are the likeliest accidental data loss path here, and the app already knows how to guard them (studio-page.tsx:215)."
+    }
+   ]
+  },
+  {
+   "criterion": "clarity_self_explanation",
+   "score": 6,
+   "verdict": "The explanatory layer \u2014 ContextHelp, the Guide dialog, mode-aware status lines \u2014 is good, plain and honest. But raw system vocabulary leaks into the surface in a dozen places: lowercase enum values rendered as labels, error codes with underscores swapped for spaces, model slugs, roadmap phase numbers, a fake edition number, and one metric that contradicts its own caption.",
+   "evidence": [
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 117,
+     "quote": "{plan.input.mode.replaceAll(\"_\",\" \")} \u00b7 {plan.input.anchorDate?dateLabel(plan.input.anchorDate):\"Date still needed\"}"
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 121,
+     "quote": "Last attempt did not complete ({revisions[0].error_code?.replaceAll(\"_\",\" \")})."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 86,
+     "quote": "(field===\"metric\"?[\"preorders\",\"sales\",\"reviews\",\"subscribers\",\"readers\",\"revenue\",\"custom\"]:[\"count\",\"currency\",\"percent\"]).map(o=><option key={o}>{o}</option>)"
+    },
+    {
+     "file": "components/kira/evidence-drawer.tsx",
+     "line": 50,
+     "quote": "<dd>{e.source_type.replaceAll(\"_\", \" \")}</dd>"
+    },
+    {
+     "file": "app/[module]/page.tsx",
+     "line": 129,
+     "quote": "<span aria-hidden=\"true\">0{Number(item.phase)}</span>"
+    },
+    {
+     "file": "lib/data/seed.ts",
+     "line": 358,
+     "quote": "label: \"Active campaigns\",\n    value: \"3\",\n    change: \"No live campaigns\","
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 117,
+     "change": "Add the three mode values to the existing `labels` map (before_release: 'Before release', after_release: 'After release', evergreen: 'Ongoing') and render labels[plan.input.mode] instead of replaceAll on the enum.",
+     "rationale": "'evergreen \u00b7 Date still needed \u00b7 New readers' is a database row printed at her; the map that humanizes statuses two lines above already exists."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 121,
+     "change": "Map error_code through a message table the way studioFailureMessages already does ('The model was unavailable', 'The daily limit was reached'), and drop the parenthesised code from the sentence.",
+     "rationale": "'Last attempt did not complete (provider unavailable)' is a log line; she cannot act on a code."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 86,
+     "change": "Give the metric and unit selects human option labels ('Pre-orders', 'Sales', 'Reviews', 'Newsletter subscribers', 'Readers', 'Revenue', 'Something else'; 'A count', 'Money', 'Percent') while keeping the enum as the option value.",
+     "rationale": "A goal form is where she is most likely to give up; lowercase 'subscribers'/'currency' reads as unfinished software."
+    },
+    {
+     "file": "components/kira/evidence-drawer.tsx",
+     "line": 50,
+     "change": "Replace the enum print with a label map: synthetic \u2192 'Invented example', website \u2192 'Author website', manual_snapshot \u2192 'Manual snapshot', and drop the 'Source ID' row (line 57-58) into a collapsed 'Technical details' summary.",
+     "rationale": "'synthetic' and a 10px UUID are for an auditor; the provenance story is stronger in plain words."
+    },
+    {
+     "file": "app/[module]/page.tsx",
+     "line": 129,
+     "change": "Delete the `phase` field from the modules map and the '0N' badge; replace the art numeral with the module icon alone.",
+     "rationale": "Internal roadmap phase numbers are project-management vocabulary; they tell her nothing and imply an ordering she was never shown."
+    },
+    {
+     "file": "lib/data/seed.ts",
+     "line": 358,
+     "change": "Change the 'Active campaigns' demo metric to value '\u2014' with change 'No campaigns in this example' (or give it a non-contradictory count), and do the same for 'Open opportunities' whose change reads only 'Illustrative'.",
+     "rationale": "A tile that reads '3' above 'No live campaigns' makes her distrust every other number on the page, DEMO badge or not."
+    }
+   ]
+  },
+  {
+   "criterion": "tone_dignity",
+   "score": 6,
+   "verdict": "No emoji, no exclamation marks, no baby talk, and the error and consent copy is adult and specific \u2014 that part is real craft. What pulls it down is a consistent division of labour in the metaphors: the system holds intelligence, evidence, numbers and confidence; she holds the human touch, the nuance, the call. Add a hard-coded first name that greets whoever signs in, a nav built from mission-control/hunt/intelligence vocabulary, and a few third-person references to her on her own screens.",
+   "evidence": [
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 77,
+     "quote": "<span className=\"eyebrow\">THE HUMAN TOUCH</span>"
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 211,
+     "quote": ": \"What did the numbers miss?\"}"
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 143,
+     "quote": "The nuance belongs here. Every saved lesson stays attached to its original recommendation."
+    },
+    {
+     "file": "components/kira/connected-home.tsx",
+     "line": 72,
+     "quote": "Welcome home, <em>Cassandra.</em>"
+    },
+    {
+     "file": "app/[module]/page.tsx",
+     "line": 37,
+     "quote": "\"Build a source-backed picture of how readers discover Kira\u2019s books.\""
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 62,
+     "quote": "title: \"Mission Control\","
+    },
+    {
+     "file": "lib/data/seed.ts",
+     "line": 126,
+     "quote": "role: \"Executive intelligence\","
+    },
+    {
+     "file": "components/kira/book-knowledge.tsx",
+     "line": 105,
+     "quote": "<DialogTitle>A useful question, ready for your touch.</DialogTitle>"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connected-home.tsx",
+     "line": 72,
+     "change": "Derive the greeting from the signed-in account rather than a literal: show the member's display name or the part of viewerEmail before the @, falling back to 'Welcome home.' with no name. Update tests/e2e-connected/workspace.spec.ts:38, :89, :108 in the same change.",
+     "rationale": "Today every member \u2014 including the owner demoing it \u2014 is greeted as Cassandra. A hard-coded first name where the account belongs is the difference between a product and a mock-up, and it is the first thing on the page."
+    },
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 77,
+     "change": "Replace the eyebrow 'THE HUMAN TOUCH' with 'YOUR DECISIONS' (matching desk-page.tsx:39).",
+     "rationale": "Placing 'the human touch' opposite cards labelled intelligence/evidence/confidence assigns the reasoning to the machine and the feeling to her. She is the one with the market judgment; the seeded data is the soft part."
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 211,
+     "change": "Change the Teach Raven dialog title to 'What should this brief have known?' and line 216's description to 'Tell Raven what this brief got wrong or left out. Your guidance is saved for future use; it does not retrain a model.'",
+     "rationale": "'What did the numbers miss?' frames her contribution as the non-quantitative residue. The brief, not the numbers, is what she is correcting."
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 143,
+     "change": "Replace 'The nuance belongs here.' with 'Your reasoning belongs here.'",
+     "rationale": "Same fix as above, in the sidebar that repeats the framing."
+    },
+    {
+     "file": "app/[module]/page.tsx",
+     "line": 37,
+     "change": "Change to 'Build a source-backed picture of how readers discover your books.'",
+     "rationale": "Every other module description uses 'your'; this one talks about her in the third person on her own screen."
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 62,
+     "change": "Rename the home nav item and title from 'Mission Control' to 'Today' or 'Your workspace' (update app-shell.tsx:318-323 title fallback, app/error.tsx:23, app/not-found.tsx:10 and app/layout.tsx:18 metadata). Rename seed.ts:126 role 'Executive intelligence' to 'Pulls the findings together'.",
+     "rationale": "Mission control / hunt / intelligence / executive is a military-corporate register borrowed for a romance and fantasy novelist's business desk. It is the app's loudest tonal misfire and it sits in the first nav slot."
+    },
+    {
+     "file": "components/kira/book-knowledge.tsx",
+     "line": 105,
+     "change": "Change the dialog title to 'Your question, ready to edit.'",
+     "rationale": "'ready for your touch' is precious and, next to 'the human touch', part of a pattern."
+    }
+   ]
+  },
+  {
+   "criterion": "respect_creative_material",
+   "score": 7,
+   "verdict": "Substantively respectful: an explicit permission checkbox with an honest scope limit, spoilers off by default with a visible hidden-count, reading as a separate step she starts and pauses, citations back to her own words, custody history per version, and 'never rewritten or published' stated plainly. Two things undercut it \u2014 the consent list is written in vendor SKUs, and she cannot withdraw the file she just consented to share.",
+   "evidence": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 148,
+     "quote": "I have permission to upload this manuscript and to let Raven read it privately for book knowledge. This is not permission to publish or quote from it."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 147,
+     "quote": "Spoilers stay hidden by default. Your manuscript is never rewritten or published."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 145,
+     "quote": "Passages are sent through Vercel AI Gateway to {STUDIO_MODEL} for reading and {MANUSCRIPT_EMBEDDING_MODEL} for search, under those providers\u2019 terms."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 162,
+     "quote": "Read on {new Date(knowledge.created_at).toLocaleDateString()} \u00b7 {knowledge.model} \u00b7 \u2026"
+    },
+    {
+     "file": "components/kira/connected-library.tsx",
+     "line": 67,
+     "quote": "<h2>Your words stay yours.</h2>"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 145,
+     "change": "Rewrite the consent bullet in plain names and move the slugs behind a disclosure: 'Passages are sent to two AI services to be read and indexed \u2014 Google\u2019s Gemini for reading and OpenAI\u2019s embedding model for search \u2014 through Vercel, under those providers\u2019 terms.' followed by <details><summary>Exact models</summary> listing STUDIO_MODEL and MANUSCRIPT_EMBEDDING_MODEL.",
+     "rationale": "This is the sentence that decides whether she uploads her novel. 'google/gemini-3.8-flash' is an API identifier; it makes the most personal moment in the product read like a config file, and it hides the fact she should notice \u2014 two outside companies will see her pages."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 162,
+     "change": "Render the provenance line as 'Read on {date} \u00b7 by {friendly model name} \u00b7 Manuscript version N', mapping the raw model string through the same friendly-name table.",
+     "rationale": "Same problem, restated on every findings panel; the audit value is kept by the disclosure, not by the slug."
+    }
+   ]
+  },
+  {
+   "criterion": "visual_craft_warmth",
+   "score": 7,
+   "verdict": "Genuinely handsome and non-kitsch: Cormorant display over Manrope, an olive/gold/wine palette that stays quiet, the raven line drawing, mobile that stacks cleanly, real empty and loading states. Two craft problems from my seat: almost every block is introduced by an ALL-CAPS tracked eyebrow, which flattens hierarchy into visual shouting; and the supporting text scale is punishingly small \u2014 the descriptive subtitle under every page's display heading is 11px, brief descriptions are 11px, brand and mantra text 9px.",
+   "evidence": [
+    {
+     "file": "app/globals.css",
+     "line": 451,
+     "quote": ".page-heading p {\n  margin-top: 13px;\n  color: #a8ab9a;\n  font-size: 11px;\n}"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1667,
+     "quote": ".approval-card > p {\n  color: #b2baa1;\n  font-size: 11px;"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 250,
+     "quote": ".brand small {\n  display: block;\n  color: #949782;\n  font-size: 9px;"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 365,
+     "quote": ".sidebar-mantra > span {\n  font-size: 9px;"
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 39,
+     "quote": "YOUR DECISIONS / CASSANDRA\u2019S DESK"
+    },
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 60,
+     "quote": "<span className=\"eyebrow\">THE BIG PICTURE</span>"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "app/globals.css",
+     "line": 451,
+     "change": "Raise .page-heading p to 14px (var(--text-base)) with line-height 1.6, and .approval-card > p (line 1667) to 13px.",
+     "rationale": "The sentence that tells her what a page is for should not be the smallest text on it. A 54px serif headline over 11px grey copy is a poster, not a workspace."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 250,
+     "change": "Raise .brand small and .sidebar-mantra > span from 9px to 11px and reduce their letter-spacing accordingly.",
+     "rationale": "9px tracked caps is below the point where the letterforms survive anti-aliasing on a non-retina screen."
+    },
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 60,
+     "change": "Cut the decorative eyebrows that add no information \u2014 'THE BIG PICTURE' (mission-control.tsx:60), 'A COMMUNITY, NOT A NUMBER' (:147), 'SMALL MOVES. LONG GAME.' (:121) \u2014 keeping only the ones that label provenance or section identity.",
+     "rationale": "Eleven uppercase kickers on one screen means none of them reads as a signal; removing half restores the hierarchy the type choices are already paying for."
+    }
+   ]
+  },
+  {
+   "criterion": "accessibility",
+   "score": 7,
+   "verdict": "Careful and clearly deliberate: skip link, visible 2px gold focus ring with offset, labelled inputs, aria-errormessage wiring, focus moved to errors and to dialog-safe targets, separate status and alert live regions, aria-busy, reduced-motion handling, a labelled progress element. The defects left are in my lane: decorative zero-padded ordinals that are not hidden from screen readers, a 10px monospace identifier, and copy authored in literal ALL CAPS rather than sentence case with CSS uppercase.",
+   "evidence": [
+    {
+     "file": "components/kira/recommendation-card.tsx",
+     "line": 22,
+     "quote": "<span className=\"move-number\">0{index + 1}</span>"
+    },
+    {
+     "file": "components/kira/learn-page.tsx",
+     "line": 150,
+     "quote": "<span className=\"learn-lesson-number\">0{index + 1}</span>"
+    },
+    {
+     "file": "components/kira/raven-briefing.tsx",
+     "line": 29,
+     "quote": "{state.mode === \"demo\" ? \"DEMO BRIEFING / 001\" : \"RECOMMENDATIONS / NOT MONITORING\"}"
+    },
+    {
+     "file": "components/kira/evidence-drawer.tsx",
+     "line": 58,
+     "quote": "<dd className=\"mono break-all text-[10px]\">{e.source_id}</dd>"
+    },
+    {
+     "file": "components/kira/getting-started.tsx",
+     "line": 148,
+     "quote": "<span className=\"learning-step-number\" aria-hidden=\"true\">{step.complete ? <Check size={16} /> : `0${index + 1}`}</span>"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/recommendation-card.tsx",
+     "line": 22,
+     "change": "Add aria-hidden=\"true\" to the .move-number span, matching getting-started.tsx:148.",
+     "rationale": "A screen reader currently announces 'zero one' before every recommendation title; the number is pure decoration."
+    },
+    {
+     "file": "components/kira/learn-page.tsx",
+     "line": 150,
+     "change": "Add aria-hidden=\"true\" to the .learn-lesson-number span.",
+     "rationale": "Same defect on the five lesson summaries, where the number precedes the only meaningful text."
+    },
+    {
+     "file": "components/kira/evidence-drawer.tsx",
+     "line": 58,
+     "change": "Remove text-[10px] and put the Source ID row inside a <details><summary>Technical details</summary> at default small size.",
+     "rationale": "10px is below any reasonable floor, and a UUID read aloud character by character is noise in the middle of the provenance list she actually needs."
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 39,
+     "change": "Author eyebrow strings in sentence case ('Your decisions / Cassandra\u2019s Desk') and let the existing .eyebrow text-transform: uppercase (globals.css:499) do the shouting; apply the same across the page-kicker strings in mission-control.tsx:41, connected-home.tsx:66, universe-catalog.tsx:53, studio-page.tsx:179, learn-page.tsx:141, plans-page.tsx:47, access-page.tsx:109, connections-page.tsx:89.",
+     "rationale": "Several screen readers spell out literal all-caps tokens letter by letter; CSS uppercase gives the same visual with intact pronunciation."
+    }
+   ]
+  },
+  {
+   "criterion": "trust_honesty",
+   "score": 7,
+   "verdict": "The honesty discipline is the best thing in this codebase: DEMO and MANUAL SNAPSHOT badges everywhere, 'Not running. Not pretending to.', 'Nothing is posted, sent, purchased', 'it does not retrain a model', 'No invitation or email was sent', costs and daily limits disclosed, hypotheses labelled as hypotheses. No dark patterns, no fake urgency. It falls short of 8 on three small fabrications of state: a greeting that names the wrong person, a demo metric that contradicts its own caption, and an edition number for a briefing that has no editions.",
+   "evidence": [
+    {
+     "file": "components/kira/agent-status.tsx",
+     "line": 19,
+     "quote": "<h2>Not running. Not pretending to.</h2>"
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 216,
+     "quote": "Tell Raven what the numbers missed. Your guidance is saved for future use; it does not retrain a model."
+    },
+    {
+     "file": "components/kira/connected-home.tsx",
+     "line": 72,
+     "quote": "Welcome home, <em>Cassandra.</em>"
+    },
+    {
+     "file": "lib/data/seed.ts",
+     "line": 360,
+     "quote": "change: \"No live campaigns\","
+    },
+    {
+     "file": "components/kira/raven-briefing.tsx",
+     "line": 29,
+     "quote": "\"DEMO BRIEFING / 001\""
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connected-home.tsx",
+     "line": 72,
+     "change": "Same fix as under Tone: greet the signed-in account, not a literal name.",
+     "rationale": "A greeting that is wrong for every member except one is a fake personalization, and it undermines the 'Signed in as \u2026' line at the bottom of the same page."
+    },
+    {
+     "file": "lib/data/seed.ts",
+     "line": 358,
+     "change": "Make the 'Active campaigns' tile internally consistent (value '\u2014', change 'No campaigns in this example').",
+     "rationale": "A number contradicted by its own caption is the one place in the app where a demo value looks like a mistake rather than an illustration."
+    },
+    {
+     "file": "components/kira/raven-briefing.tsx",
+     "line": 29,
+     "change": "Replace 'DEMO BRIEFING / 001' with 'DEMO BRIEFING' (or 'EXAMPLE BRIEFING').",
+     "rationale": "The zero-padded serial implies a run history that does not exist; it is small, but it is invented state in a product whose whole pitch is that it does not invent state."
+    }
+   ]
+  }
+ ],
+ "top_findings": [
+  {
+   "priority": 1,
+   "title": "Connected home greets every signed-in member by a hard-coded first name",
+   "file": "components/kira/connected-home.tsx",
+   "line": 72,
+   "problem": "The h1 is a literal: `Welcome home, <em>Cassandra.</em>`. Nothing reads viewerEmail or the member record. Michael (owner), or any editor or viewer, signs in and is welcomed home as Cassandra \u2014 while the footer of the same page correctly prints 'Signed in as {viewerEmail}' (connected-home.tsx:220). The sidebar carries the same literal at app-shell.tsx:149-150 and app-shell.tsx:261 falls back to 'Cassandra' in demo mode.",
+   "proposed_change": "Derive the name from the session: use the member display name, else the local part of viewerEmail, else drop to 'Welcome home.' with no name. Keep the demo-mode literal (pinned by tests/e2e/workspace.spec.ts) but update tests/e2e-connected/workspace.spec.ts:38, :89 and :108 in the same commit.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 2,
+   "title": "Manuscript consent is written in vendor SKUs at the exact moment she decides to hand over her novel",
+   "file": "components/kira/connected-book-detail.tsx",
+   "line": 145,
+   "problem": "The 'What happens to your file' list \u2014 otherwise the most respectful copy in the product \u2014 says 'Passages are sent through Vercel AI Gateway to google/gemini-3.8-flash for reading and openai/text-embedding-3-small for search, under those providers\u2019 terms.' Raw model slugs and a gateway brand replace the fact she needs: two outside companies will process her pages. The same slug reappears as bare text at line 162 and in plans-page.tsx:147.",
+   "proposed_change": "'Passages are sent to two AI services to be read and indexed \u2014 Google\u2019s Gemini for reading and OpenAI\u2019s embedding model for search \u2014 through Vercel, under those providers\u2019 terms.' Put STUDIO_MODEL and MANUSCRIPT_EMBEDDING_MODEL behind a <details>Exact models</details>, and map the raw model string through the same friendly-name table at line 162 and plans-page.tsx:147.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 3,
+   "title": "The machine gets the reasoning; she gets the human touch",
+   "file": "components/kira/mission-control.tsx",
+   "line": 77,
+   "problem": "A consistent framing across three surfaces assigns analysis to the system and feeling to her: the approvals card on the home screen is headed 'THE HUMAN TOUCH' beside cards labelled intelligence, evidence and confidence; the Teach Raven dialog asks 'What did the numbers miss?' (approval-card.tsx:211) and 'Tell Raven what the numbers missed' (:216); the desk sidebar says 'The nuance belongs here.' (desk-page.tsx:143). She is the market expert in this workspace and the 'numbers' are seeded demo data.",
+   "proposed_change": "'THE HUMAN TOUCH' \u2192 'YOUR DECISIONS'. Dialog title \u2192 'What should this brief have known?'; description \u2192 'Tell Raven what this brief got wrong or left out.' 'The nuance belongs here.' \u2192 'Your reasoning belongs here.'",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 4,
+   "title": "She can put her manuscript in and cannot take it out, and the copy tells her to ask a man",
+   "file": "components/kira/connected-book-detail.tsx",
+   "line": 146,
+   "problem": "'Removing a manuscript from the app isn\u2019t available yet \u2014 ask your workspace owner if you need a file removed.' appears twice on one page (also line 170). There is no in-app path to withdraw the most personal artefact she contributes, and the only route offered is a personal request to the owner.",
+   "proposed_change": "Code tonight: add a 'Request removal of this version' button that writes an ordinary, timestamped, exportable desk brief, and rewrite the sentence to state the mechanism and what happens meanwhile. Product decision for the owner: whether actual manuscript deletion (storage + SQL rows + derived knowledge) ships, and who may trigger it.",
+   "owner_decision_needed": "Whether manuscript deletion becomes a real capability (storage object + rows + extracted knowledge) and whether an editor may delete her own uploads without the owner.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 5,
+   "title": "Military/intelligence register on a novelist's business desk",
+   "file": "components/kira/app-shell.tsx",
+   "line": 62,
+   "problem": "The first nav item is 'Mission Control' ('Your day at a glance'), the brand subtitle is 'AUTHOR INTELLIGENCE' (app-shell.tsx:144, repeated on /login:33 and /welcome:24), a module is 'The Hunt' with a Target icon (app-shell.tsx:98-100) and a heading 'Opportunity has a tell.' (app/[module]/page.tsx:46), Raven's role is 'Executive intelligence' (lib/data/seed.ts:126), the home link on error and 404 pages reads 'Back to Mission Control' (app/error.tsx:23, app/not-found.tsx:10), and the module preview promises 'Good intelligence starts with real inputs.' (app/[module]/page.tsx:136).",
+   "proposed_change": "Rename 'Mission Control' \u2192 'Today' across app-shell.tsx:62, :318-323, app/error.tsx:23, app/not-found.tsx:10, app/layout.tsx:18. Rename seed.ts:126 role to 'Pulls the findings together'. Change 'Good intelligence starts with real inputs.' \u2192 'Good answers start with real sources.' Leave 'The Hunt' if the owner wants the name, but drop 'Opportunity has a tell.'",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 6,
+   "title": "Raw enums, error codes and phase numbers rendered as user-facing labels",
+   "file": "components/kira/plans-page.tsx",
+   "line": 117,
+   "problem": "Plans print `plan.input.mode.replaceAll('_',' ')` ('evergreen'), `error_code.replaceAll('_',' ')` (line 121), and goal metric/unit selects whose option labels are the raw enum values 'subscribers', 'currency', 'percent' (line 86). Evidence drawer prints `source_type.replaceAll('_',' ')` \u2192 'synthetic' (evidence-drawer.tsx:50). Approval cards print '{type} review' uppercased by CSS \u2192 'METADATA REVIEW' (approval-card.tsx:84 + globals.css:1656). Module previews show an internal roadmap phase as '03' (app/[module]/page.tsx:11,129).",
+   "proposed_change": "Extend the existing `labels` map in plans-page.tsx to cover mode; add a failure-message table for error_code as studio-contract already has; give metric/unit human option labels; map source_type and approval type through label tables; delete the `phase` field and its badge.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 7,
+   "title": "Zero-padded ordinals \u2014 decorative, developer-flavoured, and two of them announced to screen readers",
+   "file": "components/kira/recommendation-card.tsx",
+   "line": 22,
+   "problem": "'0{index+1}' appears as visible chrome in four places: recommendation cards (:22), the five Learn lessons (learn-page.tsx:150), the first-steps checklist (getting-started.tsx:148), and the module art (app/[module]/page.tsx:129) \u2014 plus a fake serial 'DEMO BRIEFING / 001' (raven-briefing.tsx:29). Only getting-started and the module art set aria-hidden, so screen readers announce 'zero one' before every recommendation title and every lesson.",
+   "proposed_change": "Add aria-hidden=\"true\" to recommendation-card.tsx:22 and learn-page.tsx:150. Drop the padding to plain 1, 2, 3 in all four places and change 'DEMO BRIEFING / 001' to 'DEMO BRIEFING'.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 8,
+   "title": "Every page's explanatory subtitle is 11px",
+   "file": "app/globals.css",
+   "line": 451,
+   "problem": ".page-heading p sets the sentence that explains each page ('Approve, adjust, or record what only you know.', 'Here\u2019s what your universe is doing.') to 11px grey, under a 40\u201354px serif headline. Brief descriptions are also 11px (globals.css:1667), and brand/mantra text is 9px (:250, :365). The hierarchy inverts: the decorative type is enormous and the informative type is the smallest thing on screen.",
+   "proposed_change": "Raise .page-heading p to 14px/1.6, .approval-card > p to 13px, and the 9px rules to 11px with reduced tracking.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 9,
+   "title": "Book metadata dialog discards typed work without asking",
+   "file": "components/kira/connected-library.tsx",
+   "line": 55,
+   "problem": "Cancel calls onCancel directly and the Dialog's onOpenChange (line 76) closes on Esc or outside click, throwing away a typed title, series, genre, description and audiobook details with no confirmation \u2014 in an app that otherwise guards every draft ('Keep my draft', 'Keep your unfinished idea?', the session-ended recovery dialog).",
+   "proposed_change": "Track dirtiness and route Cancel/Esc/outside-click through the same confirmation pattern used in book-details-brief.tsx:24.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 10,
+   "title": "A demo metric contradicts its own caption",
+   "file": "lib/data/seed.ts",
+   "line": 358,
+   "problem": "The 'Active campaigns' tile shows value '3' with change text 'No live campaigns'; 'Open opportunities' shows '7' with change 'Illustrative'. Both carry DEMO badges, but a tile that says 3 above 'No live campaigns' reads as a bug, not an illustration, and it costs the app credibility on the one screen where its honesty discipline should be most visible.",
+   "proposed_change": "Set 'Active campaigns' to value '\u2014' / change 'No campaigns in this example', and give 'Open opportunities' a caption that is a statement rather than the word 'Illustrative'.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 11,
+   "title": "Third-person references to her, and one inconsistent verb for the same action",
+   "file": "components/kira/universe-catalog.tsx",
+   "line": 63,
+   "problem": "'Titles sourced from the author\u2019s site' (:63) and '\u201cUniverse\u201d organizes the author\u2019s work' (:128) talk about her in the third person on her own catalog; app/[module]/page.tsx:37 says 'how readers discover Kira\u2019s books'. Separately the same queueRecommendation action is labelled 'Prepare campaign' in raven-briefing.tsx:82 and 'Prepare brief' in recommendation-card.tsx:66, and the nav says 'Catalog Opportunities' (app-shell.tsx:123) while the page h1 says 'Back Catalog Opportunities' (opportunities-page.tsx:17) and the nav 'Social' (app-shell.tsx:87) opens a page titled 'Social Intelligence' (app/[module]/page.tsx:21).",
+   "proposed_change": "Switch the third-person phrases to 'your site' / 'your work' / 'your books'. Note: 'Prepare campaign' is pinned by tests/e2e/workspace.spec.ts, so settle on one verb \u2014 'Prepare brief' everywhere \u2014 and update that expectation deliberately. Align nav titles with page headings for opportunities and social.",
+   "fixable_in_code": true
+  }
+ ],
+ "what_works": [
+  "Not a single emoji, exclamation mark or piece of baby talk in any user-visible string across components/, app/ and lib/data/ \u2014 I checked every non-ASCII glyph in the tree and found only typographic marks. For an app with this much warmth in its visual voice, that restraint is rare and it is why the copy reads as adult.",
+  "The honesty discipline is the best thing in the codebase and it is consistent: 'Not running. Not pretending to.' (agent-status.tsx:19), 'Your guidance is saved for future use; it does not retrain a model.' (approval-card.tsx:216), 'Access saved. No invitation or email was sent.' (access-page.tsx:89), 'Saving a link creates a shortcut. It does not verify ownership, authorize KIRA, or import account data.' (connections-page.tsx:97), 'These are hypotheses to test. Citations show the supplied evidence, not proof of future results.' (plans-page.tsx:125).",
+  "The session-ended dialog (session-ended-dialog.tsx:85-101) is the single best piece of writing in the app: it names exactly what happened, hands every unfinished draft back verbatim with a copy button and a label per draft, and states that saved work is untouched. Most products would have shown a toast and a redirect.",
+  "Consent copy on the manuscript upload is scoped, not blanket: 'I have permission to upload this manuscript and to let Raven read it privately for book knowledge. This is not permission to publish or quote from it.' (connected-book-detail.tsx:148). Distinguishing the two permissions is the correct and uncommon move.",
+  "Error messages consistently tell her where her words are: 'Your idea could not be saved. Your text is still here; please try again.' (manual-review-form.tsx:102), 'Your manuscript is unchanged; please try again.' (book-knowledge.tsx:82), 'Your blueprint could not be saved. It is still here; try again or download a copy.' (learn-page.tsx:93). No product blames her and none of them is vague.",
+  "Save-state copy is specific rather than reassuring: 'Not saved yet \u00b7 Kept in this tab until you save.' (manual-review-form.tsx:248) and the draft-version mismatch warning at approval-card.tsx:156, which tells her which draft she wrote against and which one the brief is now on.",
+  "The AI-idea workshop copy in lib/data/agent-recipes.ts:98-101 \u2014 'Ask up to three focused questions if essential context is missing\u2026 Do not write or rewrite fiction\u2026 Any future external action needs separate explicit authorization' \u2014 is a genuinely good piece of plain-English policy writing embedded in something she can download and use elsewhere.",
+  "The knowledge panels label their own epistemics without hedging into mush: 'Manuscript-supported \u00b7 unreviewed' vs 'Interpretation \u00b7 verify with source' (book-knowledge.tsx:102), and 'this is not an approved character bible' (:102). That is exactly the register a working novelist can act on."
+ ]
+}

@@ -176,7 +176,7 @@ export const findings: AgentFinding[] = [
     type: "audience",
     title: "Devotion is getting their attention.",
     summary:
-      "Protective and devoted love-interest language appears more often in the synthetic sample. Test the positioning only after Cassandra confirms audience fit and book relevance.",
+      "Protective and devoted love-interest language appears more often in the synthetic sample. Test the positioning only after you confirm audience fit and book relevance.",
     confidence: 0.82,
     created_at: seedTime,
     evidence: [evidence[0]],
@@ -279,9 +279,9 @@ export const initialApprovals: ApprovalRequest[] = [
     type: "social",
     title: "Review a reader-language direction",
     description:
-      "Confirm that the positioning fits the readers Kira wants to reach.",
+      "Confirm that the positioning fits the readers you want to reach.",
     draft:
-      "DEMO MARKETING BRIEF\n\nExplore protective / devoted positioning using existing, approved marketing copy. First confirm audience fit with Cassandra, then verify which books actually fit. Do not invent quotes, tropes, plot points, or creative prose.\n\nDeliverable: a reviewed marketing direction. No publication is authorized by this approval.",
+      "DEMO MARKETING BRIEF\n\nExplore protective / devoted positioning using existing, approved marketing copy. First confirm audience fit yourself, then verify which books actually fit. Do not invent quotes, tropes, plot points, or creative prose.\n\nDeliverable: a reviewed marketing direction. No publication is authorized by this approval.",
     status: "pending",
     evidence: [evidence[0]],
     created_at: seedTime,
@@ -312,7 +312,7 @@ export const initialApprovals: ApprovalRequest[] = [
     title: "Plan a backlist asset review",
     description: "A little attention for the books that started it all.",
     draft:
-      "DEMO CAMPAIGN BRIEF\n\nInventory existing backlist marketing assets. Check source permissions, book relevance and freshness. Ask Cassandra to approve each proposed use.\n\nThe supporting asset audit is synthetic. Actual files must be supplied before any real asset review. No posting, spending, or outreach.",
+      "DEMO CAMPAIGN BRIEF\n\nInventory existing backlist marketing assets. Check source permissions, book relevance and freshness. Approve each proposed use yourself.\n\nThe supporting asset audit is synthetic. Actual files must be supplied before any real asset review. No posting, spending, or outreach.",
     status: "pending",
     evidence: [evidence[2]],
     created_at: seedTime,
@@ -356,16 +356,16 @@ export const metrics = [
   },
   {
     label: "Active campaigns",
-    value: "03",
-    change: "In motion",
+    value: "3",
+    change: "No live campaigns",
     detail: "Illustrative campaign count",
     values: [],
     data_origin: "demo" as const,
   },
   {
     label: "Open opportunities",
-    value: "07",
-    change: "To explore",
+    value: "7",
+    change: "Illustrative",
     detail: "Illustrative opportunity count",
     values: [],
     data_origin: "demo" as const,

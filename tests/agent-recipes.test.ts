@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { agentRecipes, buildAgentBlueprint, michaelAgentStarter, starterForRecipe, type AgentRecipeId } from "@/lib/data/agent-recipes";
+import { agentRecipes, buildAgentBlueprint, shareableAgentStarter, starterForRecipe, type AgentRecipeId } from "@/lib/data/agent-recipes";
 
 describe("local agent blueprint recipes", () => {
   it("produces bounded review briefs with creative and action boundaries for every recipe", () => {
@@ -28,11 +28,12 @@ describe("local agent blueprint recipes", () => {
     expect(() => buildAgentBlueprint("brainstorm-partner", { ...starter, context: "x".repeat(3001) })).toThrow();
   });
 
-  it("makes missing context explicit and keeps Michael's starter a shareable idea only", () => {
+  it("makes missing context explicit and keeps the shareable starter an idea only", () => {
     expect(buildAgentBlueprint("reader-listening", starterForRecipe(agentRecipes[1])).prompt).toContain("No supporting context supplied yet");
-    const result = buildAgentBlueprint("brainstorm-partner", michaelAgentStarter);
-    expect(result.title).toContain("Michael");
-    expect(result.brief).toContain("does not run an agent or send anything to Michael");
-    expect(result.prompt).toContain("I will decide whether to share it");
+    const result = buildAgentBlueprint("brainstorm-partner", shareableAgentStarter);
+    expect(result.title).toContain("An agent idea to share");
+    expect(result.brief).toContain("does not run an agent or send anything to anyone");
+    expect(result.prompt).toContain("I decide whether to share it, and with whom.");
+    expect(JSON.stringify(shareableAgentStarter)).not.toContain("Michael");
   });
 });

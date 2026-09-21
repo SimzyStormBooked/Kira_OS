@@ -12,6 +12,7 @@ export function BookCover({
   return (
     <div
       className={`book-cover cover-${book.accent} ${large ? "cover-large" : ""}`}
+      aria-hidden="true"
     >
       <div className="cover-border" />
       <span className="cover-top">THE KIRA STANLEY COLLECTION</span>
@@ -32,8 +33,8 @@ export function BookCard({ book }: { book: Book }) {
       <BookCover book={book} />
       <div className="book-card-info">
         <span className="eyebrow">
-          {series.find((s) => s.id === book.series_id)?.name} /{" "}
-          {String(book.series_order).padStart(2, "0")}
+          {series.find((s) => s.id === book.series_id)?.name} / Book{" "}
+          {book.series_order}
         </span>
         <h3>
           {book.title}

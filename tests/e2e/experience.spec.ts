@@ -51,7 +51,7 @@ test("the guide is optional and a demo idea becomes a saved local brief only on 
   });
   await page.goto("/");
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  const guideTrigger = page.getByRole("button", { name: "Open workspace guide", exact: true });
+  const guideTrigger = page.getByRole("button", { name: "Guide", exact: true });
   await guideTrigger.click();
   const guide = page.getByRole("dialog", { name: "Make yourself at home." });
   await expect(guide).toContainText("You are exploring a demo");

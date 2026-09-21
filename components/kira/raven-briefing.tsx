@@ -31,7 +31,7 @@ export function RavenBriefing() {
         </div>
         <p className="raven-intro">
           {state.mode === "demo"
-            ? "I connected the dots. You make the call."
+            ? "Example findings, ranked for review. You make the call."
             : "Your evidence. Your judgment. A clear next step."}
         </p>
         <span className="eyebrow signal-label">

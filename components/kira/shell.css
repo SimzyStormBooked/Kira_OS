@@ -1,0 +1,65 @@
+/* Shell-owned styles (W1). Global design-system rules stay in app/globals.css. */
+
+/* "Coming later" items carry a one-line description, like the items above them. */
+.nav-planned .nav-item-planned {
+  align-items: flex-start;
+  min-height: 52px;
+  padding-block: 9px;
+}
+.nav-planned .nav-item-planned > span:first-of-type {
+  min-width: 0;
+}
+.nav-planned .nav-item .nav-planned-desc {
+  display: block;
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: #a5a798;
+}
+
+/* The disclaimer explains the whole card, so it reads before the grid, at body size. */
+.agent-card .agent-disclaimer {
+  font-size: var(--text-base, 14px);
+  line-height: 1.7;
+  color: #b8c0a6;
+  margin: 4px 0 20px;
+  max-width: 62ch;
+}
+
+/* Roadmap specialists: readable names, honest state labels, no fake activity dot. */
+.agent-card .agent-status {
+  flex-wrap: wrap;
+  row-gap: 6px;
+  padding: 13px 0;
+}
+.agent-card .agent-status strong {
+  font-size: 12px;
+}
+.agent-card .agent-status small {
+  font-size: 11px;
+  line-height: 1.5;
+}
+.agent-card .agent-state {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  white-space: normal;
+}
+.agent-card .agent-state > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #839076;
+  flex-shrink: 0;
+}
+.agent-card .agent-state.waiting > span {
+  background: #c5b071;
+}
+
+/* Two ideas to borrow when the desk is empty. */
+.connected-desk .connected-starter-label {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #b7b3a6;
+  margin-top: 4px;
+}

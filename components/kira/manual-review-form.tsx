@@ -28,6 +28,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [invalid, setInvalid] = useState({ title: false, draft: false });
   const submission = useRef(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
@@ -79,6 +80,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
     if (submission.current || busy || !ready || !canEdit) return;
     setSaved(false);
     if (!title.trim() || !draft.trim()) {
+      setInvalid({ title: !title.trim(), draft: !draft.trim() });
       setError("Give your idea a title and add the idea you want to review.");
       requestAnimationFrame(() => errorRef.current?.focus());
       return;
@@ -89,6 +91,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
     try {
       const success = await createManualReview(title.trim(), draft.trim());
       if (success) {
+        setInvalid({ title: false, draft: false });
         setConsumedIdea(idea?.id ?? null);
         clearScratchpad(scratchpad);
         setSaved(true);
@@ -181,9 +184,12 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
             value={title}
             onChange={(e) => {
               updateScratchpad({ title: e.target.value });
+              setInvalid((current) => ({ ...current, title: false }));
               setSaved(false);
             }}
-            required
+            aria-required="true"
+            aria-invalid={invalid.title || undefined}
+            aria-errormessage={invalid.title ? "manual-brief-error" : undefined}
             maxLength={200}
             disabled={pending || !ready || !canEdit}
             placeholder="For example, a fall reading-list promotion"
@@ -194,7 +200,18 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
             <label className="form-label" htmlFor="manual-brief-draft">
               Your idea
             </label>
-            <span>{draft.length.toLocaleString("en-US")} / 10,000</span>
+            <span id="manual-draft-count" role="status">
+              <span aria-hidden="true">
+                {draft.length.toLocaleString("en-US")} / 10,000
+              </span>
+              <span className="sr-only">
+                {draft.length >= 10000
+                  ? "Character limit reached: 10,000 of 10,000 characters."
+                  : draft.length >= 9000
+                    ? "Fewer than 1,000 characters left of 10,000."
+                    : "Limit 10,000 characters."}
+              </span>
+            </span>
           </div>
           <Textarea
             id="manual-brief-draft"
@@ -202,13 +219,16 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
             value={draft}
             onChange={(e) => {
               updateScratchpad({ draft: e.target.value });
+              setInvalid((current) => ({ ...current, draft: false }));
               setSaved(false);
             }}
-            required
+            aria-required="true"
+            aria-invalid={invalid.draft || undefined}
+            aria-errormessage={invalid.draft ? "manual-brief-error" : undefined}
             maxLength={10000}
             rows={5}
             disabled={pending || !ready || !canEdit}
-            aria-describedby="manual-brief-help manual-draft-state"
+            aria-describedby="manual-brief-help manual-draft-state manual-draft-count"
             placeholder="What would you like to try? Which book is it for? What needs checking first?"
           />
           <p id="manual-brief-help" className="manual-review-help">
@@ -217,7 +237,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
           </p>
         </div>
         {error && (
-          <p className="form-error" role="alert" ref={errorRef} tabIndex={-1}>
+          <p id="manual-brief-error" className="form-error" role="alert" ref={errorRef} tabIndex={-1}>
             {error}
           </p>
         )}
@@ -225,7 +245,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
           <span id="manual-draft-state">
             <ShieldCheck size={14} aria-hidden="true" />
             {hasDraft
-              ? "Not saved yet · Kept while you explore. Save before reloading or signing out."
+              ? "Not saved yet · Kept in this tab until you save."
               : mode === "demo"
                 ? "Saving keeps this idea in this browser."
                 : "Saving keeps this idea in your private workspace."}

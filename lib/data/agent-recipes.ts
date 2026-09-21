@@ -70,11 +70,11 @@ export function starterForRecipe(recipe: AgentRecipe): AgentBlueprintInput {
   return { name: recipe.starterName, goal: recipe.starterGoal, context: "", success: recipe.starterSuccess };
 }
 
-export const michaelAgentStarter: AgentBlueprintInput = {
-  name: "An agent idea for Michael",
-  goal: "Help me create a new business-agent idea for Michael that we can discuss together.",
-  context: "I want to shape the idea before sharing it. Start by helping me identify which business task it should support and what Michael would need to know.",
-  success: "A clear purpose, the information it would need, a small example task, and questions for Michael. I will decide whether to share it.",
+export const shareableAgentStarter: AgentBlueprintInput = {
+  name: "An agent idea to share",
+  goal: "Help me shape a new business-agent idea I may share with someone who can build it.",
+  context: "I want to shape the idea before sharing it. Start by helping me identify which business task it should support and what a builder would need to know.",
+  success: "A clear purpose, the information it would need, a small example task, and questions for the builder. I decide whether to share it, and with whom.",
 };
 
 export interface AgentBlueprint {
@@ -106,7 +106,7 @@ export function buildAgentBlueprint(recipeId: AgentRecipeId, input: AgentBluepri
     "This is an editable agent idea for review. No agent has been created, connected, or started. The prompt below was assembled locally from a curated recipe and my notes; it is not an AI-generated recommendation.",
     `RECIPE\n${recipe.name}`,
     `PROMPT TO COPY OR ADAPT\n\n${prompt}`,
-    "BEFORE USING IT\nChoose where to use this prompt, supply only material you want to share there, and review the first answer. Saving this blueprint records an idea at my desk; it does not run an agent or send anything to Michael or anyone else.",
+    "BEFORE USING IT\nChoose where to use this prompt, supply only material you want to share there, and review the first answer. Saving this blueprint records an idea at my desk; it does not run an agent or send anything to anyone.",
   ].join("\n\n");
   if (title.length > 200 || brief.length > 10000) throw new Error("Shorten your notes before saving this blueprint.");
   return { title, prompt, brief };

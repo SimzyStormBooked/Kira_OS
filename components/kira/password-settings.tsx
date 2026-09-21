@@ -5,6 +5,7 @@ import { KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import "./workspace-status.css";
 
 export function PasswordSettings({ canChoosePasswordAfterLink = false }: { canChoosePasswordAfterLink?: boolean }) {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -18,16 +19,18 @@ export function PasswordSettings({ canChoosePasswordAfterLink = false }: { canCh
   const setupMode = canChoosePasswordAfterLink && !passwordChosen && !useCurrentPassword;
   const pending = useRef(false);
   const statusRef = useRef<HTMLParagraphElement>(null);
+  const alertRef = useRef<HTMLParagraphElement>(null);
   async function changePassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending.current) return;
     setError(null); setSaved(false);
     if ([...newPassword].length < 12 || newPassword.length > 128 || newPassword !== confirmPassword || (!setupMode && newPassword === currentPassword)) {
       setError(setupMode ? "Use a password of 12–128 characters and make sure both passwords match." : "Use a different password of 12–128 characters and make sure the new passwords match.");
-      requestAnimationFrame(() => statusRef.current?.focus());
+      requestAnimationFrame(() => alertRef.current?.focus());
       return;
     }
     pending.current = true; setBusy(true);
+    let failed = false;
     try {
       const response = await fetch(setupMode ? "/api/account/password/setup" : "/api/account/password", {
         method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
@@ -42,9 +45,10 @@ export function PasswordSettings({ canChoosePasswordAfterLink = false }: { canCh
       setCurrentPassword(""); setNewPassword(""); setConfirmPassword(""); setSaved(true);
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Your password could not be updated. Please try again.");
+      failed = true;
     } finally {
       pending.current = false; setBusy(false);
-      requestAnimationFrame(() => statusRef.current?.focus());
+      requestAnimationFrame(() => (failed ? alertRef : statusRef).current?.focus());
     }
   }
   return <Card id="account-password" role="region" tabIndex={-1} aria-labelledby="account-password-heading" className="settings-card password-settings">
@@ -65,7 +69,8 @@ export function PasswordSettings({ canChoosePasswordAfterLink = false }: { canCh
         setUseCurrentPassword(true); setError(null);
         requestAnimationFrame(() => document.getElementById("account-current-password")?.focus());
       }}>Use my current password instead</Button>}
-      <p ref={statusRef} tabIndex={-1} role={error ? "alert" : "status"} aria-live="polite" className={error ? "form-error" : "access-status"}>{error ?? (saved ? passwordChosen ? "Your password is set. Next time, sign in with your email and this password." : "Your password has been changed. Use your new password next time you sign in." : "")}</p>
+      <p ref={alertRef} tabIndex={-1} role="alert" className="form-error access-alert">{error ?? ""}</p>
+      <p ref={statusRef} tabIndex={-1} role="status" aria-live="polite" className="access-status">{saved ? passwordChosen ? "Your password is set. Next time, sign in with your email and this password." : "Your password has been changed. Use your new password next time you sign in." : ""}</p>
       {saved && <p className="quiet-note"><Link href="/">Open my workspace</Link> and bookmark that page for your next visit.</p>}
     </form>
   </Card>;

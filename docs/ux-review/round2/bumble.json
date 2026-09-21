@@ -1,0 +1,595 @@
+{
+ "judge": "Maya \u2014 product designer, consent-forward / women-first products (Bumble lens: who moves first, who holds control, how exposure is managed, whether defaults protect her, whether her feedback is design input)",
+ "files_read": [
+  "/home/user/Kira_OS/docs/ux-review/brief.md",
+  "/home/user/Kira_OS/components/kira/app-shell.tsx",
+  "/home/user/Kira_OS/components/kira/mission-control.tsx",
+  "/home/user/Kira_OS/components/kira/connected-home.tsx",
+  "/home/user/Kira_OS/components/kira/getting-started.tsx",
+  "/home/user/Kira_OS/components/kira/desk-page.tsx",
+  "/home/user/Kira_OS/components/kira/manual-review-form.tsx",
+  "/home/user/Kira_OS/components/kira/approval-card.tsx",
+  "/home/user/Kira_OS/components/kira/session-ended-dialog.tsx",
+  "/home/user/Kira_OS/components/kira/universe-catalog.tsx",
+  "/home/user/Kira_OS/components/kira/connected-library.tsx",
+  "/home/user/Kira_OS/components/kira/book-detail.tsx",
+  "/home/user/Kira_OS/components/kira/connected-book-detail.tsx",
+  "/home/user/Kira_OS/components/kira/book-knowledge.tsx",
+  "/home/user/Kira_OS/components/kira/book-details-brief.tsx",
+  "/home/user/Kira_OS/components/kira/studio-page.tsx",
+  "/home/user/Kira_OS/components/kira/learn-page.tsx",
+  "/home/user/Kira_OS/components/kira/plans-page.tsx",
+  "/home/user/Kira_OS/components/kira/opportunities-page.tsx",
+  "/home/user/Kira_OS/components/kira/settings-page.tsx",
+  "/home/user/Kira_OS/components/kira/access-page.tsx",
+  "/home/user/Kira_OS/components/kira/connections-page.tsx",
+  "/home/user/Kira_OS/components/kira/workspace-guide.tsx",
+  "/home/user/Kira_OS/components/kira/context-help.tsx",
+  "/home/user/Kira_OS/components/kira/workspace-permission-notice.tsx",
+  "/home/user/Kira_OS/components/kira/inspiration-shelf.tsx",
+  "/home/user/Kira_OS/components/kira/daily-quote.tsx",
+  "/home/user/Kira_OS/components/kira/recommendation-card.tsx",
+  "/home/user/Kira_OS/components/kira/raven-briefing.tsx",
+  "/home/user/Kira_OS/components/kira/agent-status.tsx",
+  "/home/user/Kira_OS/components/kira/origin-badge.tsx",
+  "/home/user/Kira_OS/components/kira/evidence-drawer.tsx",
+  "/home/user/Kira_OS/components/kira/login-form.tsx",
+  "/home/user/Kira_OS/app/login/page.tsx",
+  "/home/user/Kira_OS/app/welcome/page.tsx",
+  "/home/user/Kira_OS/app/[module]/page.tsx",
+  "/home/user/Kira_OS/app/error.tsx",
+  "/home/user/Kira_OS/app/layout.tsx",
+  "/home/user/Kira_OS/app/page.tsx",
+  "/home/user/Kira_OS/lib/db/demo-store.tsx",
+  "/home/user/Kira_OS/lib/data/seed.ts",
+  "/home/user/Kira_OS/lib/data/agent-recipes.ts",
+  "/home/user/Kira_OS/app/globals.css",
+  "/home/user/Kira_OS/supabase/migrations/202609190002_strategy_plans.sql",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots-round2 (desktop-home, mobile-desk, cdesktop-access, cdesktop-universe-assassins-refusal, cmobile-home, cmobile-plans)"
+ ],
+ "first_five_minutes": "Cassy signs in (login-form.tsx:164 tells her plainly that Michael adds accounts and no email is sent \u2014 honest, and also the first quiet reminder that she is a guest in her own business). \"Welcome home, Cassandra.\" lands well; \"A place for the business. More room for your stories.\" (connected-home.tsx:74) is the best sentence in the product. She reads the sidebar: \"Kira Stanley / Cassandra's author workspace\" (app-shell.tsx:149) and pauses \u2014 nothing anywhere in the app says Kira is her pen name, so the two names sit side by side like two people, one of whom owns the place. She clicks The Universe, opens Assassin's Refusal, and finds the single best screen in the app: \"What happens to your file\" (connected-book-detail.tsx:143-148) names the providers, says spoilers are hidden by default and the manuscript is never rewritten, and asks her to tick a box that explicitly separates read-permission from publish-permission. Then two lines stop her cold: \"Everyone with access to this workspace can read its passages and findings \u2014 see Workspace access\" and \"Removing a manuscript from the app isn't available yet \u2014 ask your workspace owner if you need a file removed.\" She clicks the Workspace access link, because she wants to know who \"everyone\" is before her unpublished novel goes in. The page says \"Your trusted circle. Choose who can work alongside you, and what they can do.\" \u2014 and then shows her only her own role, because the member list is owner-gated (access-page.tsx:110, 127). So: she is told her manuscript will be readable by people she cannot name, in a file she cannot delete, on a page that promises her a choice she does not have. She does not upload. She goes to her desk instead, where everything is excellent \u2014 the draft is protected, the brief tells her approval is final and publishes nothing, the desk states who can read it. She drafts a Marketing Plan, hits \"Ask Raven to build this plan,\" and the answer comes back as \"Your plan is saved and ready for owner review\" (plans-page.tsx:39) \u2014 she never chose to send it. The consolation card (plans-page.tsx:132) is kindly worded and tells her what she can still do meanwhile, which is a real improvement, but the move was made for her.",
+ "scores": [
+  {
+   "criterion": "agency_control",
+   "score": 6,
+   "verdict": "Per-action consent is genuinely strong \u2014 explicit upload permission, spoilers off by default, a pause control, edit-before-decide, honest viewer/editor messaging. But the three decisions that matter most to her are held by someone else and one of them happens without her pressing anything: she cannot enumerate who reads her manuscript, she cannot remove it, and generating a plan auto-submits it to the owner.",
+   "evidence": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 148,
+     "quote": "I have permission to upload this manuscript and to let Raven read it privately for book knowledge. This is not permission to publish or quote from it."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 160,
+     "quote": "Pause reading"
+    },
+    {
+     "file": "components/kira/access-page.tsx",
+     "line": 127,
+     "quote": "{mode === \"connected\" && access?.role === \"owner\" && <div className=\"access-grid\">"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 146,
+     "quote": "Removing a manuscript from the app isn\u2019t available yet \u2014 ask your workspace owner if you need a file removed."
+    },
+    {
+     "file": "supabase/migrations/202609190002_strategy_plans.sql",
+     "line": 206,
+     "quote": "if p_error is null then update public.strategy_plans set latest_revision_id=r.id,approved_revision_id=null,status='needs_review'"
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 132,
+     "quote": "Plans get a second read from the workspace owner before dated tasks go live \u2014 a check on audience, budget and dates, not on you."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/access-page.tsx",
+     "line": 127,
+     "change": "Render a read-only \"People with access\" list for every member, not only the owner: move the owner row and `access.members` list out of the `access?.role === \"owner\"` gate and hide only the grant/change/revoke controls. If exposing member emails to non-owners needs an RLS/RPC change, ship the honest interim instead: for non-owners render a card that names the owner and says \"Only the workspace owner can see the full member list. Ask <owner email> who else can read this workspace.\"",
+     "rationale": "The app tells her three times that everyone with access can read her briefs and her manuscript, and points her at this page. A consent notice that cannot be resolved into names is not consent. (Exposing member emails to editors/viewers is an owner/product decision; saying so plainly is code.)"
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 39,
+     "change": "Split generation from submission: after a complete revision keep the plan in `draft` and add an explicit \"Send to <owner> for review\" button that moves it to `needs_review`; change the notice to \"Your plan is saved as a draft. Send it for review when you're ready.\"",
+     "rationale": "She should move first on exposing her work. Today the act of asking Raven for help silently puts her plan in front of Michael. (The status transition lives in the `strategy_generate` RPC at supabase/migrations/202609190002_strategy_plans.sql:206 \u2014 needs a migration and an owner decision; the UI step and copy are code.)"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 146,
+     "change": "Add a \"Request removal of this version\" action that writes a desk brief naming the manuscript version and the requester, and show, per version in the custody list, who granted permission and when (the data already exists per line 171).",
+     "rationale": "\"Ask your workspace owner\" is the only exit today and it is an out-of-band favour. Giving her an in-product, recorded request \u2014 and showing her who authorized each version \u2014 restores some control while real deletion is decided. (Actual deletion in storage + SQL is an owner decision.)"
+    }
+   ]
+  },
+  {
+   "criterion": "safe_to_experiment_undo",
+   "score": 7,
+   "verdict": "Draft protection is the best-engineered thing here \u2014 per-tab scratchpads, the session-expiry dialog that hands her words back before anything is cleared, the unreadable-demo-file dialog that refuses to overwrite, version-conflict guards on decisions. Two gaps keep it under 8: the sign-out dialog destroys the same drafts the session dialog carefully rescues, and a failed plans load is presented as an empty workspace.",
+   "evidence": [
+    {
+     "file": "components/kira/session-ended-dialog.tsx",
+     "line": 84,
+     "quote": "Your session ended \u2026 Your unfinished words are below, exactly as you left them. Copy anything you want to keep"
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 240,
+     "quote": "This brief changed while you were reviewing it. Cancel, read the latest version, then choose your next step."
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 476,
+     "quote": "Signing out discards unfinished desk briefs, workshop notes, and questions."
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 481,
+     "quote": "Sign out and discard drafts"
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 56,
+     "quote": "{plans.length===0?<p className=\"quiet-note\">Your first plan starts below."
+    },
+    {
+     "file": "components/kira/connections-page.tsx",
+     "line": 100,
+     "quote": "onClick={() => void change(\"DELETE\", { id: link.id })}"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 476,
+     "change": "Reuse the SessionEndedDialog's kept-draft list in the sign-out confirmation: list each unsaved draft with a Copy button (and a \"Copy all\") before offering \"Sign out and discard drafts\".",
+     "rationale": "The same words that the expiry path treats as precious are thrown away by the deliberate path. A destructive confirm should offer a way to keep the thing it is about to destroy, not just a way to back out."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 56,
+     "change": "Guard the empty state on a successful load: render \"Your first plan starts below\" only when `loaded && !error`; when `error` is set, show \"We couldn't read your saved plans. Nothing has changed \u2014 reload to try again.\" in place of the list.",
+     "rationale": "After a load failure the page currently looks identical to a workspace with no plans, which invites her to rebuild work that already exists."
+    }
+   ]
+  },
+  {
+   "criterion": "clarity_self_explanation",
+   "score": 7,
+   "verdict": "The app explains itself unusually well: nav items carry plain-language subtitles, ContextHelp answers \"how does my desk work?\", the Guide maps every room, DEMO / MANUAL SNAPSHOT / NEEDS VERIFICATION are consistent, and save-state is spelled out on every form. It falls short where the explanation points somewhere that cannot answer, and where an error is dressed as an empty state.",
+   "evidence": [
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 187,
+     "quote": "Cassandra\u2019s Desk<small>Ideas, decisions & your guidance</small>"
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 248,
+     "quote": "Not saved yet \u00b7 Kept in this tab until you save."
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 74,
+     "quote": "Everyone with access to this workspace can read these briefs and your decisions. See who under Workspace access"
+    },
+    {
+     "file": "components/kira/access-page.tsx",
+     "line": 110,
+     "quote": "Choose who can work alongside you, and what they can do."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 132,
+     "quote": "See who reviews plans"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/access-page.tsx",
+     "line": 110,
+     "change": "Make the page subhead role-aware: owner keeps \"Choose who can work alongside you, and what they can do.\"; editor/viewer gets \"Who can see this workspace, and what each person can do.\"",
+     "rationale": "Telling a woman she can choose who works alongside her, on a page where she can choose nothing, is the kind of small dishonesty that makes everything else on the page suspect."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 132,
+     "change": "Name the reviewer in the card rather than linking to a page that may not name them: \"<owner email> gives each plan a second read\u2026\", keeping the /access link secondary.",
+     "rationale": "\"See who reviews plans\" resolves to nothing for a non-owner today, so the one question the card raises is the one it cannot answer."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 56,
+     "change": "See the empty-state fix under safe_to_experiment_undo \u2014 an error state and an empty state must not render the same.",
+     "rationale": "Legibility of states is a clarity requirement, not only a safety one."
+    }
+   ]
+  },
+  {
+   "criterion": "tone_dignity",
+   "score": 7,
+   "verdict": "Peer-level and largely un-cute: \"The evidence is here. The call is yours.\", \"Not running. Not pretending to.\", no exclamation marks, no coaching voice, no gendered softening. What keeps it from 8 is identity: the product never establishes that Kira and Cassandra are one woman, and in three places it speaks about her in the third person \u2014 \"the author's site\", \"the author's work\", \"Kira's books\" \u2014 as if she were staff administering someone else's catalog.",
+   "evidence": [
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 43,
+     "quote": "The evidence is here. <em>The call is yours.</em>"
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 149,
+     "quote": "Kira Stanley<small>Cassandra\u2019s author workspace</small>"
+    },
+    {
+     "file": "app/[module]/page.tsx",
+     "line": 37,
+     "quote": "Build a source-backed picture of how readers discover Kira\u2019s books."
+    },
+    {
+     "file": "components/kira/universe-catalog.tsx",
+     "line": 63,
+     "quote": "Titles sourced from the author\u2019s site"
+    },
+    {
+     "file": "components/kira/universe-catalog.tsx",
+     "line": 128,
+     "quote": "organizes the author\u2019s work; it does not assert that separate series share a fictional world"
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 261,
+     "quote": "{mode === \"connected\" ? viewerEmail : \"Cassandra\"}"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 149,
+     "change": "Say the relationship out loud once, where the two names meet: `Kira Stanley<small>Your pen name \u00b7 Cassandra\u2019s workspace</small>`.",
+     "rationale": "Nothing in the codebase contains the words \"pen name\" (verified by grep). Two names with no stated relationship read as two people, and the one on top owns the place."
+    },
+    {
+     "file": "app/[module]/page.tsx",
+     "line": 37,
+     "change": "\"\u2026how readers discover your books.\" (matching the sidebar description at app-shell.tsx:93).",
+     "rationale": "The same module is described as \"your books\" in the nav and \"Kira's books\" on the page \u2014 the inconsistency is exactly where the one-woman concept breaks."
+    },
+    {
+     "file": "components/kira/universe-catalog.tsx",
+     "line": 63,
+     "change": "\"Titles sourced from your author site\"; at line 128, \"organizes your work; it does not assert\u2026\".",
+     "rationale": "This is her catalog, sourced from her own site. Third-person distance here makes the workspace feel like it belongs to a client."
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 261,
+     "change": "Show her name with the account underneath in connected mode \u2014 e.g. `Cassandra` as the primary line and `{roleLabels[role]} \u00b7 {viewerEmail}` as the small line.",
+     "rationale": "In the real workspace she is reduced to an email string while the demo greets her by name; the product she will actually use should know who she is."
+    }
+   ]
+  },
+  {
+   "criterion": "respect_creative_material",
+   "score": 6,
+   "verdict": "The consent surface itself is the best I have seen in a workspace of this kind \u2014 named model providers, spoiler-hidden default, \"never rewritten or published\", a checkbox that separates reading from publishing, a custody list of versions, a pause control, and findings that always carry the passage behind them. It is undermined by two facts it states honestly and then does nothing about: every version she uploads is kept forever with no way to take it back, and the audience for it is \"everyone with workspace access\" \u2014 a set she cannot see.",
+   "evidence": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 147,
+     "quote": "Spoilers stay hidden by default. Your manuscript is never rewritten or published."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 149,
+     "quote": "Saving stores the file only. Reading is a separate step that you start, and you can pause it."
+    },
+    {
+     "file": "components/kira/book-knowledge.tsx",
+     "line": 98,
+     "quote": "Reveal plot details and potential spoilers"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 144,
+     "quote": "Everyone with access to this workspace can read its passages and findings \u2014 see Workspace access"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 170,
+     "quote": "Every version you upload is kept. Removing a manuscript from the app isn\u2019t available yet"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 171,
+     "quote": "The file size and the member who granted permission are recorded with each version but are not shown here yet."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 170,
+     "change": "Ship at minimum a per-version \"Hide this version from the workspace\" control that flags the manuscript inactive (no findings, no search, no plan evidence) and records who hid it, alongside the recorded-removal-request brief described above.",
+     "rationale": "\"It is kept forever and only he can remove it\" is the single most exposing fact about her most intimate material. A reversible hide is buildable in app code and gives her a way to withdraw exposure tonight; irreversible deletion in storage/SQL is an owner decision."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 171,
+     "change": "Surface the recorded permission-granter and file size per version in the custody list instead of apologising for them.",
+     "rationale": "\"We recorded who gave permission but won't show you\" is the wrong side of the consent line, and the data is already there."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 144,
+     "change": "Replace the bare link with the actual count and, where policy allows, the names: \"Stored privately in this workspace. N people can read its passages and findings \u2014 see Workspace access.\"",
+     "rationale": "A number she can see before she ticks the box changes the decision; a link that may not answer does not."
+    }
+   ]
+  },
+  {
+   "criterion": "visual_craft_warmth",
+   "score": 7,
+   "verdict": "Genuinely handsome and coherent: Cormorant/Manrope pairing, restrained gold-on-charcoal palette, editorial eyebrows, real designed empty and failure states, the raven line art, a mobile layout that holds up over very long pages. Three craft faults: the most consequential copy is set in the smallest type, native controls are not told the page is dark, and there is no light option at all.",
+   "evidence": [
+    {
+     "file": "app/globals.css",
+     "line": 2635,
+     "quote": ".recommendation-card > p { font-size: 11px; }"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1150,
+     "quote": ".quiet-note { color: #a5ae94; font-size: var(--text-sm); }"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 9,
+     "quote": ":root { --background: #121312; \u2026 }  /* no color-scheme declaration */"
+    },
+    {
+     "file": "app/layout.tsx",
+     "line": 492,
+     "quote": "<html lang=\"en\" className=\"dark\">"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 3613,
+     "quote": ".failure-state p { font-size: 15px; line-height: 1.75; max-width: 52ch; }"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "app/globals.css",
+     "line": 9,
+     "change": "Add `color-scheme: dark;` to `:root`.",
+     "rationale": "Without it the native file-input button, `<select>` popups, the `type=\"date\"` picker on the plan form and the scrollbars render in the light UA scheme inside a dark page \u2014 visible on the connected book page and the plan form screenshots. One line."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2635,
+     "change": "Raise the 11px overrides to `var(--text-sm)` (12px) minimum for `.recommendation-card > p` and `.raven-summary`, and lift `.quiet-note` to 13px with its current line-height.",
+     "rationale": "`.quiet-note` carries the manuscript custody terms, the \"not saved yet\" state and the provenance disclaimers; the text that protects her should not be the smallest text on the page."
+    },
+    {
+     "file": "app/layout.tsx",
+     "line": 492,
+     "change": "Either keep dark-only deliberately and say so in Settings, or add a light token set under `:root:not(.dark)` plus a theme control.",
+     "rationale": "Dark-only is a defensible aesthetic choice but it is currently an unstated one; a reader who works in daylight has no option. (Whether to build a light theme is an owner decision; stating the choice is code.)"
+    }
+   ]
+  },
+  {
+   "criterion": "accessibility",
+   "score": 7,
+   "verdict": "Lots of real, unglamorous work: skip link, focus returned to triggers after dialogs, focus moved to error paragraphs, `aria-errormessage` paired with `aria-invalid`, live regions for save state and search counts, `aria-pressed` on every filter, a `<progress>` with `aria-valuetext`, a reduced-motion block, 44px targets at \u2264760px, sr-only character-limit warnings. What holds it at 7 is systemic rather than local: a 14px base with 11\u201312px secondary text, a 40px floor for plain buttons on mobile, and native controls rendering in the wrong colour scheme.",
+   "evidence": [
+    {
+     "file": "app/globals.css",
+     "line": 2620,
+     "quote": "@media (prefers-reduced-motion: reduce) { *, *::before, *::after { \u2026 } }"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 153,
+     "quote": "<progress aria-label=\"Manuscript reading progress\" aria-valuetext={`${latest.completed_chunks} of ${latest.chunk_count} passages read`}"
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 370,
+     "quote": "<span className=\"sr-only\">{draft.length >= 10000 ? \"Character limit reached\u2026\""
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2643,
+     "quote": "button, a[data-slot=\"button\"] { min-height: 40px; }"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 13,
+     "quote": "--text-base: 14px;"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 166,
+     "quote": "<div role=\"status\" className=\"library-search-results\">"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "app/globals.css",
+     "line": 2643,
+     "change": "Raise the \u2264760px floor from 40px to 44px for bare `button` as well, so `.inspiration-filter`, `.knowledge-view-nav button` and `.nav-planned-toggle` match the 44px used everywhere else.",
+     "rationale": "Two different target floors in the same breakpoint is an inconsistency, and the 40px set includes the carousel and knowledge-view controls that get the most thumb traffic."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 13,
+     "change": "Move `--text-base` to 15px and `--text-sm` to 13px, then re-check the compact overrides at lines 2631-2639.",
+     "rationale": "A 14px base with 11px card body text is a legibility tax on a 40-something reader working at night; it is the cheapest single improvement to perceived quality as well."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 9,
+     "change": "Add `color-scheme: dark;` (same fix as visual craft).",
+     "rationale": "UA-rendered controls currently paint light-scheme foregrounds over dark surfaces, which is a contrast risk the stylesheet cannot otherwise reach."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 166,
+     "change": "Put `role=\"status\"` on the results-count paragraph only, not on the container holding the result articles and their buttons.",
+     "rationale": "A live region wrapping interactive content re-announces the whole result list on every change; announcing just \"N matching passages\" is what she needs."
+    }
+   ]
+  },
+  {
+   "criterion": "trust_honesty",
+   "score": 7,
+   "verdict": "This is the product's strongest instinct. DEMO/MANUAL SNAPSHOT/NEEDS VERIFICATION are applied consistently, \"Not running. Not pretending to.\" is on the home page, approvals say what they do not do, Teach Raven explicitly refuses to claim training, Ask Raven prints its model and estimated cost, access grants say no email was sent, and the demo seed never attaches invented tropes to a real title. It drops below 8 on three claims the implementation does not keep.",
+   "evidence": [
+    {
+     "file": "components/kira/agent-status.tsx",
+     "line": 185,
+     "quote": "<h2>Not running. Not pretending to.</h2>"
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 216,
+     "quote": "Your guidance is saved for future use; it does not retrain a model."
+    },
+    {
+     "file": "components/kira/studio-page.tsx",
+     "line": 212,
+     "quote": "Saved privately \u00b7 {generation.model}{\u2026 ` \u00b7 Estimated model cost $${\u2026}`}"
+    },
+    {
+     "file": "components/kira/access-page.tsx",
+     "line": 110,
+     "quote": "Choose who can work alongside you, and what they can do."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 39,
+     "quote": "Your plan is saved and ready for owner review."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 56,
+     "quote": "Your first plan starts below. Existing ideas stay on Cassandra\u2019s Desk."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/access-page.tsx",
+     "line": 110,
+     "change": "Role-aware subhead (see clarity) and, for non-owners, a card that states who the owner is and that the member list is owner-only.",
+     "rationale": "A page that claims to give her the choice while withholding even the list is the one place the product's otherwise excellent honesty breaks."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 39,
+     "change": "Do not describe a state she did not choose as a completed step; after the explicit \"Send for review\" control exists, this notice should read \"Your plan is saved as a draft.\"",
+     "rationale": "Claims must match the action she took, not only the state the database reached."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 56,
+     "change": "Never show an empty-workspace message on a failed load (see above).",
+     "rationale": "An error rendered as \"you have nothing\" is a false statement about her data."
+    }
+   ]
+  }
+ ],
+ "top_findings": [
+  {
+   "priority": 1,
+   "title": "She is told her manuscript is readable by \"everyone with access\" and then cannot find out who that is",
+   "file": "components/kira/access-page.tsx",
+   "line": 127,
+   "problem": "The People-with-access card and the owner row are inside `access?.role === \"owner\"`. Cassy is an Editor, so /access shows her only her own role. Meanwhile connected-book-detail.tsx:144, connected-book-detail.tsx:168, connected-library.tsx:67 and desk-page.tsx:74 all tell her that everyone with workspace access can read her manuscript passages, findings, briefs and decisions, and each points her at this page. The consent notice is unresolvable, and the page's own subhead (line 110) promises her a choice she does not have.",
+   "proposed_change": "Move the owner row and `access.members` list outside the owner gate, keeping only grant/change/revoke owner-only; make the subhead role-aware; if exposing member emails to non-owners requires an RLS/RPC change, ship the honest interim that names the owner and states the list is owner-only, and show a member count next to the manuscript consent bullet.",
+   "fixable_in_code": true,
+   "owner_decision_needed": "Whether editors/viewers may see other members' email addresses (needs an access RPC/RLS change if yes)."
+  },
+  {
+   "priority": 2,
+   "title": "Asking Raven to build a plan silently submits it for owner review",
+   "file": "components/kira/plans-page.tsx",
+   "line": 39,
+   "problem": "A completed generation flips the plan to `needs_review` inside the `strategy_generate` RPC (supabase/migrations/202609190002_strategy_plans.sql:206), and the UI reports \"Your plan is saved and ready for owner review.\" She never chose to expose the draft. The waiting card (line 132) is now kindly framed and tells her what she can do meanwhile, but the moment of exposure is still not hers.",
+   "proposed_change": "Keep a completed generation in `draft`; add an explicit \"Send to <owner> for review\" button that performs the transition, and reword the generation notice to \"Your plan is saved as a draft.\"",
+   "fixable_in_code": true,
+   "owner_decision_needed": "Confirm that a generated plan may sit privately in draft (requires a migration to stop the RPC forcing needs_review); who may approve plans remains an owner/role decision."
+  },
+  {
+   "priority": 3,
+   "title": "Her manuscript can never be taken back, and she cannot see who authorized each version",
+   "file": "components/kira/connected-book-detail.tsx",
+   "line": 146,
+   "problem": "\"Every version you upload is kept. Removing a manuscript from the app isn't available yet \u2014 ask your workspace owner if you need a file removed.\" Repeated at line 170. Line 171 admits the permission-granter and file size are recorded but not shown. For an unpublished manuscript this is the highest-stakes irreversibility in the product, and her only remedy is asking a man off-platform.",
+   "proposed_change": "Add a reversible per-version \"Hide this version from the workspace\" (suppresses findings, search and plan evidence, records who hid it and when), plus a \"Request removal\" action that writes a desk brief; surface the recorded permission-granter and size in the custody list.",
+   "fixable_in_code": true,
+   "owner_decision_needed": "Real deletion from storage + SQL (retention policy) is an owner decision; hide/request are not."
+  },
+  {
+   "priority": 4,
+   "title": "Sign-out destroys the drafts the session-expiry dialog is built to rescue",
+   "file": "components/kira/app-shell.tsx",
+   "line": 476,
+   "problem": "The confirmation warns that signing out \"discards unfinished desk briefs, workshop notes, and questions\" and offers only \"Keep working\" or \"Sign out and discard drafts\". SessionEndedDialog (session-ended-dialog.tsx:84-109) already assembles exactly these drafts with per-item Copy buttons; the deliberate path does not use it.",
+   "proposed_change": "Render the same kept-draft list with Copy (and Copy all) inside the sign-out dialog before the destructive button.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 5,
+   "title": "A failed plans load is rendered as an empty workspace",
+   "file": "components/kira/plans-page.tsx",
+   "line": 56,
+   "problem": "`plans` stays `[]` after a load error, so the card shows \"Your first plan starts below. Existing ideas stay on Cassandra's Desk.\" alongside the red alert \u2014 visible in cmobile-plans.png. She can reasonably conclude her plans are gone and start rebuilding.",
+   "proposed_change": "Gate the empty state on `loaded && !error`; when `error` is set show \"We couldn't read your saved plans. Nothing has changed \u2014 reload to try again.\" in place of the list.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 6,
+   "title": "Kira and Cassandra are never stated to be the same woman, and the app sometimes speaks about her in the third person",
+   "file": "components/kira/app-shell.tsx",
+   "line": 149,
+   "problem": "\"Kira Stanley / Cassandra's author workspace\" places two names together with no stated relationship; the string \"pen name\" appears nowhere in the codebase. app/[module]/page.tsx:37 says \"how readers discover Kira's books\" where the sidebar for the same module says \"your books\"; universe-catalog.tsx:63 and :128 say \"the author's site\" / \"the author's work\" about her own catalog. In connected mode the sidebar identifies her by email rather than by name (app-shell.tsx:261).",
+   "proposed_change": "`Kira Stanley<small>Your pen name \u00b7 Cassandra's workspace</small>`; \"your books\" in the module copy; \"your author site\" / \"your work\" in the catalog notes; show \"Cassandra\" as the primary line in the connected user profile with role and email beneath.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 7,
+   "title": "Native controls render in the light UA scheme inside a dark app",
+   "file": "app/globals.css",
+   "line": 9,
+   "problem": "`:root` declares a full dark palette but never declares `color-scheme`, so the file input's button, `<select>` popups, the plan form's `type=\"date\"` picker and scrollbars use light-scheme UA colors on dark surfaces \u2014 visible in cdesktop-universe-assassins-refusal.png and cmobile-plans.png.",
+   "proposed_change": "Add `color-scheme: dark;` to `:root` (and ship it with the light-theme decision if a light mode is ever added).",
+   "fixable_in_code": true,
+   "owner_decision_needed": "Whether to offer a light theme at all (app/layout.tsx:492 hardcodes `className=\"dark\"`)."
+  },
+  {
+   "priority": 8,
+   "title": "The most consequential copy is the smallest type in the product",
+   "file": "app/globals.css",
+   "line": 2635,
+   "problem": "`.recommendation-card > p` and `.raven-summary` are hard-set to 11px; `.quiet-note` (line 1150) is 12px and carries the manuscript custody terms, the \"not saved yet\" state, provenance disclaimers and the viewer-access explanations. Base is 14px.",
+   "proposed_change": "Base 15px, `--text-sm` 13px, and raise the 11px overrides to at least 12px; re-check the compact overrides at globals.css:2631-2639 afterwards.",
+   "fixable_in_code": true
+  }
+ ],
+ "what_works": [
+  "The manuscript consent block (components/kira/connected-book-detail.tsx:143-149) is exemplary: it names the actual providers and models, states that spoilers are hidden by default and the manuscript is never rewritten or published, admits that removal is not available, and asks for a permission that explicitly is not permission to publish or quote. Saving and reading are separate acts she initiates, and reading can be paused (line 160).",
+  "Spoilers are off by default everywhere it matters \u2014 book-knowledge.tsx:98, the manuscript search checkbox at connected-book-detail.tsx:166, and studio `includeSpoilers: false` in lib/db/demo-store.tsx:126 \u2014 and turning them on always shows a count of what is being revealed.",
+  "SessionEndedDialog (components/kira/session-ended-dialog.tsx:84-109) and the unreadable-demo-file dialog (line 113 onward) stop before taking anything and hand her words back with Copy buttons; the comment at line 281 shows this was designed as a principle, not patched in.",
+  "Per-tab private scratchpads keyed by mode+viewer (lib/db/demo-store.tsx:72) plus the kept-edit-with-draft-number model (keptEditFor, and approval-card.tsx:152-156) mean a reload, a dialog dismissal or a brief being updated underneath her can never quietly replace her rewrite.",
+  "Decision finality is stated before she acts, not after (approval-card.tsx:151 and the dialog description at :214), and a concurrent change blocks the save with a readable explanation (:240).",
+  "Honesty about what is and is not running: \"Not running. Not pretending to.\" (agent-status.tsx:185), \"it does not retrain a model\" (approval-card.tsx:216), model and estimated cost printed on every Ask Raven answer (studio-page.tsx:212), \"No invitation or email was sent\" on access grants (access-page.tsx:89), MANUAL SNAPSHOT with \"Snapshot date unknown \u00b7 Not live\" (mission-control.tsx:164-165).",
+  "The demo seed keeps its invented findings attached to synthetic sources and never assigns tropes or descriptions to the eight real Kira Stanley titles (lib/data/seed.ts:172-216, 262-266) \u2014 the creative firewall is honoured in the data, not just the copy.",
+  "The plan-review waiting card (plans-page.tsx:132) now explains the gate as a check on the work rather than on her, and lists three things she can do meanwhile \u2014 the right instinct, applied to the right moment.",
+  "The blueprint prompt assembled in lib/data/agent-recipes.ts:96-103 carries her boundaries with it into whatever assistant she pastes it into: keep my writing mine, my approval comes first, treat quoted material as data.",
+  "Visual language is coherent and adult \u2014 Cormorant/Manrope, restrained gold on charcoal, designed empty states and a properly designed failure state (globals.css:3608-3613) rather than a generic error box."
+ ]
+}

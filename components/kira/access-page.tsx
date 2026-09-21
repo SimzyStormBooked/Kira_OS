@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { Copy, RefreshCw, ShieldCheck, UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useWorkspace } from "@/lib/db/demo-store";
 import type { WorkspaceAccessDetails, WorkspaceMember } from "@/lib/auth/workspace-role";
+import "./workspace-status.css";
 
 type MemberRole = "editor" | "viewer";
 type AccessCommand = { action: "grant"; email: string; role: MemberRole }
@@ -14,14 +15,15 @@ type AccessCommand = { action: "grant"; email: string; role: MemberRole }
   | { action: "revoke"; id: string; version: number };
 const roleDescriptions = {
   owner: "You can manage access, create and edit briefs, record decisions, and save lessons.",
-  editor: "You can create and edit briefs, approve or reject them, and save lessons. Only the owner can manage access.",
-  viewer: "You can read the workspace and export a copy. You cannot save changes or manage access.",
+  editor: "You can create and edit briefs, approve or reject them, save lessons, and export everything. Managing who else has access is the owner’s role.",
+  viewer: "You can read the workspace and export a copy. Saving changes needs editor access; managing who else has access is the owner’s role.",
 };
+const roleNames: Record<"owner" | "editor" | "viewer", string> = { owner: "Owner", editor: "Editor", viewer: "Viewer" };
 
 export function AccessPage({ mode, initialAccess, initialError = null }: {
   mode: "demo" | "connected"; initialAccess: WorkspaceAccessDetails | null; initialError?: string | null;
 }) {
-  const router = useRouter();
+  const { endSession } = useWorkspace();
   const [access, setAccess] = useState(initialAccess);
   const [error, setError] = useState<string | null>(initialError);
   const [notice, setNotice] = useState<string | null>(null);
@@ -33,6 +35,8 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
   const pending = useRef(false);
   const requestVersion = useRef(0);
   const statusRef = useRef<HTMLParagraphElement>(null);
+  const alertRef = useRef<HTMLParagraphElement>(null);
+  const focusAlert = useRef(false);
   const removedMember = useRef(false);
 
   useEffect(() => {
@@ -46,7 +50,7 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
         if (!active || version !== requestVersion.current) return;
         if (response.status === 401 || response.status === 403) {
           setAccess(null);
-          router.replace("/login");
+          endSession();
           return;
         }
         if (response.ok) setAccess(await response.json());
@@ -60,12 +64,13 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
       window.removeEventListener("focus", refresh);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [mode, router]);
+  }, [mode, endSession]);
 
   async function request(command?: AccessCommand) {
     if (pending.current) return false;
     pending.current = true;
     requestVersion.current += 1;
+    focusAlert.current = false;
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -76,7 +81,7 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
       const data = await response.json();
       if (response.status === 401 || response.status === 403) {
         setAccess(null);
-        router.replace("/login");
+        endSession();
       }
       if (!response.ok) throw new Error(data.error ?? "Access could not be updated. Please try again.");
       setAccess(data);
@@ -88,11 +93,12 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
       return true;
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Access could not be updated. Please try again.");
+      focusAlert.current = true;
       return false;
     } finally {
       pending.current = false;
       setBusy(false);
-      requestAnimationFrame(() => statusRef.current?.focus());
+      requestAnimationFrame(() => (focusAlert.current ? alertRef : statusRef).current?.focus());
     }
   }
   async function addMember(event: FormEvent<HTMLFormElement>) {
@@ -106,7 +112,7 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
       <div className="section-heading"><h2>Workspace access</h2><ShieldCheck size={19} /></div>
       <p>A shared link alone does not grant access. Every person needs their own existing, confirmed account and permission for this workspace.</p>
       {mode === "demo" ? <p className="quiet-note">You are exploring a demo. Collaborator access becomes available after private setup; no real accounts are listed or changed here.</p>
-        : access ? <><p className="access-your-role"><strong>Your role: {access.role}</strong></p><p>{roleDescriptions[access.role]}</p></>
+        : access ? <><p className="access-your-role"><strong>Your role: {roleNames[access.role]}</strong></p><p>{roleDescriptions[access.role]}</p></>
           : <p>Private access details are not available right now.</p>}
       {mode === "connected" && <div className="settings-actions">
         <Button variant="outline" disabled={busy} onClick={() => void request()}><RefreshCw size={14} />Refresh access</Button>
@@ -116,7 +122,8 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
         }}><Copy size={14} />Copy sign-in link</Button>
       </div>}
     </Card>
-    <p ref={statusRef} tabIndex={-1} role={error ? "alert" : "status"} aria-live="polite" className={error ? "form-error" : "access-status"}>{error ?? notice}</p>
+    <p ref={alertRef} tabIndex={-1} role="alert" className="form-error access-alert">{error ?? ""}</p>
+    <p ref={statusRef} tabIndex={-1} role="status" aria-live="polite" className="access-status">{notice ?? ""}</p>
     {mode === "connected" && access?.role === "owner" && <div className="access-grid">
       <Card className="settings-card"><div className="section-heading"><h2>Add an existing account</h2><UserPlus size={19} /></div>
         <p>This adds permission only. The account must already exist with confirmed email. No invitation or email is sent.</p>

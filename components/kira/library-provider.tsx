@@ -16,22 +16,23 @@ type LibraryContextValue = {
 const LibraryContext = createContext<LibraryContextValue | null>(null);
 
 function PrivateLibraryProvider({ children }: { children: ReactNode }) {
-  const { mode, clearPrivateScratchpads } = useWorkspace();
+  const { mode, endSession } = useWorkspace();
   const [data, setData] = useState<LibraryResponse | null>(null);
   const [loading, setLoading] = useState(mode === "connected");
   const [error, setError] = useState<string | null>(null);
   const [authorized, setAuthorized] = useState(true);
   const controller = useRef<AbortController | null>(null);
   const mounted = useRef(true);
-  const clearScratchpads = useRef(clearPrivateScratchpads);
-  useEffect(() => { clearScratchpads.current = clearPrivateScratchpads; }, [clearPrivateScratchpads]);
+  const leaveSession = useRef(endSession);
+  useEffect(() => { leaveSession.current = endSession; }, [endSession]);
   const clear = useCallback(() => { controller.current?.abort(); setData(null); setAuthorized(false); }, []);
   const request = useCallback(async (url: string, options?: RequestInit) => {
     const response = await fetch(url, { ...options, cache: "no-store", credentials: "same-origin" });
     const body: unknown = await response.json().catch(() => null);
     if (!response.ok) {
       if (response.status === 401 || (response.status === 403 && (!options?.method || options.method === "GET"))) {
-        if (mounted.current) { clear(); clearScratchpads.current(); window.location.replace("/login"); }
+        // The workspace store decides: unfinished words are offered back to her before any sign-out.
+        if (mounted.current) { clear(); leaveSession.current(); }
       }
       const message = body && typeof body === "object" && "error" in body && typeof body.error === "string" ? body.error : "Your library could not be reached. Please try again.";
       throw new LibraryRequestError(message, response.status);

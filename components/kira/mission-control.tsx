@@ -20,7 +20,13 @@ import { AgentStatus } from "./agent-status";
 import { DemoBadge } from "./origin-badge";
 import { InspirationShelf } from "./inspiration-shelf";
 import { ConnectedHome } from "./connected-home";
-export function MissionControl({ dateKey }: { dateKey?: string }) {
+export function MissionControl({
+  dateKey,
+  greeting = "Good afternoon",
+}: {
+  dateKey?: string;
+  greeting?: string;
+}) {
   const state = useWorkspace();
   const pending = state.approvals.filter((a) => a.status === "pending");
   const recommendations = state.recommendations.filter(
@@ -32,18 +38,21 @@ export function MissionControl({ dateKey }: { dateKey?: string }) {
       <div className="page-heading">
         <div>
           <div className="eyebrow page-kicker">
-            KIRA // AUTHOR INTELLIGENCE <span className="little-star">✦</span>
+            KIRA // AUTHOR INTELLIGENCE{" "}
+            <span className="little-star" aria-hidden="true">
+              ✦
+            </span>
           </div>
           <h1>
-            Good afternoon, <em>Cassandra.</em>
+            {greeting}, <em>Cassandra.</em>
           </h1>
           <p>Here’s what your universe is doing.</p>
         </div>
         <div className="heading-note">
-          <span className="eyebrow">YOUR PRIVATE COMMAND CENTER</span>
+          <span className="eyebrow">YOUR PRIVATE WORKSPACE</span>
           <span>
             <ShieldCheck size={14} />
-            Human judgment. Machine advantage.
+            Your call, every time.
           </span>
         </div>
       </div>
@@ -69,9 +78,9 @@ export function MissionControl({ dateKey }: { dateKey?: string }) {
             <DemoBadge />
           </div>
           <h2>
-            A few things
+            A few things{" "}
             <br />
-            need <em>your instinct.</em>
+            need <em>your call.</em>
           </h2>
           <p>
             {pending.length} {pending.length === 1 ? "decision" : "decisions"}{" "}
@@ -90,14 +99,14 @@ export function MissionControl({ dateKey }: { dateKey?: string }) {
             ))}
             {pending.length === 0 && (
               <div className="empty-inline">
-                <CheckCheck size={23} />
-                The minions are working. Go write. 🖤
+                <CheckCheck size={23} aria-hidden="true" />
+                Nothing needs you right now. Go write.
               </div>
             )}
           </div>
           <Button asChild variant="outline" className="w-full">
             <Link href="/desk">
-              Take your seat <ArrowRight size={15} />
+              Open your desk <ArrowRight size={15} />
             </Link>
           </Button>
           <span className="desk-quiet">
@@ -112,9 +121,7 @@ export function MissionControl({ dateKey }: { dateKey?: string }) {
             <span className="eyebrow">SMALL MOVES. LONG GAME.</span>
             <h2>
               Today’s moves{" "}
-              <span className="section-count">
-                {recommendations.length.toString().padStart(2, "0")}
-              </span>
+              <span className="section-count">{recommendations.length}</span>
             </h2>
           </div>
           <Link href="/raven" className="text-link">
@@ -140,7 +147,7 @@ export function MissionControl({ dateKey }: { dateKey?: string }) {
             <span className="eyebrow">A COMMUNITY, NOT A NUMBER</span>
             <Camera size={17} />
           </div>
-          <h2>The coven is here.</h2>
+          <h2>Your readers, in one place.</h2>
           <div className="community-stats">
             <div>
               <strong>

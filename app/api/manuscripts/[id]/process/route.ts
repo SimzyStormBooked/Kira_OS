@@ -25,7 +25,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         const code = error instanceof ManuscriptProviderError ? error.code : "provider_unavailable";
         const usage = error instanceof ManuscriptProviderError ? error.usage : emptyManuscriptUsage();
         await persist(() => repo.finishBatch(id, input.requestId, null, usage, [], code));
-        throw new ManuscriptError(code, 503, "Kira could not finish this reading step. Completed passages are saved. Review the status, then retry when ready.");
+        throw new ManuscriptError(code, 503, "Raven could not finish this reading step. Completed passages are saved. Review the status, then retry when ready.");
       }
       await persist(() => repo.finishBatch(id, input.requestId, reply.result, reply.usage, reply.embeddings, null));
     }

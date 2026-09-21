@@ -125,8 +125,9 @@ test("setup auth failure rechecks the real session and clears drafts before redi
   await page.route("**/api/connections/meta", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ configured: false, isOwner: true, connection: null }) }));
   await page.goto("/learn");
   await page.getByLabel("Give your idea a name", { exact: true }).fill("Private setup-session draft must be cleared");
+  await expect.poll(() => page.locator('[data-slot="sheet-content"]').count()).toBe(0);
   const menu = page.getByRole("button", { name: "Open navigation", exact: true });
-  if (await menu.isVisible()) await menu.click();
+  if (await menu.isVisible() && await menu.getAttribute("aria-expanded") !== "true") await menu.click();
   await page.locator('a.nav-item[href="/settings"]:visible').first().click();
   const refresh = page.locator("#setup").filter({visible:true}).getByRole("button", { name: "Refresh connection status", exact: true });
   await expect(refresh).toBeEnabled();
@@ -134,6 +135,13 @@ test("setup auth failure rechecks the real session and clears drafts before redi
   await context.clearCookies();
   sessionEnded = true;
   await refresh.click();
+  // A lapsed session with an unfinished draft first offers it back; she confirms before anything is cleared.
+  const signInAgain = page.getByRole("button", { name: "Sign in again", exact: true });
+  await Promise.race([
+    page.waitForURL(/\/login$/).catch(() => undefined),
+    signInAgain.waitFor({ state: "visible" }).catch(() => undefined),
+  ]);
+  if (await signInAgain.isVisible().catch(() => false)) await signInAgain.click();
   await expect(page).toHaveURL(/\/login$/);
   expect(workspaceReads).toBeGreaterThan(readsBeforeExpiry);
   expect(dialogs).toEqual([]);

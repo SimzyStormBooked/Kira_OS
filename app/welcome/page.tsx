@@ -19,7 +19,7 @@ export default async function WelcomePage() {
   return (
     <main id="main-content" className="login-stage">
       <div className="login-intro">
-        <Link href="/login" className="brand" aria-label="KIRA OS sign in" prefetch={false}>
+        <Link href="/login" className="brand" prefetch={false}>
           <span className="brand-symbol">K<span>✦</span></span>
           <span>KIRA<span className="brand-os"> OS</span><small>AUTHOR INTELLIGENCE</small></span>
         </Link>

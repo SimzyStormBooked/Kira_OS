@@ -1,0 +1,799 @@
+{
+ "judge": "Nora \u2014 self-published romantic-fantasy novelist, eleven books, running her own author business solo, mostly from her phone. Judging KIRA OS on branch claude/kira-ux-women-users as the code actually is.",
+ "files_read": [
+  "/home/user/Kira_OS/components/kira/app-shell.tsx",
+  "/home/user/Kira_OS/components/kira/mission-control.tsx",
+  "/home/user/Kira_OS/components/kira/connected-home.tsx",
+  "/home/user/Kira_OS/components/kira/getting-started.tsx",
+  "/home/user/Kira_OS/components/kira/desk-page.tsx",
+  "/home/user/Kira_OS/components/kira/manual-review-form.tsx",
+  "/home/user/Kira_OS/components/kira/approval-card.tsx",
+  "/home/user/Kira_OS/components/kira/context-help.tsx",
+  "/home/user/Kira_OS/components/kira/universe-catalog.tsx",
+  "/home/user/Kira_OS/components/kira/connected-library.tsx",
+  "/home/user/Kira_OS/components/kira/book-detail.tsx",
+  "/home/user/Kira_OS/components/kira/connected-book-detail.tsx",
+  "/home/user/Kira_OS/components/kira/book-knowledge.tsx",
+  "/home/user/Kira_OS/components/kira/book-card.tsx",
+  "/home/user/Kira_OS/components/kira/studio-page.tsx",
+  "/home/user/Kira_OS/components/kira/learn-page.tsx",
+  "/home/user/Kira_OS/components/kira/settings-page.tsx",
+  "/home/user/Kira_OS/components/kira/access-page.tsx",
+  "/home/user/Kira_OS/components/kira/connections-page.tsx",
+  "/home/user/Kira_OS/components/kira/plans-page.tsx",
+  "/home/user/Kira_OS/components/kira/workspace-guide.tsx",
+  "/home/user/Kira_OS/components/kira/workspace-permission-notice.tsx",
+  "/home/user/Kira_OS/components/kira/inspiration-shelf.tsx",
+  "/home/user/Kira_OS/components/kira/daily-quote.tsx",
+  "/home/user/Kira_OS/components/kira/origin-badge.tsx",
+  "/home/user/Kira_OS/components/kira/metric-card.tsx",
+  "/home/user/Kira_OS/components/kira/agent-status.tsx",
+  "/home/user/Kira_OS/components/kira/raven-briefing.tsx",
+  "/home/user/Kira_OS/components/kira/recommendation-card.tsx",
+  "/home/user/Kira_OS/components/kira/evidence-drawer.tsx",
+  "/home/user/Kira_OS/components/kira/setup-status.tsx",
+  "/home/user/Kira_OS/components/kira/login-form.tsx",
+  "/home/user/Kira_OS/components/kira/one-time-sign-in.tsx",
+  "/home/user/Kira_OS/components/kira/ads/dashboard.tsx",
+  "/home/user/Kira_OS/app/login/page.tsx",
+  "/home/user/Kira_OS/app/welcome/page.tsx",
+  "/home/user/Kira_OS/app/[module]/page.tsx",
+  "/home/user/Kira_OS/app/error.tsx",
+  "/home/user/Kira_OS/app/not-found.tsx",
+  "/home/user/Kira_OS/app/loading.tsx",
+  "/home/user/Kira_OS/lib/db/demo-store.tsx",
+  "/home/user/Kira_OS/lib/data/seed.ts",
+  "/home/user/Kira_OS/lib/data/inspiration.ts",
+  "/home/user/Kira_OS/lib/data/agent-recipes.ts",
+  "/home/user/Kira_OS/lib/agents/approvals.ts",
+  "/home/user/Kira_OS/lib/manuscripts/provider.ts",
+  "/home/user/Kira_OS/app/api/library/[bookId]/route.ts",
+  "/home/user/Kira_OS/app/api/manuscripts/upload/route.ts",
+  "/home/user/Kira_OS/app/globals.css",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots/mobile-home.png",
+  "/tmp/claude-0/-home-user-Kira-OS/435a9c2c-bd13-5680-aaca-e94ebbb6bdd8/scratchpad/shots/cmobile-universe-assassins-refusal.png"
+ ],
+ "first_five_minutes": "Cassy opens the link on her phone. The login page is genuinely lovely \u2014 Cormorant italic, \"A little more room to be the author,\" a verified Bront\u00eb line with a Gutenberg source. It says \"WELCOME HOME, CASSANDRA\" and, in the small print under the password field, \"Private access, by invitation\" (components/kira/login-form.tsx:56). Nobody invited her; Michael added her account by hand and the app elsewhere insists it never sends invitations. First tiny wrong note, and she won't be able to name it.\n\nShe signs in. Connected home: \"Welcome home, Cassandra.\" Good. A quote. An idea shelf. A \"Start with one small thing\" checklist with three numbered steps \u2014 she will click one, come back, and find all three still showing \"01 02 03\" with no checkmark, because `complete` is hardcoded `false` (components/kira/getting-started.tsx:81,89,97). A to-do list that never lets her finish is a small daily insult.\n\nIf Michael shows her the demo build instead, the home screen says \"Good afternoon, Cassandra.\" at whatever hour it is (components/kira/mission-control.tsx:38 \u2014 no clock, just a string). Six metric cards with DEMO badges she cannot read: the badge is 7px, and inside the metric cards on her phone it drops to 5px (app/globals.css:554, 2333-2334). Then the second card down, in big serif on her iPhone: \"A few thingsneed your instinct.\" \u2014 the `<br>` is hidden at \u22641020px (app/globals.css:2111) and JSX ate the space (components/kira/mission-control.tsx:72-74). That is the first typography-grade defect she sees, on the hero card, on the screen she is being shown the app on. If her desk were empty it would say \"The minions are working. Go write. \ud83d\udda4\" (mission-control.tsx:94).\n\nFirst real click: \"Take your seat\" \u2192 Cassandra's Desk. Heading: \"They bring the evidence. You bring the instinct.\" She will ask who \"they\" are. Nobody is running. The first brief in the list is written about her in the third person \u2014 \"First confirm audience fit with Cassandra\" (lib/data/seed.ts:284). She is reading a memo about herself, in her own workspace, named after her pen name.\n\nIf she gets as far as Marketing Plans, she builds a plan for her own books, saves it, and reads: \"Michael can review this plan and activate its tasks. You can keep exploring while it awaits review.\" (components/kira/plans-page.tsx:104). That is the moment I would lose her. Eleven books, her business, her name on the sidebar \u2014 and she needs her friend's sign-off to turn on her own 30/60/90 calendar.\n\nWhat would actually win her: the book page. Warm, calm, \"Your book, in your words,\" an explicit permission checkbox before her manuscript goes anywhere, spoilers off by default, every finding traceable to a passage. That page is the product. It is also the page where she cannot delete the file she just gave it.",
+ "scores": [
+  {
+   "criterion": "agency_control",
+   "score": 3,
+   "verdict": "The app is branded with her pen name and addressed to her by name, but she is an Editor in someone else's workspace. Her own marketing plan for her own books cannot be activated without Michael, by name, in the UI. She cannot see who else can read her workspace, cannot manage access, and cannot remove her own manuscript. Six separate surfaces tell her to ask the owner.",
+   "evidence": [
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 104,
+     "quote": "{role!==\"owner\"&&plan.status===\"needs_review\"&&<p className=\"inline-notice\">Michael can review this plan and activate its tasks. You can keep exploring while it awaits review.</p>}"
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 14,
+     "quote": "needs_review:\"Needs owner review\""
+    },
+    {
+     "file": "components/kira/access-page.tsx",
+     "line": 120,
+     "quote": "{mode === \"connected\" && access?.role === \"owner\" && <div className=\"access-grid\">"
+    },
+    {
+     "file": "components/kira/context-help.tsx",
+     "line": 42,
+     "quote": "Ask your workspace owner for help with account access."
+    },
+    {
+     "file": "components/kira/studio-page.tsx",
+     "line": 178,
+     "quote": "{mode === \"connected\" && role === \"owner\" && !view?.availability.available && <Link href=\"/settings#setup\" className=\"text-link\">Finish workspace setup"
+    },
+    {
+     "file": "components/kira/ads/dashboard.tsx",
+     "line": 45,
+     "quote": "Michael needs to finish the Facebook Login for Business configuration with <code>ads_read</code> access."
+    },
+    {
+     "file": "app/api/library/[bookId]/route.ts",
+     "line": 17,
+     "quote": "export async function PATCH(request: Request, context: Context) {"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 104,
+     "change": "Replace the hardcoded name with the actual owner identity from the access API, and state why the gate exists and what she can do now: `<p className=\"inline-notice\">This plan is waiting on {ownerEmail ?? \"your workspace owner\"} to review the budget and dates before its tasks go live. You can keep editing it, generate a revision, or work the steps yourself without activating them.</p>`. Longer term this is an owner decision (see findings) but hardcoding one man's first name into a woman's business software is fixable tonight.",
+     "rationale": "A named third party gating her work, with no explanation and no alternative path, reads as permission-seeking in her own house. It is also a correctness bug: the string is wrong for any other workspace."
+    },
+    {
+     "file": "components/kira/access-page.tsx",
+     "line": 120,
+     "change": "Render a read-only members list for non-owners: keep the grant/revoke controls owner-only, but always show `access.owner` and `access.members` with their roles, plus a line reading \"These people can read everything in this workspace, including any manuscript you upload.\"",
+     "rationale": "She is about to upload the most intimate file she owns into a workspace whose membership she is not allowed to see. Visibility is not the same as control and costs nothing to grant."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 129,
+     "change": "Add a \"Remove this manuscript\" control beside Pause/Retry, with a confirm dialog naming exactly what goes (the stored file, its passages, its embeddings, and the extracted knowledge) and what stays (her book record and any desk briefs she already saved). Back it with a DELETE handler on /api/manuscripts/[id] under the same role check as upload.",
+     "rationale": "There is currently no way to take her manuscript back. Ads data can be disconnected and deleted (components/kira/ads/dashboard.tsx:45); her novel cannot. Consent without withdrawal is not consent."
+    },
+    {
+     "file": "components/kira/settings-page.tsx",
+     "line": 119,
+     "change": "Change \"Your workspace owner controls access.\" to name the owner and state her own role and what it allows: \"You are an editor here. {owner} manages who can see this workspace.\" Link to /access.",
+     "rationale": "Passive-voice gating with no named actor and no statement of her own standing is the exact tone that makes a professional feel like a guest."
+    }
+   ]
+  },
+  {
+   "criterion": "safe_to_experiment_undo",
+   "score": 5,
+   "verdict": "The draft-protection work is genuinely careful \u2014 conflict guards, keep-or-replace dialogs, beforeunload, a submission race guard that refuses to erase words typed after a save. But the three things that would actually cost her: an approval is final with no undo window, unfinished drafts live only in memory and die with a backgrounded mobile tab, and a manuscript cannot be removed at all.",
+   "evidence": [
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 54,
+     "quote": "scratchpad: { title: \"\", draft: \"\", ideaId: null as string | null },"
+    },
+    {
+     "file": "components/kira/manual-review-form.tsx",
+     "line": 228,
+     "quote": "? \"Not saved yet \u00b7 Kept while you explore. Save before reloading or signing out.\""
+    },
+    {
+     "file": "lib/agents/approvals.ts",
+     "line": 19,
+     "quote": "throw new Error(\"Only pending requests can be changed\");"
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 184,
+     "quote": "This decision is final: the brief becomes read-only and cannot be reopened or edited."
+    },
+    {
+     "file": "components/kira/getting-started.tsx",
+     "line": 81,
+     "quote": "complete: false,"
+    },
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 252,
+     "quote": "// A completed save must never erase words entered after that submission."
+    },
+    {
+     "file": "components/kira/book-detail.tsx",
+     "line": 216,
+     "quote": "You already have words at your desk. Open that brief as it is, or replace it with a book-details starter for {book.title}. Nothing has been saved or changed yet."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 249,
+     "change": "Persist `scratchpad` (and the studio/learn prompts) to sessionStorage under a key namespaced by viewerEmail, restoring on mount and clearing in `clearPrivateScratchpads`. Wrap every read/write in try/catch. Then change manual-review-form.tsx:228 to \"Not saved yet \u00b7 Kept in this browser tab. Save it to keep it for good.\"",
+     "rationale": "iOS Safari discards backgrounded tabs without firing beforeunload. She writes half a launch brief, takes a call, comes back to an empty form. sessionStorage is per-tab and per-origin, so it does not violate the rule against putting private workspace records in persistent browser storage \u2014 but confirm the scope with the owner before shipping."
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 184,
+     "change": "Either add a short reversal window (an \"Undo this decision\" button on the card for N minutes, implemented as a new pending version rather than mutating the locked record), or \u2014 if immutability is non-negotiable \u2014 say why in the dialog: \"Decisions are kept permanently so your reasoning stays auditable. If you change your mind later, save a new brief; this one stays as the record of what you decided today.\"",
+     "rationale": "Right now a mis-tap on Approve followed by a mis-tap on Confirm is permanent, and the copy explains the mechanism but never the reason. Reversibility or a stated reason \u2014 one of the two."
+    },
+    {
+     "file": "components/kira/getting-started.tsx",
+     "line": 81,
+     "change": "Derive each step's `complete` from state that already exists in the component: step 1 from whether any book detail page has been opened (a localStorage breadcrumb), step 2 from `ideas > 0`, step 3 from `decisions > 0`. The Check icon and `learning-step-complete` class are already wired up at line 127.",
+     "rationale": "A three-item checklist that can never be checked off tells her, every single day, that she has not started. The completion rendering is already built; only the boolean is wrong."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 129,
+     "change": "Add manuscript removal (see agency_control). Until then, at minimum change line 118's \"Add your manuscript once.\" to state the truth: \"Add your manuscript once. Uploading is not yet reversible from here \u2014 ask your workspace owner if you need it removed.\"",
+     "rationale": "Silence about irreversibility on the single most sensitive action in the product is worse than an ugly admission."
+    }
+   ]
+  },
+  {
+   "criterion": "clarity_self_explanation",
+   "score": 5,
+   "verdict": "The provenance vocabulary is taught well \u2014 ContextHelp on four surfaces, a Guide dialog that translates each named place into plain words, \"needs verification\" explained. Then it is undercut by a fixed greeting that is wrong most of the day, an error page that describes the wrong storage mode, raw enum values shown as UI text, and a page that prints a JSON blob at her.",
+   "evidence": [
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 38,
+     "quote": "Good afternoon, <em>Cassandra.</em>"
+    },
+    {
+     "file": "app/error.tsx",
+     "line": 9,
+     "quote": "Your locally saved decisions are still in your browser. Try loading this"
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 78,
+     "quote": "{approval.status}"
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 85,
+     "quote": "Proposed brief <span>VERSION {approval.version + 1}</span>"
+    },
+    {
+     "file": "components/kira/access-page.tsx",
+     "line": 109,
+     "quote": "<p className=\"access-your-role\"><strong>Your role: {access.role}</strong></p>"
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 111,
+     "quote": "<pre className=\"plan-snapshot\">{JSON.stringify({input:r.input_snapshot.input,evidence:r.input_snapshot.evidence,proposal:r.output},null,2)}</pre>"
+    },
+    {
+     "file": "components/kira/settings-page.tsx",
+     "line": 90,
+     "quote": "All external execution is blocked in Phase One."
+    },
+    {
+     "file": "components/kira/workspace-guide.tsx",
+     "line": 13,
+     "quote": "{ name: \"The Universe\", plain: \"Your books\", description: \"Find a title, browse a series, and see what is known about each book.\", href: \"/universe\", icon: BookOpen },"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 38,
+     "change": "Compute the greeting from the server-provided `dateKey` timezone context rather than hardcoding: `Good {hour < 12 ? \"morning\" : hour < 18 ? \"afternoon\" : \"evening\"}, Cassandra.` Note: tests/e2e/workspace.spec.ts pins the exact heading \"Good afternoon, Cassandra.\" and must be updated in the same change (pin the test run to a fixed clock, or assert /Good (morning|afternoon|evening), Cassandra\\./).",
+     "rationale": "She will open this at 9pm. A greeting that is confidently wrong about the time makes every other confident statement on the page feel decorative."
+    },
+    {
+     "file": "app/error.tsx",
+     "line": 9,
+     "change": "Make the copy mode-agnostic: \"Nothing you saved has been lost. Try loading this workspace again.\" The error boundary renders in both modes and cannot read the workspace store.",
+     "rationale": "Telling a connected user her decisions are in her browser is factually wrong at the exact moment she is anxious about losing work."
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 78,
+     "change": "Map the enum to sentence case for display: `{approval.status === \"pending\" ? \"Needs your eye\" : approval.status === \"approved\" ? \"Approved\" : \"Rejected\"}`. Do the same for access-page.tsx:109 (`Your role: Editor`).",
+     "rationale": "Lowercase `pending` / `editor` are database values leaking through the UI. It reads as unfinished, and \"pending\" is vaguer than the language the tabs already use."
+    },
+    {
+     "file": "components/kira/plans-page.tsx",
+     "line": 111,
+     "change": "Replace the raw JSON `<pre>` with a rendered summary (revision number, model, cost, the input title/intent, and a list of evidence labels), and offer the JSON as a download for anyone who wants it.",
+     "rationale": "Dumping a serialized snapshot into the page is debug output shipped to a novelist. It also buries genuinely useful audit information she would want."
+    },
+    {
+     "file": "components/kira/approval-card.tsx",
+     "line": 85,
+     "change": "Change \"Proposed brief VERSION {approval.version + 1}\" to \"Proposed brief \u00b7 Draft {approval.version + 1}\", and reword settings-page.tsx:90 \"All external execution is blocked in Phase One.\" to \"Nothing in this workspace can post, send, or spend. That is not a setting.\"",
+     "rationale": "\"VERSION n+1\" and \"Phase One\" are the builder's roadmap vocabulary. She has no map to read them against."
+    }
+   ]
+  },
+  {
+   "criterion": "tone_dignity",
+   "score": 4,
+   "verdict": "Most of the voice is genuinely good \u2014 spare, adult, unhurried, warm without being soft. Then three things break it badly: a cutesy \"minions\" line in two places, a desk headline that invents a staff of agents that does not exist, and seeded briefs that talk about her in the third person inside her own workspace.",
+   "evidence": [
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 94,
+     "quote": "The minions are working. Go write. \ud83d\udda4"
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 110,
+     "quote": "? \"The minions are working. Go write. \ud83d\udda4\""
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 41,
+     "quote": "They bring the evidence."
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 45,
+     "quote": "<p>Approve, adjust, or teach the team what only you know.</p>"
+    },
+    {
+     "file": "lib/data/seed.ts",
+     "line": 284,
+     "quote": "First confirm audience fit with Cassandra, then verify which books actually fit."
+    },
+    {
+     "file": "lib/data/seed.ts",
+     "line": 179,
+     "quote": "Test the positioning only after Cassandra confirms audience fit and book relevance."
+    },
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 318,
+     "quote": "Next: Cassandra verifies book relevance and audience fit, then selects approved assets."
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 224,
+     "quote": "<small>Human in command</small>"
+    },
+    {
+     "file": "lib/data/inspiration.ts",
+     "line": 23,
+     "quote": "Which published book would you love to put back in a reader\u2019s hands, and what still draws you to it?"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 94,
+     "change": "Replace with \"Nothing needs you right now. Go write.\" and make the same change at components/kira/desk-page.tsx:110. Drop the emoji.",
+     "rationale": "\"Minions\" is a cartoon metaphor for an eleven-book professional's business operations, and it claims invisible workers are busy when nothing is running. It is the only genuinely embarrassing string in the product."
+    },
+    {
+     "file": "components/kira/desk-page.tsx",
+     "line": 41,
+     "change": "Change the h1 to \"The evidence is here. <em>The judgment is yours.</em>\" and line 45 to \"Approve, adjust, or record what only you know.\"",
+     "rationale": "\"They\" and \"the team\" invent a staff. There is one deterministic prioritizer over seeded findings. Naming a phantom team is both condescending and a false status claim."
+    },
+    {
+     "file": "lib/data/seed.ts",
+     "line": 284,
+     "change": "Rewrite the seeded briefs in second person: \"First confirm audience fit yourself, then verify which books actually fit.\" Same at seed.ts:179 (\"\u2026only after you confirm audience fit and book relevance\") and lib/db/demo-store.tsx:318 (\"Next: confirm book relevance and audience fit, then choose approved assets.\"). Unit tests in tests/ pin seed copy \u2014 update them in the same change. Regenerate with `npm run db:seed:generate`.",
+     "rationale": "She is the only reader of these briefs. Being referred to by name in the third person in her own desk is the clearest signal that the copy was written for the builder to demo, not for her to use."
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 224,
+     "change": "Change the profile subtitle from \"Human in command\" to her role in plain words \u2014 \"Editor\" in connected mode, \"Exploring the demo\" in demo mode.",
+     "rationale": "\"Human in command\" is a reassurance slogan aimed at an AI-anxiety objection, not information. It also flatly contradicts plans-page.tsx:104, where she is not in command."
+    }
+   ]
+  },
+  {
+   "criterion": "respect_creative_material",
+   "score": 4,
+   "verdict": "The intent here is the best thing in the codebase \u2014 an explicit permission checkbox before upload, spoilers off by default with a count of what is hidden, every finding clickable back to the exact passage, \"never rewritten\", pausable reading, version history. It fails on three concrete facts: she cannot take the file back, \"private\" is not true in the way she will read it, and she is never told which company's model reads her novel or for how long it is kept.",
+   "evidence": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 119,
+     "quote": "I have permission to upload this manuscript and have Kira\u2019s AI services analyze it privately for book knowledge. This does not approve publishing excerpts."
+    },
+    {
+     "file": "components/kira/connected-library.tsx",
+     "line": 67,
+     "quote": "<span className=\"quiet-note\">Private to your workspace. Your manuscript is never rewritten.</span>"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 29,
+     "quote": "const book = data.book; const canEdit = data.role !== \"viewer\"; const knowledge = data.intelligence;"
+    },
+    {
+     "file": "components/kira/book-knowledge.tsx",
+     "line": 46,
+     "quote": "const [spoilers, setSpoilers] = useState(false), [view, setView] = useState<View>(\"characters\")"
+    },
+    {
+     "file": "components/kira/book-knowledge.tsx",
+     "line": 89,
+     "quote": "{knowledge.facts.filter(i => i.spoiler).length + knowledge.characters.filter(i => i.spoiler).length} findings with potential spoilers are hidden."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 131,
+     "quote": "These are AI-extracted findings for your review. Findings with quotations that cannot be matched exactly to the manuscript are omitted."
+    },
+    {
+     "file": "lib/manuscripts/provider.ts",
+     "line": 24,
+     "quote": "const gateway = createGateway();"
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 138,
+     "quote": "Private reference text from the cited version. This may contain spoilers and is not approved marketing copy."
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 129,
+     "change": "Add a \"Remove this manuscript\" action with a confirmation that itemises what is deleted (file, passages, embeddings, extracted knowledge) and what survives (book record, saved desk briefs), plus a DELETE route at /api/manuscripts/[id] under the same authorization as upload.",
+     "rationale": "She has no way to undo the most personal action the product offers. Ads imports can be disconnected and deleted; her manuscript cannot. That asymmetry is indefensible to her face."
+    },
+    {
+     "file": "components/kira/connected-library.tsx",
+     "line": 67,
+     "change": "Change \"Private to your workspace\" to say who that includes: \"Only people with access to this workspace can read it \u2014 today that is {n} people, listed under Workspace access. It is never public and never used to train a model.\"",
+     "rationale": "Every workspace member, including viewers, can open source passages and search the manuscript (the knowledge and search sections at lines 130-135 are not role-gated). She will read \"private\" as \"only me.\" That gap between her reading and the truth is the trust failure that matters most."
+    },
+    {
+     "file": "components/kira/connected-book-detail.tsx",
+     "line": 119,
+     "change": "Expand the consent line to name the processor and the retention: \"\u2026have it read privately by {provider name} through Kira's AI gateway. Your text is sent for analysis, not used to train anyone's model, and stays in your workspace until you remove it.\" Pull the provider name from the same config that supplies `knowledge.model`.",
+     "rationale": "The checkbox asks her to consent to \"Kira's AI services\" \u2014 a phrase that names no company, no destination and no retention period. Informed consent needs a noun."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1133,
+     "change": "Raise `.quiet-note` from 10px to 13px (and delete the 9px override at line 1746), because the consent checkbox copy, the spoiler-count note and the manuscript disclaimers all render at that size.",
+     "rationale": "Consent text she cannot read on a phone is not consent. This one line change lifts the most important safety copy in the product out of the unreadable band."
+    }
+   ]
+  },
+  {
+   "criterion": "visual_craft_warmth",
+   "score": 5,
+   "verdict": "The aesthetic is real and distinctive \u2014 Cormorant Garamond against Manrope, a wine/olive/gold palette that feels like a hardback rather than a SaaS dashboard, hand-built book covers, the raven illustration, a daily verified literary quote. It is undone by a broken heading on every phone and tablet, a type scale that bottoms out at 5px, no light theme at all, and a home page that is over twelve thousand pixels tall on an iPhone.",
+   "evidence": [
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 72,
+     "quote": "            A few things\n            <br />\n            need <em>your instinct.</em>"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2111,
+     "quote": "  .desk-preview h2 br {\n    display: none;\n  }"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1453,
+     "quote": "  font-size: 5px;"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2334,
+     "quote": "    font-size: 5px;"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 9,
+     "quote": ":root {\n  --background: #121312;"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 1133,
+     "quote": ".quiet-note {\n  color: #a5ae94;\n  font-size: 10px;"
+    },
+    {
+     "file": "components/kira/book-card.tsx",
+     "line": 17,
+     "quote": "<span className=\"cover-top\">THE KIRA STANLEY COLLECTION</span>"
+    },
+    {
+     "file": "components/kira/daily-quote.tsx",
+     "line": 8,
+     "quote": "<span className=\"eyebrow\">A LINE TO ARRIVE WITH</span>"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 72,
+     "change": "Add the missing space so the collapsed form reads correctly: `A few things{\" \"}<br />need <em>your instinct.</em>`",
+     "rationale": "\"A few thingsneed your instinct.\" renders in 30px serif on the home hero card at every width \u22641020px, which is the width Cassy will see it at tomorrow. One character."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 547,
+     "change": "Set a floor on the type scale. Raise `.origin-badge` from 7px to 11px (line 554), `.status-pill` from 7px to 11px (line 1229), `.cover-placeholder` from 5px to 9px (line 1453), and delete the mobile overrides that push `.metric-top .origin-badge` to 5px (line 2334), `.cover-top` to 5px (line 2546) and `.cover-large .cover-placeholder` to 5px (line 2211). Audit the remaining 220 rules under 12px and move the floor to 11px for anything that is not a decorative ornament.",
+     "rationale": "Sub-8px text is not a style choice, it is an unreadable element that happens to occupy space. It is worst on the DEMO badge and the cover-placeholder disclaimer, which is to say it is worst on exactly the copy the honesty system depends on."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 9,
+     "change": "Add a light theme: keep the current tokens under `:root` as the dark default, add a `@media (prefers-color-scheme: light)` block overriding `--background`, `--foreground`, `--card`, `--border`, `--muted-foreground` and the hardcoded hex values in `.quiet-note` and friends, and give `body` an explicit background either way.",
+     "rationale": "There is no light mode anywhere in 3,688 lines of CSS. She reads on a phone half the day, including outdoors. A permanently dark workspace is a comfort decision the product made for her without asking."
+    },
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 135,
+     "change": "Shorten the mobile home page. The rendered demo home is 12,138px tall on a 390pt phone. Collapse `AgentStatus` and the community card into a single \"Behind the scenes\" `<details>` on narrow widths, and cap `InspirationShelf` to the card without the filter row below 760px.",
+     "rationale": "Eight full screen-heights of scrolling to reach the footer means she never sees the bottom half, and the bottom half is where the demo disclaimers live."
+    }
+   ]
+  },
+  {
+   "criterion": "accessibility",
+   "score": 4,
+   "verdict": "There is genuine, deliberate accessibility work here \u2014 a skip link, focus-visible rings, a reduced-motion block, aria-live on every async status, focus returned to the right element after every dialog, 44px inputs on mobile, and the axe checks in the e2e suite pass. But axe cannot measure font size, and the type scale fails WCAG 1.4.4/1.4.12 across hundreds of rules. Two specific defects also block screen-reader users from information sighted users get.",
+   "evidence": [
+    {
+     "file": "app/globals.css",
+     "line": 2689,
+     "quote": "@media (prefers-reduced-motion: reduce) {"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 3678,
+     "quote": "  body input:not([type=\"radio\"]):not([type=\"checkbox\"]), body select { min-height: 44px; }"
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 139,
+     "quote": "aria-label=\"Cassandra\u2019s Desk\""
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 155,
+     "quote": "aria-label={`${count} pending decisions`}"
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 134,
+     "quote": "<small aria-hidden=\"true\">{description}</small>"
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 404,
+     "quote": "<Check size={16} />"
+    },
+    {
+     "file": "app/globals.css",
+     "line": 2334,
+     "quote": "    font-size: 5px;"
+    },
+    {
+     "file": "components/kira/inspiration-shelf.tsx",
+     "line": 49,
+     "quote": "<span className=\"sr-only\" id={keyboardHelpId}>Use the previous and next buttons, or focus this card and press the arrow keys, to browse ideas.</span>"
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 139,
+     "change": "Remove `aria-label=\"Cassandra\u2019s Desk\"` from the desk Link. The label overrides the whole subtree, so the count badge's own aria-label at line 155 is never announced. Let the link compute its name from its content, and change the badge to `<span className=\"count-badge\">{count}<span className=\"sr-only\"> decisions need your eye</span></span>`.",
+     "rationale": "A screen-reader user currently cannot tell that anything is waiting at the desk. The badge author wrote a correct label that the parent silently swallows."
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 134,
+     "change": "Drop `aria-hidden=\"true\"` from the nav `<small>` descriptions (and the matching one at line 166), and remove the now-redundant `aria-label` on each Link so the accessible name becomes \"Mission Control, Your day at a glance\".",
+     "rationale": "\"The Universe\", \"The Raven\", \"The Hunt\" are opaque without their subtitles. Hiding the only plain-language gloss from screen readers hands blind users the harder version of the product."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 554,
+     "change": "Apply the 11px type floor described under visual_craft_warmth, especially `.origin-badge` (554), `.status-pill` (1229), `.quiet-note` (1135), `.cover-placeholder` (1453) and the 5px/6px mobile overrides at 2034, 2211, 2334, 2546.",
+     "rationale": "WCAG 1.4.4 requires text to survive 200% zoom; 5px text zoomed 200% is 10px. Contrast ratios that pass at 16px also stop being meaningful at 5px. This is the single largest accessibility defect in the product and the automated tests cannot see it."
+    },
+    {
+     "file": "components/kira/app-shell.tsx",
+     "line": 404,
+     "change": "Swap the icon by state: `{state.error ? <TriangleAlert size={16} aria-hidden=\"true\" /> : <Check size={16} aria-hidden=\"true\" />}`.",
+     "rationale": "Every error toast currently shows a green-tick checkmark next to the failure text. For anyone scanning by icon rather than reading, the app reports success when it failed."
+    }
+   ]
+  },
+  {
+   "criterion": "trust_honesty",
+   "score": 5,
+   "verdict": "The provenance discipline is the best I have seen in a product like this \u2014 DEMO badges on every synthetic record, \"No live sources were queried\", \"it does not retrain a model\", \"Allowed describes policy permission, not an implemented feature\", per-answer model cost in dollars, evidence drawers with source IDs and retrieval dates. It is then punctured by four false claims in the copy layer and by rendering its own honesty badges at 5-7px.",
+   "evidence": [
+    {
+     "file": "components/kira/login-form.tsx",
+     "line": 56,
+     "quote": "Private access, by invitation. Your workspace owner can help with access or a password reset."
+    },
+    {
+     "file": "components/kira/access-page.tsx",
+     "line": 122,
+     "quote": "This adds permission only. The account must already exist with confirmed email. No invitation or email is sent."
+    },
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 94,
+     "quote": "The minions are working. Go write. \ud83d\udda4"
+    },
+    {
+     "file": "components/kira/agent-status.tsx",
+     "line": 18,
+     "quote": "<span className=\"eyebrow\">YOUR BUSINESS TEAM</span>"
+    },
+    {
+     "file": "components/kira/agent-status.tsx",
+     "line": 50,
+     "quote": "Specialists are foundations, not running agents. Raven synthesizes"
+    },
+    {
+     "file": "app/error.tsx",
+     "line": 9,
+     "quote": "Your locally saved decisions are still in your browser."
+    },
+    {
+     "file": "components/kira/settings-page.tsx",
+     "line": 88,
+     "quote": "Allowed describes policy permission, not an implemented feature."
+    },
+    {
+     "file": "components/kira/studio-page.tsx",
+     "line": 203,
+     "quote": "<span>Saved privately \u00b7 {generation.model}{generation.estimated_cost_usd !== null ? ` \u00b7 Estimated model cost $${generation.estimated_cost_usd.toFixed(5)}` : \" \u00b7 Model cost unavailable\"}</span>"
+    },
+    {
+     "file": "lib/db/demo-store.tsx",
+     "line": 355,
+     "quote": "\"Demo briefing refreshed from 3 seeded findings. No live sources were queried.\","
+    }
+   ],
+   "must_fix_to_reach_8": [
+    {
+     "file": "components/kira/login-form.tsx",
+     "line": 56,
+     "change": "Change \"Private access, by invitation.\" to \"Private access. Your workspace owner adds accounts by hand \u2014 no invitations are sent.\"",
+     "rationale": "The product's own access page states no invitation is ever sent. The login page promises an invitation flow that does not exist, on the very first screen she reads."
+    },
+    {
+     "file": "components/kira/mission-control.tsx",
+     "line": 94,
+     "change": "Replace both minions strings (here and desk-page.tsx:110) with \"Nothing needs you right now. Go write.\" and change desk-page.tsx:41 from \"They bring the evidence.\" to \"The evidence is here.\"",
+     "rationale": "Both strings assert that autonomous workers are active. Nothing is running. AGENTS.md forbids fabricated agent status, and these are the two clearest violations in the UI."
+    },
+    {
+     "file": "components/kira/agent-status.tsx",
+     "line": 18,
+     "change": "Change the eyebrow from \"YOUR BUSINESS TEAM\" to \"PLANNED SPECIALISTS \u00b7 NOT RUNNING\", and change the per-agent `agent-state` pills from bare status enums (WAITING / IDLE) to \"Demo only\" / \"Not built yet\". The honest disclaimer at line 50 should not be the smallest text on the card.",
+     "rationale": "Six named specialists with live-looking status pills read as a running crew. The disclaimer at the bottom is correct but is rendered as an afterthought below six things that contradict it."
+    },
+    {
+     "file": "app/globals.css",
+     "line": 554,
+     "change": "Raise `.origin-badge` to 11px and delete the 5px mobile override at line 2334, so the DEMO badge is legible everywhere it appears.",
+     "rationale": "The DEMO badge is the load-bearing honesty mechanism of the entire demo mode. Rendering it at 5px on the metric cards means the six most impressive numbers on her home screen look real. tests/e2e/workspace.spec.ts asserts six DEMO badges exist in the \"Demo metrics\" region \u2014 it asserts presence, not legibility, and will stay green."
+    },
+    {
+     "file": "components/kira/getting-started.tsx",
+     "line": 81,
+     "change": "Derive step completion from real state instead of hardcoding `complete: false` at lines 81, 89 and 97.",
+     "rationale": "A progress indicator wired to a constant is a fake status display, in the same family as the fake agent statuses the project rules prohibit."
+    }
+   ]
+  }
+ ],
+ "top_findings": [
+  {
+   "priority": 1,
+   "title": "Her own marketing plan needs Michael's approval, and the UI says so by name",
+   "file": "components/kira/plans-page.tsx",
+   "line": 104,
+   "problem": "Cassy is an Editor. When she builds a marketing plan for her own books, it lands in \"Needs owner review\" (line 14) and the page tells her \"Michael can review this plan and activate its tasks.\" The approve/activate controls are owner-only (line 103). This is the central Bumble-lens failure: the workspace carries her pen name in the sidebar, addresses her by name on every page, and then requires a man's sign-off to switch on her own 30/60/90 calendar. The name is also hardcoded, so it is wrong for any other deployment.",
+   "proposed_change": "Tonight: replace the hardcoded name with the owner identity from the access API and explain the gate and her options \u2014 \"This plan is waiting on {owner} to review its budget and dates before the tasks go live. You can keep editing it, generate a revision, or work the steps yourself without activating them.\" Then the owner decides the real question: either make Cassy the workspace Owner before the demo (one row change, and the honest answer given whose business this is), or keep the review gate but scope it to what it is actually for \u2014 spend and dated commitments \u2014 and let her activate zero-budget plans herself.",
+   "fixable_in_code": true,
+   "owner_decision_needed": "Whether Cassy should be Owner rather than Editor, and if not, whether the review gate applies to all plans or only to ones with a budget. The wording of the gate is code; who holds the gate is Michael's call and should be made before she sees this tomorrow."
+  },
+  {
+   "priority": 2,
+   "title": "She cannot take her manuscript back",
+   "file": "components/kira/connected-book-detail.tsx",
+   "line": 129,
+   "problem": "There is no delete path for a manuscript anywhere in the product. app/api/library/[bookId]/route.ts exposes only GET and PATCH; app/api/manuscripts/* has upload, process, reading and source, and no DELETE handler exists outside the connections routes. She uploads the most intimate file she owns, an AI gateway reads it (lib/manuscripts/provider.ts:24), passages and embeddings and extracted knowledge are persisted, and the only controls offered are pause, resume and retry. Meanwhile the ads surface offers \"Disconnect & delete imported reports\" (components/kira/ads/dashboard.tsx:45). Facebook spend data can be withdrawn; her novel cannot.",
+   "proposed_change": "Add a DELETE route at /api/manuscripts/[id] under the same role and tenant checks as upload, cascading to chunks, embeddings and book_intelligence, and surface a \"Remove this manuscript\" button in the library-actions row beside Pause/Retry. The confirm dialog should itemise what goes (the stored file, its passages, its embeddings, everything Kira extracted) and what stays (the book record, and any desk brief she already saved that quotes it). If it cannot ship tonight, change line 118 from \"Add your manuscript once.\" to say plainly that uploading is not yet reversible from this screen.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 3,
+   "title": "\"Private to your workspace\" is not what she will hear, and every viewer can read her manuscript",
+   "file": "components/kira/connected-library.tsx",
+   "line": 67,
+   "problem": "The manuscript card says \"Private to your workspace. Your manuscript is never rewritten.\" She will read \"private\" as \"only me.\" In fact every workspace member can read it: in connected-book-detail.tsx, `canEdit` (line 29) gates only upload and metadata editing \u2014 the knowledge section (line 130), the source-passage dialog (line 138) and the spoiler-gated manuscript search (line 135) are not role-gated, so a Viewer can pull up verbatim excerpts. And she cannot even see the member list, because access-page.tsx:120 renders it for owners only. The consent checkbox she ticks (connected-book-detail.tsx:119) also names no AI provider and no retention period, just \"Kira's AI services\".",
+   "proposed_change": "Three changes, all code. (a) Rewrite line 67: \"Only people with access to this workspace can read it \u2014 today that is {n} people, listed under Workspace access. It is never public, and it is never used to train a model.\" (b) Show `access.owner` and `access.members` read-only to non-owners in access-page.tsx, keeping grant/revoke owner-only. (c) Expand the consent line to name the processor and retention, sourcing the provider name from the same config that produces `knowledge.model`.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 4,
+   "title": "The type scale bottoms out at 5px, and the DEMO badge is the victim",
+   "file": "app/globals.css",
+   "line": 2334,
+   "problem": "220 CSS rules set a font-size under 12px. The worst are load-bearing honesty and consent copy: `.origin-badge` (the DEMO marker) is 7px at line 554 and 5px inside metric cards on mobile at line 2334; `.cover-placeholder` (\"CATALOG PLACEHOLDER \u00b7 NOT OFFICIAL COVER\") is 5px at line 1453; `.status-pill` is 7px at line 1229; `.quiet-note` \u2014 which carries the consent explanations, the spoiler counts, the \"nothing is published or sent\" reassurances and every viewer-role note \u2014 is 10px at line 1135 and 9px at line 1746. On her phone, the six impressive numbers on the home screen carry a 5px DEMO badge, which is to say they look real. This is simultaneously the biggest accessibility defect (WCAG 1.4.4, 1.4.12) and the biggest honesty defect, because the honesty system is implemented entirely in the unreadable band.",
+   "proposed_change": "Set an 11px floor for any text that is not purely ornamental, and 13px for `.quiet-note`. Specifically: 554 \u2192 11px, 1229 \u2192 11px, 1135 \u2192 13px, delete 1746, 1453 \u2192 9px, and delete the mobile overrides at 2034, 2211, 2334 and 2546. Then re-check the six-badge assertion in tests/e2e/workspace.spec.ts (it asserts presence in the \"Demo metrics\" region, not size, so it will stay green) and re-run the axe checks for the new layout.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 5,
+   "title": "\"A few thingsneed your instinct.\" on the home hero, at every phone and tablet width",
+   "file": "components/kira/mission-control.tsx",
+   "line": 72,
+   "problem": "The heading is authored as `A few things<br />need <em>your instinct.</em>`. At \u22641020px, app/globals.css:2111 sets `.desk-preview h2 br { display: none; }`, and JSX strips the whitespace around the newline, so the words collide: \"A few thingsneed your instinct.\" It renders in 30px Cormorant on the second card of the connected and demo home pages. Confirmed in the captured mobile-home screenshot.",
+   "proposed_change": "`A few things{\" \"}<br />need <em>your instinct.</em>` \u2014 one character. Then grep the other `<br />`-in-heading patterns (desk-page.tsx:42, universe-catalog.tsx:56, settings-page.tsx:50, studio-page.tsx:177, learn-page.tsx:141, connections-page.tsx:89) for the same collapse risk under their own media queries.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 6,
+   "title": "\"The minions are working\" and \"They bring the evidence\" invent a staff that does not exist",
+   "file": "components/kira/mission-control.tsx",
+   "line": 94,
+   "problem": "Three strings assert autonomous activity. mission-control.tsx:94 and desk-page.tsx:110 both say \"The minions are working. Go write. \ud83d\udda4\" when her desk is clear. desk-page.tsx:41-45 heads her decision page with \"They bring the evidence. You bring the instinct.\" and \"teach the team what only you know.\" agent-status.tsx:18 labels six specialists \"YOUR BUSINESS TEAM\" with live-looking WAITING/IDLE pills, undercut by a disclaimer in the smallest text on the card. Nothing is running. This violates the project's own rule against fabricated agent status, and \"minions\" is a cartoon metaphor aimed at a professional with eleven books out.",
+   "proposed_change": "mission-control.tsx:94 and desk-page.tsx:110 \u2192 \"Nothing needs you right now. Go write.\" (no emoji). desk-page.tsx:41 \u2192 \"The evidence is here.\"; line 45 \u2192 \"Approve, adjust, or record what only you know.\" agent-status.tsx:18 \u2192 \"PLANNED SPECIALISTS \u00b7 NOT RUNNING\", and change the status pills from WAITING/IDLE to \"Demo only\" / \"Not built yet\". None of these strings are pinned by tests/e2e/workspace.spec.ts or experience.spec.ts.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 7,
+   "title": "Her unfinished drafts live only in memory and will not survive her phone",
+   "file": "lib/db/demo-store.tsx",
+   "line": 54,
+   "problem": "`scratchpad`, `learnScratchpad` and `studioScratchpad` are re-created fresh on every mount and never persisted; only committed workspace records reach localStorage. The protections built around this are careful \u2014 a beforeunload guard (line 471), a sign-out confirmation dialog (app-shell.tsx:420), keep-or-replace prompts, and honest labels like \"Not saved yet \u00b7 Kept while you explore. Save before reloading or signing out.\" But beforeunload does not fire when iOS Safari discards a backgrounded tab, and Cassy is on her phone half the day. She will lose a half-written launch brief and the app will have warned her in 10px text.",
+   "proposed_change": "Persist the scratchpads to sessionStorage under a key namespaced by `viewerEmail`, restore on mount, clear in `clearPrivateScratchpads`, and wrap every access in try/catch so blocked storage degrades to today's behaviour. sessionStorage is per-tab and dies with it, so no private workspace record outlives the session \u2014 but confirm the scope against rule 12 before shipping. Then soften manual-review-form.tsx:228 to \"Not saved yet \u00b7 Kept in this browser tab. Save it to keep it for good.\"",
+   "fixable_in_code": true,
+   "owner_decision_needed": "Whether per-tab sessionStorage for unsaved private drafts is acceptable under the rule that private workspace state must not live in browser storage. The code change is trivial; the policy call is Michael's."
+  },
+  {
+   "priority": 8,
+   "title": "A getting-started checklist that can never be completed",
+   "file": "components/kira/getting-started.tsx",
+   "line": 81,
+   "problem": "The three onboarding steps each hardcode `complete: false` (lines 81, 89, 97). The completion rendering is fully built \u2014 a Check icon, a `learning-step-complete` class and an sr-only \"Complete:\" prefix at line 127 \u2014 and can never fire. The component already computes `ideas` and `decisions` counts at lines 73-74 and uses them for the status text, so the real signal is sitting right there unused. Every visit tells her she has not started.",
+   "proposed_change": "Step 2 `complete: ideas > 0`, step 3 `complete: decisions > 0`, and step 1 from a lightweight localStorage breadcrumb set when a book detail page opens (the file already owns a localStorage preference helper). Not pinned by any e2e test.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 9,
+   "title": "Error toast shows a green checkmark; error page describes the wrong storage mode",
+   "file": "components/kira/app-shell.tsx",
+   "line": 404,
+   "problem": "The toast renders `<Check size={16} />` unconditionally, including when `state.error` is set and `role=\"alert\"` fires \u2014 so every failure message is preceded by a success tick. Separately, app/error.tsx:9 tells the user \"Your locally saved decisions are still in your browser,\" which is false in connected mode where everything lives in Supabase; the boundary renders in both modes and cannot read the store.",
+   "proposed_change": "app-shell.tsx:404 \u2192 `{state.error ? <TriangleAlert size={16} aria-hidden=\"true\" /> : <Check size={16} aria-hidden=\"true\" />}`. app/error.tsx:9 \u2192 \"Nothing you saved has been lost. Try loading this workspace again.\"",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 10,
+   "title": "Seeded briefs talk about her in the third person, in her own desk",
+   "file": "lib/data/seed.ts",
+   "line": 284,
+   "problem": "The demo briefs she will read tomorrow are written about her: \"First confirm audience fit with Cassandra\" (seed.ts:284), \"Test the positioning only after Cassandra confirms audience fit\" (seed.ts:179), \"Next: Cassandra verifies book relevance and audience fit\" (demo-store.tsx:318), \"Cassandra's verification\" (book-detail.tsx:205), \"Cassandra's audience guidance\" (app/[module]/page.tsx:17). She is the only reader of these. It is the clearest tell that the copy was written for a stakeholder demo rather than for the woman using it.",
+   "proposed_change": "Rewrite in second person: \"First confirm audience fit yourself, then verify which books actually fit\"; \"\u2026only after you confirm audience fit and book relevance\"; \"Next: confirm book relevance and audience fit, then choose approved assets\"; \"your verification\"; \"Your audience guidance\". Unit tests in tests/ pin seed copy, and regeneration needs `npm run db:seed:generate`; do both in one change.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 11,
+   "title": "Raw enums, internal version numbers and a JSON dump reach the UI",
+   "file": "components/kira/plans-page.tsx",
+   "line": 111,
+   "problem": "plans-page.tsx:111 renders `JSON.stringify(...)` inside a `<pre>` for every saved generation. approval-card.tsx:78 prints the bare status enum (`pending`, lowercase). approval-card.tsx:85 shows \"VERSION {version + 1}\". access-page.tsx:109 prints \"Your role: editor\". settings-page.tsx:90 says \"blocked in Phase One\". ads/dashboard.tsx:45 shows her the literal token `ads_read`. These are the seams where the builder's mental model shows through.",
+   "proposed_change": "Replace the JSON block with a rendered summary (revision, model, cost, intent, evidence labels) plus a download link for the raw snapshot. Map status and role enums to sentence-case display strings. \"VERSION n+1\" \u2192 \"Draft n+1\". \"blocked in Phase One\" \u2192 \"Nothing in this workspace can post, send, or spend. That is not a setting.\" Replace `ads_read` with \"read-only access to your ad results\".",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 12,
+   "title": "\"Private access, by invitation\" promises a flow that does not exist",
+   "file": "components/kira/login-form.tsx",
+   "line": 56,
+   "problem": "The login page's closing line says access is \"by invitation.\" The access page says the opposite twice \u2014 \"This adds permission only... No invitation or email is sent\" (access-page.tsx:122) and \"Access saved. No invitation or email was sent\" (line 84) \u2014 and the project rules forbid sending any auth email. The first sentence Cassy reads about how she got here is untrue.",
+   "proposed_change": "\"Private access. Your workspace owner adds accounts by hand \u2014 no invitations are sent.\" Not pinned by any test.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 13,
+   "title": "Screen readers never hear the pending-decision count, or the nav descriptions",
+   "file": "components/kira/app-shell.tsx",
+   "line": 139,
+   "problem": "The desk nav Link carries `aria-label=\"Cassandra's Desk\"`, which overrides its entire subtree \u2014 so the count badge's own `aria-label={count} pending decisions` at line 155 is silently discarded and never announced. Separately, every nav item's explanatory `<small>` is `aria-hidden=\"true\"` (lines 134 and 166), so screen-reader users get \"The Universe\", \"The Raven\", \"The Hunt\" with no gloss, while sighted users get \"Your books\", \"Evidence & recommendations to review\", and so on. The axe checks pass because neither is a rule violation \u2014 they are correct-by-the-letter choices that hand blind users the harder product.",
+   "proposed_change": "Remove the `aria-label` from each nav Link so the name computes from content; drop `aria-hidden` from the descriptions; change the badge to `{count}<span className=\"sr-only\"> decisions need your eye</span>`. tests/e2e/workspace.spec.ts locates nav items by accessible name \u2014 re-run and update the selectors in the same change.",
+   "fixable_in_code": true
+  },
+  {
+   "priority": 14,
+   "title": "No light theme exists, and \"Good afternoon\" is a constant",
+   "file": "app/globals.css",
+   "line": 9,
+   "problem": "3,688 lines of CSS contain no `prefers-color-scheme` block and no theme attribute \u2014 the workspace is dark, permanently, with no toggle. And mission-control.tsx:38 hardcodes \"Good afternoon, Cassandra.\" with no clock anywhere in the codebase (the only matches for `getHours`/`morning`/`evening` are zero). She will open it at 9pm.",
+   "proposed_change": "Add a `@media (prefers-color-scheme: light)` override for the `:root` tokens plus the hardcoded hex values in `.quiet-note` and its neighbours, and give `body` an explicit background in both. For the greeting, derive morning/afternoon/evening from the server-supplied `dateKey` timezone. tests/e2e/workspace.spec.ts pins the literal heading \"Good afternoon, Cassandra.\" \u2014 update it to a fixed-clock fixture or a /Good (morning|afternoon|evening), Cassandra\\./ pattern in the same change.",
+   "fixable_in_code": true,
+   "owner_decision_needed": "Whether a light theme ships before the demo or after. The dark aesthetic is a deliberate brand choice and a light variant needs a real design pass, not just token inversion \u2014 worth asking Cassy directly which she prefers rather than guessing."
+  }
+ ],
+ "what_works": [
+  "The manuscript consent model. connected-book-detail.tsx:119 requires an explicit checkbox naming both the permission and its limit (\"This does not approve publishing excerpts\") and refuses the upload without it (line 81). Spoilers default to off in both the knowledge workbench (book-knowledge.tsx:46) and the manuscript search (connected-book-detail.tsx:27), and the hidden count is shown so she knows what she is not seeing (book-knowledge.tsx:89). Do not weaken any of this.",
+  "Traceability from every finding back to her own words. Each extracted fact and character carries a \"Read supporting passage\" button (connected-book-detail.tsx:108) that opens the verbatim source, and the framing at line 131 is honest about what a matched quotation does and does not prove. book-knowledge.tsx separates \"Manuscript-supported \u00b7 unreviewed\" from \"Interpretation \u00b7 verify with source\" on every item (line 102).",
+  "Background reading that respects her time and her connection. Pause, resume and retry are all first-class (connected-book-detail.tsx:129), progress is persisted per passage, \"you can leave this screen or close the tab\" is stated plainly (line 126), and failure modes are explained in terms of what is safe rather than error codes (line 125, 128).",
+  "The draft-protection choreography throughout. Every place where an action could overwrite unfinished words asks first and states that nothing has changed yet: the idea-shelf prefill (manual-review-form.tsx:139-157), the book-details starter (book-detail.tsx:216-221), the Michael starter in the workshop (learn-page.tsx:158), the new-question reset in Studio (studio-page.tsx:206), and sign-out (app-shell.tsx:420-427). The guard at demo-store.tsx:252 that refuses to clear a scratchpad if she typed more after submitting is the kind of detail almost nobody builds.",
+  "Provenance as a first-class visual system. The DemoBadge / origin-badge component tags every synthetic record, the evidence drawer shows source, type, retrieval date and source ID with a link to the original (evidence-drawer.tsx:42-70), the demo refresh notice says \"No live sources were queried\" (demo-store.tsx:355), and the creative-firewall panel explicitly warns that \"Allowed describes policy permission, not an implemented feature\" (settings-page.tsx:88). Keep every one of these strings.",
+  "Cost and model transparency in Ask Raven. studio-page.tsx:203 shows the model name and estimated dollar cost per answer, line 188 states the daily cap and that there are no automatic retries, and line 185 tells her exactly what leaves her workspace (\"Only this question is sent to the AI provider\"). The Plans surface does the same at plans-page.tsx:92.",
+  "Version-conflict handling on decisions. approval-card.tsx:41 detects that a brief changed while the dialog was open and blocks the save with a plain-language explanation at line 210, and the store reconciles rather than guessing (demo-store.tsx:218-229). This is the kind of correctness that stops a shared workspace from quietly losing someone's work.",
+  "The role-degradation messaging. Every write surface has a specific, non-punitive viewer-access note that distinguishes \"you have viewer access\" from \"we could not check your permissions\" and always reassures her that her unfinished work survives (manual-review-form.tsx:130, approval-card.tsx:143, learn-page.tsx:188, book-detail.tsx:138, demo-store.tsx:129). The WorkspacePermissionNotice with a retry and focus restoration (workspace-permission-notice.tsx) is a genuinely good pattern.",
+  "The inspiration and lesson content. lib/data/inspiration.ts is written as real editorial questions for a working author \u2014 \"Which published book would you love to put back in a reader's hands?\" \u2014 with a first step, a structured brief template, and no fabricated claims about reader behaviour. The daily quote is verified against Gutenberg with a dated verification field, an excerpt flag, and in-book context (inspiration.ts:126-164). lib/data/agent-recipes.ts bakes the creative firewall and the source-checking discipline directly into every generated prompt (agent-recipes.ts:99-101).",
+  "The typography and palette. Cormorant Garamond against Manrope, the wine/olive/gold accents, the hand-built book covers with their own ornament and placeholder disclaimer, the raven illustration. It reads like a hardback rather than a dashboard, which is exactly right for this person. Fix the sizes; do not touch the taste.",
+  "Focus management after async work. Errors, notices and dialogs consistently move focus somewhere useful and return it to the trigger afterward \u2014 approval-card.tsx:167-175, access-page.tsx:149-155, desk-page.tsx:21-31, getting-started.tsx:65,70, learn-page.tsx:91. Combined with the skip link, the reduced-motion block (globals.css:2689) and the 44px mobile input floor (globals.css:3678), there is a real accessibility foundation here to build the type-size fix on top of."
+ ]
+}

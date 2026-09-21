@@ -80,7 +80,7 @@ test("decisions explain finality, cancel safely, and write only after explicit c
   await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(dialog).toHaveCount(0);
   expect(decisions).toHaveLength(0);
-  await expect(card).toContainText("pending");
+  await expect(card).toContainText("Waiting for you");
   await card.getByRole("button", { name: "Reject", exact: true }).click();
   dialog = page.getByRole("dialog", { name: "Reject this brief?" });
   await expect(dialog).toContainText(brief.title);
@@ -109,7 +109,7 @@ test("a failed confirmation stays open and can retry without changing the pendin
   await dialog.getByRole("button", { name: "Confirm approval", exact: true }).click();
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("alert")).toContainText("has not been confirmed");
-  await expect(card).toContainText("pending");
+  await expect(card).toContainText("Waiting for you");
   await dialog.getByRole("button", { name: "Confirm approval", exact: true }).click();
   await expect(dialog).toHaveCount(0);
   await page.getByRole("tab", { name: /Reviewed/ }).click();
@@ -129,7 +129,7 @@ test("confirmation keeps its original version and refuses a brief changed by ano
   await expect(dialog.getByRole("button", { name: "Confirm approval", exact: true })).toBeDisabled();
   await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(card.locator("pre")).toContainText("different editor added");
-  await expect(card).toContainText("pending");
+  await expect(card).toContainText("Waiting for you");
   await card.getByRole("button", { name: "Approve", exact: true }).click();
   await dialog.getByRole("button", { name: "Confirm approval", exact: true }).click();
   await expect(dialog).toHaveCount(0);

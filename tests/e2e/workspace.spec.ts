@@ -8,7 +8,7 @@ test("Mission Control shows honest data and sourced evidence", async ({
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Good afternoon, Cassandra." }),
+    page.getByRole("heading", { name: /Good (morning|afternoon|evening), Cassandra\./ }),
   ).toBeVisible();
   await expect(
     page
@@ -73,7 +73,8 @@ test("prepare → edit → teach → approve survives a reload", async ({ page }
   await expect(card).toContainText("Readers must fit our audience");
   await card.getByRole("button", { name: "Approve", exact: true }).click();
   await page.getByRole("button", { name: "Confirm approval", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText(
+  // The desk also carries a role="status" character counter, so target the toast live region.
+  await expect(page.locator('[role="status"].toast-region')).toContainText(
     "Nothing has been published or sent",
   );
   await page.reload();

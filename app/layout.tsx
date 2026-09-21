@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { AppShell } from "@/components/kira/app-shell";
 import { WorkspaceProvider } from "@/lib/db/demo-store";
 import { LibraryProvider } from "@/components/kira/library-provider";
@@ -16,7 +17,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: { default: "Mission Control · KIRA OS", template: "%s · KIRA OS" },
   description:
-    "Let Kira write. The agents run the business. A private author workspace.",
+    "Let Kira write. A private workspace for the business around the books.",
   robots: { index: false, follow: false },
 };
 export default async function RootLayout({
@@ -74,14 +75,16 @@ export default async function RootLayout({
           <span className="eyebrow">KIRA OS</span>
           <h1>Your workspace needs a moment.</h1>
           <p>
-            We could not load your saved decisions. Check the Supabase
-            connection and migrations, then reload.
+            We couldn’t open your saved workspace. Nothing has been lost. Try
+            again, or ask the workspace owner to check the connection.
           </p>
           <Link className="text-link" href="/">
             Try again
           </Link>
           <form method="post" action="/auth/logout">
-            <button type="submit">Sign out</button>
+            <Button type="submit" variant="outline">
+              Sign out
+            </Button>
           </form>
         </section>
       </main>

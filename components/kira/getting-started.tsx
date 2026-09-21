@@ -32,6 +32,26 @@ function changePreference(dismissed: boolean) {
   window.dispatchEvent(new Event(preferenceEvent));
 }
 
+// A breadcrumb written by the book detail page. It records only that a book was
+// opened in this browser; no workspace content is stored here.
+const visitedBookKey = "kira-os:visited-book:v1";
+
+function readVisitedBook() {
+  try {
+    return window.localStorage.getItem(visitedBookKey) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function subscribeVisitedBook(notify: () => void) {
+  const storageChanged = (event: StorageEvent) => {
+    if (event.key === visitedBookKey || event.key === null) notify();
+  };
+  window.addEventListener("storage", storageChanged);
+  return () => window.removeEventListener("storage", storageChanged);
+}
+
 function subscribePreference(notify: () => void) {
   const storageChanged = (event: StorageEvent) => {
     if (event.key === preferenceKey || event.key === null) {
@@ -58,6 +78,7 @@ export function GettingStarted() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const reopenRef = useRef<HTMLButtonElement>(null);
   const dismissed = useSyncExternalStore(subscribePreference, readPreference, () => false);
+  const visitedBook = useSyncExternalStore(subscribeVisitedBook, readVisitedBook, () => false);
   if (mode !== "connected") return null;
 
   function hideSteps() {
@@ -78,15 +99,15 @@ export function GettingStarted() {
       description: "Open a title and find its details and sources.",
       href: "/universe",
       link: "Open your books",
-      complete: false,
-      status: "A good place to begin",
+      complete: visitedBook,
+      status: visitedBook ? "You’ve opened a book" : "A good place to begin",
     },
     {
       title: canEdit ? "Add to your shared desk" : "Explore the shared desk",
       description: canEdit ? "Give a business idea a title and a few lines at your desk." : "Read saved business briefs and the evidence behind them.",
       href: "/desk",
       link: !canEdit ? "Read the briefs" : ideas ? "Open your ideas" : "Add an idea",
-      complete: false,
+      complete: ready && ideas > 0,
       status: ready && ideas > 0 ? `${ideas} shared ${ideas === 1 ? "brief is" : "briefs are"} already here` : "Ready when you are",
     },
     {
@@ -94,7 +115,7 @@ export function GettingStarted() {
       description: canEdit ? "Read a brief, adjust it if needed, then approve or reject it." : "Build and download your own assistant blueprint. Saving workspace changes needs editor access.",
       href: canEdit ? "/desk" : "/learn",
       link: !canEdit ? "Learn & Create" : decisions ? "Open your decisions" : "Visit your desk",
-      complete: false,
+      complete: canEdit && ready && decisions > 0,
       status: !canEdit ? "Your own thinking space" : ready && decisions > 0 ? `${decisions} shared ${decisions === 1 ? "decision" : "decisions"} recorded` : "Your judgment leads the way",
     },
   ];
@@ -117,7 +138,7 @@ export function GettingStarted() {
           <h2 id={headingId} ref={headingRef} tabIndex={-1}>Start with one small thing.</h2>
           <p>Explore at your own pace. Counts include starter briefs and work saved by everyone in this workspace.</p>
         </div>
-        <Button type="button" variant="ghost" size="sm" onClick={hideSteps} aria-label="Hide getting started">
+        <Button type="button" variant="ghost" size="sm" onClick={hideSteps}>
           <X size={14} aria-hidden="true" /><span>Hide for now</span>
         </Button>
       </div>

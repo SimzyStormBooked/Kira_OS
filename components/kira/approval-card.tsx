@@ -19,13 +19,18 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useWorkspace } from "@/lib/db/demo-store";
+import { keptEditFor, useWorkspace } from "@/lib/db/demo-store";
 import type { ApprovalRequest } from "@/types/domain";
 import { DemoBadge } from "./origin-badge";
 import { EvidenceDrawer } from "./evidence-drawer";
+import "./desk.css";
+const statusLabels: Record<ApprovalRequest["status"], string> = {
+  pending: "Waiting for you",
+  approved: "Approved",
+  rejected: "Rejected",
+};
 export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
   const [modal, setModal] = useState<"edit" | "teach" | "approve" | "reject" | null>(null);
-  const [draft, setDraft] = useState("");
   const [editVersion, setEditVersion] = useState(approval.version);
   const [lesson, setLesson] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
@@ -33,8 +38,12 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
   const submitLock = useRef(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const decisionTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const { ready, feedback, mode, busy, canEdit, roleError } = useWorkspace();
-  const { decideApproval, showError, teachRaven } = useWorkspace();
+  const { ready, feedback, mode, busy, canEdit, roleError, editDrafts } = useWorkspace();
+  const { decideApproval, showError, teachRaven, setEditDraft, clearEditDrafts } = useWorkspace();
+  // Her rewrite lives in the workspace store, keyed to the draft she edited, so closing the
+  // dialog, reloading the tab or signing out can never quietly replace it with the stored brief.
+  const [keptEdit, unsavedEdit, keptVersion] = keptEditFor(editDrafts, approval);
+  const draft = keptEdit ?? approval.draft;
   const lessons = feedback.filter((f) => f.approval_request_id === approval.id);
   const isDecision = modal === "approve" || modal === "reject";
   const pending = busy || saving;
@@ -55,6 +64,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
         ? await teachRaven(approval.id, lesson)
         : await decideApproval(approval.id, modal === "edit" ? { type: "edit", draft } : { type: modal }, editVersion);
       if (saved) {
+        if (modal !== "teach") clearEditDrafts(approval.id);
         setModal(null);
         setLesson("");
       } else setFormError("Could not save. Your decision has not been confirmed. Check the workspace notice and try again.");
@@ -75,14 +85,14 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
         </span>
         <DemoBadge origin={approval.data_origin} />
         <span className={`status-pill status-${approval.status}`}>
-          {approval.status}
+          {statusLabels[approval.status]}
         </span>
       </div>
       <h2 id={`brief-${approval.id}`} tabIndex={-1}>{approval.title}</h2>
       <p>{approval.description}</p>
       <details className="approval-draft" open>
         <summary>
-          Proposed brief <span>VERSION {approval.version + 1}</span>
+          Proposed brief <span>· Draft {approval.version + 1}</span>
         </summary>
         <pre>{approval.draft}</pre>
       </details>
@@ -98,7 +108,6 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
               disabled={!ready || pending || !canEdit}
               onClick={() => {
                 decisionTriggerRef.current = null;
-                setDraft(approval.draft);
                 setEditVersion(approval.version);
                 setFormError(null);
                 setModal("edit");
@@ -139,7 +148,28 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
         </Button>
         <EvidenceDrawer evidence={approval.evidence} label="Evidence" />
       </div>
-      {approval.status === "pending" && <p className="quiet-note">Approve or reject records a final decision. Review and edit the brief first; you will confirm before it is locked.</p>}
+      {approval.status === "pending" && <p className="approval-finality">Approving or rejecting is final: the brief becomes read-only. You can still add a lesson.</p>}
+      {unsavedEdit !== null && approval.status === "pending" && (
+        <p className="approval-unsaved">
+          <span>
+            You have unsaved edits to this brief, kept in this tab until you save them.
+            {keptVersion !== approval.version && ` You wrote them against Draft ${keptVersion + 1}; this brief is now Draft ${approval.version + 1}.`}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!ready || pending || !canEdit}
+            onClick={() => {
+              decisionTriggerRef.current = null;
+              setEditVersion(approval.version);
+              setFormError(null);
+              setModal("edit");
+            }}
+          >
+            Continue editing
+          </Button>
+        </p>
+      )}
       {!canEdit && <p className="quiet-note">{roleError ? "Decisions and lessons are paused until your permissions can be checked. You can still read this brief and its evidence." : "Viewer access · You can read this brief and its evidence. An owner or editor can record decisions and lessons."}</p>}
       {lessons.length > 0 && (
         <div className="saved-lessons">
@@ -150,7 +180,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
             <p key={l.id}>
               “{l.feedback}”
               <small>
-                Human feedback · {l.created_at.slice(0, 10)} ·{" "}
+                Your note · {l.created_at.slice(0, 10)} ·{" "}
                 {mode === "demo" ? "Stored locally" : "Saved to workspace"}
               </small>
             </p>
@@ -178,7 +208,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
             <DialogTitle className="serif text-3xl">
               {isDecision ? modal === "approve" ? "Approve this brief?" : "Reject this brief?" : modal === "edit"
                 ? "Make it yours."
-                : "Instinct is intelligence."}
+                : "What did the numbers miss?"}
             </DialogTitle>
             <DialogDescription>
               {isDecision ? `You are about to ${modal} “${approval.title}”. This decision is final: the brief becomes read-only and cannot be reopened or edited. You can still add a lesson. Nothing will be published, sent, purchased, or changed outside this workspace.` : modal === "edit"
@@ -202,7 +232,7 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
             maxLength={modal === "edit" ? 10000 : 4000}
             onChange={(e) =>
               modal === "edit"
-                ? setDraft(e.target.value)
+                ? setEditDraft(approval.id, approval.version, e.target.value === approval.draft ? null : e.target.value)
                 : setLesson(e.target.value)
             }
             placeholder="Those readers aren’t my audience. Here’s what matters…"

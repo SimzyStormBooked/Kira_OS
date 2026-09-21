@@ -1,0 +1,76 @@
+.desk-access-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted-foreground);
+}
+.desk-access-note .text-link {
+  display: inline;
+}
+.approval-finality {
+  margin-top: 18px;
+  font-size: 13px;
+  line-height: 1.75;
+  color: #b7bda6;
+}
+.approval-unsaved {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  background: #1f2119;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #e2dcc9;
+}
+.approval-card .approval-draft summary span {
+  float: none;
+  font-size: inherit;
+  color: var(--muted-foreground);
+}
+.session-ended-drafts {
+  display: grid;
+  gap: 18px;
+  max-height: min(52vh, 460px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.session-ended-draft {
+  display: grid;
+  gap: 8px;
+}
+.session-ended-draft-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.session-ended-draft label {
+  font-size: 13px;
+  color: #ded8cf;
+}
+.session-ended-draft textarea {
+  font-size: 13px;
+  line-height: 1.7;
+}
+.session-ended-status {
+  margin: 0;
+  min-height: 20px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+@media (max-width: 760px) {
+  .session-ended-drafts {
+    max-height: 46vh;
+  }
+}
+/* "Waiting for you" is longer than the old one-word status; let the row wrap on narrow screens. */
+.approval-card .approval-heading {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}

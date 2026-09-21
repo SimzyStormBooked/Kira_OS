@@ -1,5 +1,6 @@
 "use client";
-import { studioRequestSignature } from "@/lib/ai/studio-contract";
+import { z } from "zod";
+import { studioJobs, studioRequestSignature } from "@/lib/ai/studio-contract";
 import {
   createContext,
   useContext,
@@ -9,7 +10,7 @@ import {
 } from "react";
 import type { AgentRecommendation, ApprovalRequest } from "@/types/domain";
 import type { WorkspaceRole } from "@/lib/auth/workspace-role";
-import { agentRecipes, starterForRecipe, type AgentBlueprint, type AgentBlueprintInput, type AgentRecipeId } from "@/lib/data/agent-recipes";
+import { agentRecipeIds, agentRecipes, starterForRecipe, type AgentBlueprint, type AgentBlueprintInput, type AgentRecipeId } from "@/lib/data/agent-recipes";
 import type { StudioJob } from "@/lib/ai/studio-contract";
 import {
   createFeedback,
@@ -49,6 +50,72 @@ export interface StudioScratchpad {
   submittedId: string | null;
   pendingRequestId: string | null;
 }
+const recipeIdSchema = z.enum(agentRecipeIds);
+const blueprintDraftSchema = z.object({ name: z.string().max(80), goal: z.string().max(1000), context: z.string().max(3000), success: z.string().max(1000) });
+const blueprintPreviewSchema = z.object({ title: z.string().max(400), prompt: z.string().max(20000), brief: z.string().max(20000), signature: z.string().max(40000) });
+/** Unfinished words she has not saved. Kept per tab so a reload cannot take them, never sent anywhere. */
+const privateDraftsSchema = z.object({
+  scratchpad: z.object({ title: z.string().max(200), draft: z.string().max(10000), ideaId: z.string().max(120).nullable() }),
+  learnScratchpad: z.object({
+    recipeId: recipeIdSchema,
+    drafts: z.partialRecord(recipeIdSchema, blueprintDraftSchema),
+    previews: z.partialRecord(recipeIdSchema, blueprintPreviewSchema),
+    savedSignatures: z.partialRecord(recipeIdSchema, z.string().max(40000)),
+    downloadedSignatures: z.partialRecord(recipeIdSchema, z.string().max(40000)),
+  }),
+  studioScratchpad: z.object({
+    bookIds: z.array(z.uuid()).max(4), includeSpoilers: z.boolean(), job: z.enum(studioJobs), prompt: z.string().max(6000),
+    savedSignature: z.string().max(40000).nullable(),
+    requestIdentity: z.object({ signature: z.string().max(40000), id: z.uuid() }).nullable(),
+    submittedId: z.uuid().nullable(), pendingRequestId: z.uuid().nullable(),
+  }),
+  editDrafts: z.record(z.string().max(120), z.string().max(10000)),
+});
+const draftsStorageKey = (mode: Mode, viewerEmail: string | null) => `kira-os:drafts:v1:${mode}:${viewerEmail ?? "demo"}`;
+function restoreDrafts(key: string): PrivateScratchpads {
+  const fresh = freshPrivateScratchpads();
+  try {
+    const raw = typeof sessionStorage === "undefined" ? null : sessionStorage.getItem(key);
+    if (!raw) return fresh;
+    const stored = privateDraftsSchema.parse(JSON.parse(raw));
+    return {
+      scratchpad: stored.scratchpad,
+      learnScratchpad: { ...stored.learnScratchpad, drafts: { ...fresh.learnScratchpad.drafts, ...stored.learnScratchpad.drafts } },
+      studioScratchpad: stored.studioScratchpad,
+      editDrafts: stored.editDrafts,
+    };
+  } catch {
+    // Unreadable drafts are dropped quietly; nothing she saved lives here.
+    return fresh;
+  }
+}
+function persistDrafts(key: string, snapshot: Snapshot) {
+  try {
+    if (typeof sessionStorage === "undefined") return;
+    sessionStorage.setItem(key, JSON.stringify({
+      scratchpad: snapshot.scratchpad, learnScratchpad: snapshot.learnScratchpad,
+      studioScratchpad: snapshot.studioScratchpad, editDrafts: snapshot.editDrafts,
+    }));
+  } catch {
+    // Per-tab storage is a convenience; the in-memory draft is still hers.
+  }
+}
+function forgetDrafts(key: string) {
+  try {
+    if (typeof sessionStorage !== "undefined") sessionStorage.removeItem(key);
+  } catch {
+    // Nothing to do; the scratchpads are cleared in memory either way.
+  }
+}
+function downloadFile(contents: string, filename: string) {
+  const url = URL.createObjectURL(new Blob([contents], { type: "application/json" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+type PrivateScratchpads = ReturnType<typeof freshPrivateScratchpads>;
 function freshPrivateScratchpads() {
   return {
     scratchpad: { title: "", draft: "", ideaId: null as string | null },
@@ -58,7 +125,21 @@ function freshPrivateScratchpads() {
       previews: {}, savedSignatures: {}, downloadedSignatures: {},
     } satisfies LearnScratchpad,
     studioScratchpad: { bookIds: [], includeSpoilers: false, job: "brainstorm" as StudioJob, prompt: "", savedSignature: null, requestIdentity: null, submittedId: null, pendingRequestId: null } as StudioScratchpad,
+    editDrafts: {} as Record<string, string>,
   };
+}
+export function editDraftKey(id: string, version: number) {
+  return `${id}:${version}`;
+}
+/** Her unsaved rewrite of one brief: the text she typed, and the draft number she typed it against. */
+export function keptEditFor(
+  editDrafts: Record<string, string>,
+  approval: { id: string; version: number; draft: string },
+): [text: string | null, unsaved: string | null, version: number] {
+  const own = Object.entries(editDrafts).find(([key]) => key.startsWith(`${approval.id}:`));
+  if (!own) return [null, null, approval.version];
+  const [key, text] = own;
+  return [text, text.trim() === approval.draft.trim() ? null : text, Number(key.slice(approval.id.length + 1))];
 }
 function hasPrivateDrafts(snapshot: Snapshot) {
   const { scratchpad, learnScratchpad, studioScratchpad } = snapshot;
@@ -68,7 +149,9 @@ function hasPrivateDrafts(snapshot: Snapshot) {
     return JSON.stringify(input) !== JSON.stringify(starterForRecipe(recipe)) && learnScratchpad.savedSignatures[recipe.id] !== signature && learnScratchpad.downloadedSignatures[recipe.id] !== signature;
   });
   const questionSignature = studioRequestSignature(studioScratchpad);
-  return Boolean(scratchpad.title.trim() || scratchpad.draft.trim() || changedRecipe || (studioScratchpad.prompt.trim() && studioScratchpad.savedSignature !== questionSignature));
+  // An edited brief counts while her text still differs from the brief as it stands now.
+  const editedBrief = snapshot.approvals.some((approval) => keptEditFor(snapshot.editDrafts, approval)[1] !== null);
+  return Boolean(scratchpad.title.trim() || scratchpad.draft.trim() || changedRecipe || editedBrief || (studioScratchpad.prompt.trim() && studioScratchpad.savedSignature !== questionSignature));
 }
 type Snapshot = WorkspaceState & {
   ready: boolean;
@@ -83,6 +166,9 @@ type Snapshot = WorkspaceState & {
   scratchpad: { title: string; draft: string; ideaId: string | null };
   learnScratchpad: LearnScratchpad;
   studioScratchpad: StudioScratchpad;
+  editDrafts: Record<string, string>;
+  sessionEnded: boolean;
+  corruptWorkspace: string | null;
 };
 function createStore(
   mode: Mode,
@@ -103,11 +189,16 @@ function createStore(
     busy: false,
     notice: null,
     error: null,
+    sessionEnded: false,
+    corruptWorkspace: null,
   };
-  let snapshot = server;
+  const draftsKey = draftsStorageKey(mode, viewerEmail);
+  let snapshot: Snapshot = { ...server, ...restoreDrafts(draftsKey) };
   const listeners = new Set<() => void>();
   const update = (patch: Partial<Snapshot>) => {
     snapshot = { ...snapshot, ...patch };
+    if ("scratchpad" in patch || "learnScratchpad" in patch || "studioScratchpad" in patch || "editDrafts" in patch)
+      persistDrafts(draftsKey, snapshot);
     listeners.forEach((fn) => fn());
   };
   const showError = (error: unknown) =>
@@ -119,6 +210,8 @@ function createStore(
           : "Could not save. Please try again.",
     });
   const saveLocal = (next: WorkspaceState) => {
+    if (snapshot.corruptWorkspace !== null)
+      throw new Error("This browser still holds a demo workspace this version cannot read. Download it or start a fresh demo workspace first.");
     const parsed = workspaceSchema.parse(next);
     localStorage.setItem(storageKey, JSON.stringify(parsed));
     return parsed;
@@ -129,16 +222,27 @@ function createStore(
       roleError: "We could not confirm your workspace permissions. Saving is paused; your unfinished notes are still here.",
     });
   };
+  /** Unfinished words are never thrown away by a background session loss; she decides when they go. */
+  const endSession = () => {
+    if (hasPrivateDrafts(snapshot)) {
+      update({ sessionEnded: true, ready: false, busy: false });
+      return true;
+    }
+    update({
+      ...emptyWorkspace(),
+      ...freshPrivateScratchpads(),
+      ready: false,
+      role: "viewer", canEdit: false, roleError: null,
+    });
+    forgetDrafts(draftsKey);
+    window.location.replace("/login");
+    return false;
+  };
   const readResponse = async (response: Response, isRefresh = false) => {
     if (response.status === 401 || (isRefresh && response.status === 403)) {
-      update({
-        ...emptyWorkspace(),
-        ...freshPrivateScratchpads(),
-        ready: false,
-        role: "viewer", canEdit: false, roleError: null,
-      });
-      window.location.replace("/login");
-      throw new Error("Your workspace session ended. Please sign in again.");
+      throw new Error(endSession()
+        ? "Your workspace session ended. Your unfinished notes are in the dialog; copy anything you want to keep."
+        : "Your workspace session ended. Please sign in again.");
     }
     const data = await response.json();
     if (!response.ok) {
@@ -155,21 +259,26 @@ function createStore(
     return workspace;
   };
   async function refresh() {
-    if (snapshot.busy) return;
+    // A session already known to be over must not keep retrying behind her dialog.
+    if (snapshot.busy || snapshot.sessionEnded) return;
     if (mode === "demo") {
+      let raw: string | null = null;
       try {
-        const raw = localStorage.getItem(storageKey);
+        raw = localStorage.getItem(storageKey);
+      } catch {
+        update({ ...freshWorkspace(), ready: true });
+        showError(new Error("This browser blocks local storage, so the demo cannot keep your changes. Nothing you saved elsewhere is affected."));
+        return;
+      }
+      try {
         update({
           ...(raw ? parseWorkspace(raw) : freshWorkspace()),
           ready: true,
+          corruptWorkspace: null,
         });
       } catch {
-        showError(
-          new Error(
-            "Browser storage is unavailable or contains an incompatible workspace. Export any existing data before resetting.",
-          ),
-        );
-        update({ ready: true });
+        // Her old file is kept exactly as it is until she chooses what to do with it.
+        update({ ...freshWorkspace(), ready: true, corruptWorkspace: raw });
       }
     } else {
       update({ busy: true });
@@ -235,8 +344,33 @@ function createStore(
   }
   const actions = {
     showError,
+    endSession,
     hasUnsavedPrivateDrafts: () => hasPrivateDrafts(snapshot),
-    clearPrivateScratchpads: () => update(freshPrivateScratchpads()),
+    clearPrivateScratchpads: () => {
+      update(freshPrivateScratchpads());
+      forgetDrafts(draftsKey);
+    },
+    leaveEndedSession: () => {
+      update({ ...freshPrivateScratchpads(), sessionEnded: false });
+      forgetDrafts(draftsKey);
+      window.location.replace("/login");
+    },
+    // One kept rewrite per brief: a newer draft number replaces the older entry rather than orphaning it.
+    setEditDraft: (id: string, version: number, draft: string | null) => {
+      const next = Object.fromEntries(Object.entries(snapshot.editDrafts).filter(([key]) => !key.startsWith(`${id}:`)));
+      if (draft !== null) next[editDraftKey(id, version)] = draft;
+      update({ editDrafts: next });
+    },
+    clearEditDrafts: (id: string) =>
+      update({ editDrafts: Object.fromEntries(Object.entries(snapshot.editDrafts).filter(([key]) => !key.startsWith(`${id}:`))) }),
+    downloadCorruptWorkspace: () => {
+      if (snapshot.corruptWorkspace !== null) downloadFile(snapshot.corruptWorkspace, "kira-os-unreadable-workspace.json");
+    },
+    startFreshDemoWorkspace: () => {
+      if (mode !== "demo") throw new Error("Private workspaces cannot be reset here.");
+      update({ corruptWorkspace: null });
+      update({ ...saveLocal(freshWorkspace()), notice: "A fresh demo workspace is ready in this browser." });
+    },
     updateLearnScratchpad: (change: (previous: LearnScratchpad) => LearnScratchpad) => update({ learnScratchpad: change(snapshot.learnScratchpad) }),
     updateStudioScratchpad: (patch: Partial<StudioScratchpad>) => update({ studioScratchpad: { ...snapshot.studioScratchpad, ...patch } }),
     markStudioQuestionSaved: (id: string, signature: string) => {
@@ -315,7 +449,7 @@ function createStore(
             type: "campaign",
             title: rec.title,
             description: rec.description,
-            draft: `DEMO CAMPAIGN BRIEF\n\nObjective: ${rec.objective}\n\nDirection: ${rec.description}\n\nWhy: ${rec.reason}\n\nNext: Cassandra verifies book relevance and audience fit, then selects approved assets. This brief authorizes no external action.`,
+            draft: `DEMO CAMPAIGN BRIEF\n\nObjective: ${rec.objective}\n\nDirection: ${rec.description}\n\nWhy: ${rec.reason}\n\nNext: confirm book relevance and audience fit yourself, then choose approved assets. This brief authorizes no external action.`,
             status: "pending",
             evidence: rec.evidence,
             created_at: now,
@@ -407,21 +541,11 @@ function createStore(
           ? "Your brief is saved in this browser at Cassandra’s Desk."
           : "Your brief is saved at Cassandra’s Desk.",
       ),
-    exportWorkspace: () => {
-      const blob = new Blob(
-        [JSON.stringify(workspaceSchema.parse(snapshot), null, 2)],
-        { type: "application/json" },
-      );
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download =
-        mode === "demo"
-          ? "kira-os-demo-workspace.json"
-          : "kira-os-workspace.json";
-      link.click();
-      URL.revokeObjectURL(url);
-    },
+    exportWorkspace: () =>
+      downloadFile(
+        JSON.stringify(workspaceSchema.parse(snapshot), null, 2),
+        mode === "demo" ? "kira-os-demo-workspace.json" : "kira-os-workspace.json",
+      ),
   };
   return {
     actions,

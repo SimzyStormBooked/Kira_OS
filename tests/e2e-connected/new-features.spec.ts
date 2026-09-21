@@ -10,6 +10,15 @@ async function login(page: Page, email: string) {
   await page.getByRole("button", { name: "Enter your workspace" }).click();
   await expect(page.locator(".app-shell")).toBeVisible();
 }
+/**
+ * React streams part of this page into a hidden holding element before moving it
+ * into place, so a page-wide locator can briefly match two copies. Wait for the
+ * holding element to be gone before asserting.
+ */
+async function openAccess(page: Page) {
+  await page.goto("/access");
+  await expect.poll(() => page.locator('body > div[id^="S:"]').count()).toBe(0);
+}
 test.beforeEach(async ({ page, request }) => {
   expect((await request.post(`${fixture.supabaseUrl}/__test/reset`)).ok()).toBe(true);
   await login(page, fixture.memberEmail);
@@ -28,17 +37,17 @@ test("learning builds a local blueprint, preserves recipe notes, and saves only 
   await lesson.locator("summary").press("Enter");
   await expect(lesson).toHaveAttribute("open", "");
   const name = page.getByLabel("Give your idea a name", { exact: true });
-  await name.fill("A launch thinking partner for Michael");
+  await name.fill("A launch thinking partner for my backlist");
   await page.getByLabel("What should it help you do?", { exact: true }).fill("Compare practical ways to support one approved book launch.");
   await page.getByRole("radio", { name: /^Reader listening partner/ }).check();
   await expect(name).toHaveValue("My reader listening partner");
   await page.getByRole("radio", { name: /^Business brainstorm partner/ }).check();
-  await expect(name).toHaveValue("A launch thinking partner for Michael");
-  await page.getByRole("button", { name: "Start an idea for Michael", exact: true }).click();
+  await expect(name).toHaveValue("A launch thinking partner for my backlist");
+  await page.getByRole("button", { name: "Start an idea to share", exact: true }).click();
   const replacement = page.getByRole("region", { name: "Keep your workshop notes" });
   await expect(replacement).toBeVisible();
   await replacement.getByRole("button", { name: "Keep my notes", exact: true }).click();
-  await expect(name).toHaveValue("A launch thinking partner for Michael");
+  await expect(name).toHaveValue("A launch thinking partner for my backlist");
   await page.getByRole("button", { name: "Build my blueprint", exact: true }).click();
   const prompt = page.getByLabel("Prompt to copy or adapt", { exact: true });
   await expect(prompt).toBeFocused();
@@ -56,7 +65,7 @@ test("learning builds a local blueprint, preserves recipe notes, and saves only 
   expect(writes).toHaveLength(1);
   expect(new URL(writes[0]).pathname).toBe("/api/workspace");
   await deskLink.click();
-  await expect(page.getByRole("heading", { name: "A launch thinking partner for Michael · Agent blueprint", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "A launch thinking partner for my backlist · Agent blueprint", exact: true })).toBeVisible();
   await page.reload();
   await expect(page.locator(".approval-card")).toContainText("AGENT BLUEPRINT · MANUAL PLANNING DOCUMENT");
 });
@@ -66,8 +75,8 @@ test("owner grants, changes and revokes access while viewer controls stay read-o
     const response = await fetch("/api/workspace", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "create", title: "A shared brief for collaborator review", draft: "This saved idea is available for authorized collaborators to read." }) });
     if (!response.ok) throw new Error("Could not create simulated collaboration brief");
   });
-  await page.goto("/access");
-  await expect(page.getByText("Your role: owner", { exact: true })).toBeVisible();
+  await openAccess(page);
+  await expect(page.locator("#main-content").getByText("Your role: Owner", { exact: true })).toBeVisible();
   await expect(page.getByText(/A shared link alone does not grant access/)).toBeVisible();
   await page.getByLabel("Their account email", { exact: true }).fill(fixture.outsiderEmail);
   await expect(page.getByLabel("Permission", { exact: true })).toHaveValue("viewer");
@@ -84,8 +93,8 @@ test("owner grants, changes and revokes access while viewer controls stay read-o
   try {
     const collaborator = await collaboratorContext.newPage();
     await login(collaborator, fixture.outsiderEmail);
-    await collaborator.goto("/access");
-    await expect(collaborator.getByText("Your role: viewer", { exact: true })).toBeVisible();
+    await openAccess(collaborator);
+    await expect(collaborator.locator("#main-content").getByText("Your role: Viewer", { exact: true })).toBeVisible();
     await expect(collaborator.getByRole("button", { name: "Grant access", exact: true })).toHaveCount(0);
     await expect(collaborator.getByText(fixture.memberEmail, { exact: true })).toHaveCount(0);
     expect(await collaborator.evaluate(async () => (await fetch("/api/access", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "grant", email: "unauthorized@example.test", role: "editor" }) })).status)).toBe(403);
@@ -123,6 +132,12 @@ test("owner grants, changes and revokes access while viewer controls stay read-o
     await expect(member).toHaveCount(0);
     await expect(page.getByText("Workspace access removed. Their saved work is retained.", { exact: true })).toBeFocused();
     await collaborator.evaluate(() => window.dispatchEvent(new Event("focus")));
+    // Losing access never throws away unfinished words: the words are handed back
+    // first, and she decides when to leave for the sign-in page.
+    const ended = collaborator.getByRole("dialog", { name: "Your session ended" });
+    await expect(ended).toBeVisible();
+    await expect(ended).toContainText("A draft preserved through role changes");
+    await ended.getByRole("button", { name: "Sign in again", exact: true }).click();
     await expect(collaborator).toHaveURL(/\/login$/);
     const state = await page.evaluate(async () => (await fetch("/api/workspace")).json());
     expect(state.approvals).toHaveLength(1);
@@ -133,7 +148,7 @@ test("the password form clears credentials after a successful simulated response
   await page.goto("/settings");
   await page.getByRole("navigation", { name: "Settings sections" }).getByRole("link", { name: "Your password", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Your password", exact: true })).toBeInViewport();
-  await page.getByRole("button", { name: "Open workspace guide", exact: true }).click();
+  await page.getByRole("button", { name: "Guide", exact: true }).click();
   const guide = page.getByRole("dialog", { name: "Make yourself at home.", exact: true });
   await expect(guide.getByRole("link", { name: /^Briefings/ })).toBeVisible();
   expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);

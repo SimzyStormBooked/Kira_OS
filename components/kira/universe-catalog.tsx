@@ -19,15 +19,15 @@ export function UniverseCard() {
       <div>
         <span className="eyebrow">ONE AUTHOR. A WORLD OF POSSIBILITIES.</span>
         <h2>{universe.name}</h2>
-        <p>Eight sourced titles. Open a book to review its source or prepare approved details.</p>
+        <p>{books.length} sourced titles. Open a book to review its source or prepare approved details.</p>
       </div>
       <div className="universe-counts">
         <div>
-          <strong>08</strong>
+          <strong>{books.length}</strong>
           <span>Catalog titles</span>
         </div>
         <div>
-          <strong>03</strong>
+          <strong>{series.length}</strong>
           <span>Series / collections</span>
         </div>
       </div>
@@ -66,13 +66,13 @@ function DemoUniverseCatalog() {
       <ContextHelp kind="universe" />
       <UniverseCard />
       <div className="catalog-toolbar">
-        <div className="catalog-filters" aria-label="Filter by series">
+        <div className="catalog-filters" role="group" aria-label="Filter by series">
           <Button
             variant={filter === "all" ? "secondary" : "ghost"}
             onClick={() => setFilter("all")}
             aria-pressed={filter === "all"}
           >
-            All titles <span>8</span>
+            All titles <span>{books.length}</span>
           </Button>
           {series.map((s) => (
             <Button
