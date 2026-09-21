@@ -9,6 +9,7 @@ import {
   Check,
   ChevronDown,
   Command,
+  Copy,
   Feather,
   FileCheck2,
   FolderOpen,
@@ -46,6 +47,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useWorkspace } from "@/lib/db/demo-store";
 import { books } from "@/lib/data/seed";
 import { useLibrary } from "./library-provider";
@@ -54,6 +56,7 @@ import { WorkspaceGuide } from "./workspace-guide";
 import { InspirationDialogTrigger } from "./inspiration-shelf";
 import { WorkspacePermissionNotice } from "./workspace-permission-notice";
 import { SessionEndedDialog } from "./session-ended-dialog";
+import { useKeptDrafts, type KeptDraft } from "./kept-drafts";
 import "./shell.css";
 
 const navigation = [
@@ -146,7 +149,8 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
       <div className="workspace-label">
         <span className="workspace-avatar">KS</span>
         <span>
-          Kira Stanley<small>Cassandra’s author workspace</small>
+          Kira Stanley
+          <small>Your pen name · Cassandra’s workspace</small>
         </span>
       </div>
       <div className="nav-label">YOUR WORKSPACE</div>
@@ -258,8 +262,12 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
       <div className="user-profile">
         <span className="user-avatar">C</span>
         <span>
-          {mode === "connected" ? viewerEmail : "Cassandra"}
-          <small>{mode === "connected" ? roleLabels[role] : "Exploring the demo"}</small>
+          Cassandra
+          <small>
+            {mode === "connected"
+              ? `${roleLabels[role]}${viewerEmail ? ` · ${viewerEmail}` : ""}`
+              : "Exploring the demo"}
+          </small>
         </span>
         <ShieldCheck size={16} />
       </div>
@@ -280,16 +288,32 @@ export function AppShell({
   const [signingOut, setSigningOut] = useState(false);
   const [logoutConfirmation, setLogoutConfirmation] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [copiedDraft, setCopiedDraft] = useState<string | null>(null);
   const logoutLock = useRef(false);
   const signOutButtonRef = useRef<HTMLButtonElement>(null);
   const keepWorkingRef = useRef<HTMLButtonElement>(null);
   const state = useWorkspace();
   const library = useLibrary();
+  const keptDrafts = useKeptDrafts();
+  async function copyKept(label: string, text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedDraft(label);
+    } catch {
+      setCopiedDraft(null);
+      state.showError(
+        new Error(
+          "This browser blocked copying. Select the text in the box and copy it yourself.",
+        ),
+      );
+    }
+  }
   function signOut(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (logoutLock.current) return;
     setLogoutError(null);
     if (state.hasUnsavedPrivateDrafts()) {
+      setCopiedDraft(null);
       setLogoutConfirmation(true);
       return;
     }
@@ -473,8 +497,56 @@ export function AppShell({
           onCloseAutoFocus={(event) => { event.preventDefault(); signOutButtonRef.current?.focus(); }}>
           <DialogHeader>
             <DialogTitle>Sign out with unfinished work?</DialogTitle>
-            <DialogDescription>You have unsaved work in this browser session. Signing out discards unfinished desk briefs, workshop notes, and questions. Your saved workspace records stay available.</DialogDescription>
+            <DialogDescription>You have unsaved work in this browser session. Signing out discards it, so copy anything you want to keep first. Your saved workspace records stay available.</DialogDescription>
           </DialogHeader>
+          {keptDrafts.length > 0 && (
+            <div className="signout-drafts">
+              {keptDrafts.length > 1 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="signout-copy-all"
+                  onClick={() =>
+                    void copyKept(
+                      "everything below",
+                      keptDrafts
+                        .map((draft: KeptDraft) => `${draft.label}\n\n${draft.text}`)
+                        .join("\n\n---\n\n"),
+                    )
+                  }
+                >
+                  <Copy size={14} aria-hidden="true" />
+                  Copy all
+                </Button>
+              )}
+              {keptDrafts.map((draft: KeptDraft) => (
+                <div className="signout-draft" key={draft.id}>
+                  <div className="signout-draft-top">
+                    <label htmlFor={`signout-${draft.id}`}>{draft.label}</label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void copyKept(draft.label, draft.text)}
+                    >
+                      <Copy size={14} aria-hidden="true" />
+                      Copy
+                    </Button>
+                  </div>
+                  <Textarea
+                    id={`signout-${draft.id}`}
+                    readOnly
+                    rows={draft.text.length > 400 ? 6 : 3}
+                    value={draft.text}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="signout-copy-status" role="status">
+            {copiedDraft ? `Copied to your clipboard: ${copiedDraft}` : ""}
+          </p>
           {logoutError && <p className="form-error" role="alert">{logoutError}</p>}
           <DialogFooter>
             <Button ref={keepWorkingRef} type="button" disabled={signingOut} onClick={() => setLogoutConfirmation(false)}>Keep working</Button>

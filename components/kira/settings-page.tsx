@@ -158,6 +158,10 @@ export function SettingsPage({ canChoosePasswordAfterLink = false }: { canChoose
                 </Button>
               )}
             </div>
+            <p className="quiet-note">
+              This file is a copy for your records. It cannot be loaded back
+              into KIRA OS.
+            </p>
           </Card>
         </div>
       </div>

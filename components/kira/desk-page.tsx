@@ -36,7 +36,7 @@ export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: strin
       <div className="page-heading">
         <div>
           <span className="eyebrow page-kicker">
-            YOUR DECISIONS / CASSANDRA’S DESK
+            Your decisions / Cassandra’s Desk
           </span>
           <h1>
             The evidence is here.{" "}
@@ -79,7 +79,12 @@ export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: strin
         </p>
       )}
       <ManualReviewForm ideaId={ideaId} />
-      {briefId && ready && !selectedBrief && <p role="status" className="quiet-note">That brief is not available in your workspace. You can search your saved briefs or browse the desk below.</p>}
+      {/* The live region is always in the DOM so a later message is announced, not silently inserted. */}
+      <p role="status" className="quiet-note desk-status">
+        {briefId && ready && !selectedBrief
+          ? "That brief is not available in your workspace. You can search your saved briefs or browse the desk below."
+          : ""}
+      </p>
       <div className="desk-layout">
         <section>
           <Tabs value={tab} onValueChange={(value) => {
@@ -104,7 +109,7 @@ export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: strin
                 <TabsContent value={panel} key={panel} {...(panel === "reviewed" ? { "aria-labelledby": "desk-reviewed-tab" } : {})}>
                   <div className="approval-list">
                     {items.map((a) => (
-                      <div key={a.id}><ApprovalCard approval={a} />{mode === "connected" && <Link className="text-link" href={`/plans?request=${a.id}`}>Turn this idea into a marketing plan <span aria-hidden="true">→</span></Link>}</div>
+                      <div key={a.id}><ApprovalCard approval={a} />{mode === "connected" && <Link className="text-link" href={`/plans?request=${a.id}`}>Turn this idea into a marketing plan<span className="sr-only">: {a.title}</span> <span aria-hidden="true">→</span></Link>}</div>
                     ))}
                     {items.length === 0 && (
                       <div className="empty-state">
@@ -132,7 +137,7 @@ export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: strin
         <aside className="desk-memory">
           <Card className="memory-card">
             <Lightbulb size={24} strokeWidth={1.2} />
-            <span className="eyebrow">WHAT YOU’VE TAUGHT RAVEN</span>
+            <span className="eyebrow">What you’ve taught Raven</span>
             <h2>
               Teach the Raven.
               <br />
@@ -140,8 +145,8 @@ export function DeskPage({ ideaId, briefId }: { ideaId?: string; briefId?: strin
             </h2>
             <p>“That performed well, but those readers aren’t my audience.”</p>
             <p className="muted">
-              The nuance belongs here. Every saved lesson stays attached to its
-              original recommendation.
+              Your reasoning belongs here. Every saved lesson stays attached to
+              its original recommendation.
             </p>
             <div className="memory-count">
               <strong>{feedback.length}</strong>

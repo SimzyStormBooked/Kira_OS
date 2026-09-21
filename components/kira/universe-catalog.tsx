@@ -60,7 +60,7 @@ function DemoUniverseCatalog() {
         </div>
         <span className="heading-note">
           <ShieldCheck size={17} />
-          Titles sourced from the author’s site
+          Titles sourced from your author site
         </span>
       </div>
       <ContextHelp kind="universe" />
@@ -125,7 +125,7 @@ function DemoUniverseCatalog() {
       )}
       <div className="catalog-footnote">
         This is a starter catalog, not a complete bibliography. “Universe”
-        organizes the author’s work; it does not assert that separate series
+        organizes your work; it does not assert that separate series
         share a fictional world.
       </div>
     </>

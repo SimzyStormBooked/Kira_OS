@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { connectionInputSchema, connectionLinkSchema, connectionPlatforms, platformLabels, type ConnectionLink, type ConnectionPlatform } from "@/lib/connections/schema";
 import type { MetaView } from "@/lib/connections/meta-schema";
 
@@ -24,9 +25,15 @@ export function ConnectionsPage({ initialLinks, canEdit, mode, loadError, metaVi
   const [meta, setMeta] = useState<MetaView>(metaView ?? { configured: false, isOwner: false, connection: null });
   const [metaBusy, setMetaBusy] = useState(false);
   const [metaStatus, setMetaStatus] = useState("");
+  const [removingLink, setRemovingLink] = useState<ConnectionLink | null>(null);
+  const [disconnecting, setDisconnecting] = useState(false);
   const metaRequest = useRef(false);
   const activeRequest = useRef(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
+  const linkHeadingRef = useRef<HTMLHeadingElement>(null);
+  const keepLinkRef = useRef<HTMLButtonElement>(null);
+  const keepMetaRef = useRef<HTMLButtonElement>(null);
+  const removedLink = useRef(false);
   async function change(method: "POST" | "DELETE", body: unknown) {
     if (activeRequest.current || !canEdit) return false;
     activeRequest.current = true;
@@ -93,11 +100,11 @@ export function ConnectionsPage({ initialLinks, canEdit, mode, loadError, metaVi
     {mode === "demo" && <p className="quiet-note">Demo preview · Sign in to a connected workspace to save your own links.</p>}
     <div className="connections-grid">
       <Card className="connections-card">
-        <div className="section-heading"><h2>Your link library</h2><span className="connection-status status-pill">LINK ONLY · NOT SYNCED</span></div>
+        <div className="section-heading"><h2 ref={linkHeadingRef} tabIndex={-1}>Your link library</h2><span className="connection-status status-pill">LINK ONLY · NOT SYNCED</span></div>
         <p>Saving a link creates a shortcut. It does not verify ownership, authorize KIRA, or import account data. Links are visible to your workspace members.</p>
         {links.length > 0 ? <ul className="connection-link-list">{links.map(link => <li key={link.id} className="connection-link-row">
           <div><span className="eyebrow">{platformLabels[link.platform]}</span><a href={link.url} target="_blank" rel="noopener noreferrer" className="text-link">{link.label}<ExternalLink size={14} aria-hidden="true" /><span className="sr-only"> (opens in a new tab)</span></a><span className="quiet-note">Link only · Not synced</span></div>
-          {canEdit && <Button variant="ghost" size="icon" disabled={busy} aria-label={`Remove ${link.label}`} onClick={() => void change("DELETE", { id: link.id })}><Trash2 size={16} aria-hidden="true" /></Button>}
+          {canEdit && <Button variant="ghost" size="icon" disabled={busy} aria-label={`Remove ${link.label}`} onClick={() => { setError(null); removedLink.current = false; setRemovingLink(link); }}><Trash2 size={16} aria-hidden="true" /></Button>}
         </li>)}</ul> : !loadError && <p className="quiet-note">No links saved yet. Start with your Instagram or Facebook profile.</p>}
         <form onSubmit={save} className="connection-form" aria-busy={busy}>
           <div className="manual-review-field"><label className="form-label" htmlFor="connection-platform">Platform</label><select id="connection-platform" value={platform} disabled={!canEdit || busy} onChange={event => setPlatform(event.target.value as ConnectionPlatform)}>{connectionPlatforms.map(value => <option key={value} value={value}>{platformLabels[value]}</option>)}</select></div>
@@ -122,7 +129,7 @@ export function ConnectionsPage({ initialLinks, canEdit, mode, loadError, metaVi
           </>}
           {meta.isOwner && meta.configured && <div className="connection-meta-actions">
             <form method="post" action="/api/connections/meta/start"><Button type="submit" disabled={metaBusy}>{meta.connection ? "Reconnect with Meta" : "Connect with Meta"}<ExternalLink size={14} aria-hidden="true" /></Button></form>
-            {meta.connection && <><Button variant="outline" disabled={metaBusy || !authorized} onClick={() => void updateMeta("POST")}>{metaBusy ? "Checking…" : "Check account access"}</Button><Button variant="ghost" disabled={metaBusy} onClick={() => void updateMeta("DELETE")}>Disconnect Meta</Button></>}
+            {meta.connection && <><Button variant="outline" disabled={metaBusy || !authorized} onClick={() => void updateMeta("POST")}>{metaBusy ? "Checking…" : "Check account access"}</Button><Button variant="ghost" disabled={metaBusy} onClick={() => setDisconnecting(true)}>Disconnect Meta</Button></>}
           </div>}
           {meta.isOwner && !meta.configured && <details className="connection-setup-details"><summary>Owner setup checklist</summary><ol className="connection-setup-steps"><li>Link the Instagram Business or Creator account to the intended Facebook Page.</li><li>Configure Facebook Login for Business in the Meta developer app with the five read permissions listed in the setup guide.</li><li>Add the server-only app settings and encryption key in Vercel; provision the matching capability hash in Supabase.</li><li>Register the exact callback below, along with the deauthorization and data-deletion URLs in the setup guide. Test the account before requesting wider App Review access.</li></ol><p className="quiet-note">Callback: <code>{meta.callbackUrl ?? "Set NEXT_PUBLIC_APP_URL to your canonical HTTPS app origin first."}</code></p><p className="quiet-note">Server settings: KIRA_META_APP_ID, KIRA_META_APP_SECRET, KIRA_META_LOGIN_CONFIG_ID, KIRA_META_GRAPH_VERSION, KIRA_META_CREDENTIAL_KEY. Credentials belong in Vercel’s server environment only.</p></details>}
           {!meta.isOwner && mode === "connected" && <p className="quiet-note">The workspace owner manages Meta authorization.</p>}
@@ -140,5 +147,31 @@ export function ConnectionsPage({ initialLinks, canEdit, mode, loadError, metaVi
         </Card>
       </div>
     </div>
+    <Dialog open={Boolean(removingLink)} onOpenChange={(open) => { if (!open && !busy) setRemovingLink(null); }}>
+      <DialogContent onOpenAutoFocus={(event) => { event.preventDefault(); keepLinkRef.current?.focus(); }} onCloseAutoFocus={(event) => {
+        if (removedLink.current) {
+          event.preventDefault();
+          removedLink.current = false;
+          linkHeadingRef.current?.focus();
+        }
+      }}>
+        <DialogHeader><DialogTitle>Remove this saved link?</DialogTitle><DialogDescription>“{removingLink?.label ?? "This link"}” is deleted from this workspace for everyone who can see it. Nothing on {removingLink ? platformLabels[removingLink.platform] : "the platform"} changes, and no account is touched. You can save the link again at any time.</DialogDescription></DialogHeader>
+        {error && <p role="alert" className="form-error">{error}</p>}
+        <DialogFooter><Button ref={keepLinkRef} variant="outline" disabled={busy} onClick={() => setRemovingLink(null)}>Keep this link</Button>
+          <Button variant="destructive" disabled={busy} onClick={async () => {
+            if (removingLink && await change("DELETE", { id: removingLink.id })) {
+              removedLink.current = true;
+              setRemovingLink(null);
+            }
+          }}>Remove link</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+    <Dialog open={disconnecting} onOpenChange={(open) => { if (!open && !metaBusy) setDisconnecting(false); }}>
+      <DialogContent onOpenAutoFocus={(event) => { event.preventDefault(); keepMetaRef.current?.focus(); }}>
+        <DialogHeader><DialogTitle>Disconnect Meta?</DialogTitle><DialogDescription>This deletes the authorization KIRA has saved for your Facebook Page and linked Instagram account. Nothing on Meta is posted, changed or deleted, and you can authorize again whenever you like. Facebook Ads reporting uses a separate authorization and is not affected.</DialogDescription></DialogHeader>
+        <DialogFooter><Button ref={keepMetaRef} variant="outline" disabled={metaBusy} onClick={() => setDisconnecting(false)}>Keep the connection</Button>
+          <Button variant="destructive" disabled={metaBusy} onClick={async () => { await updateMeta("DELETE"); setDisconnecting(false); }}>Disconnect Meta</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
   </>;
 }

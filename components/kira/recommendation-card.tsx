@@ -19,7 +19,9 @@ export function RecommendationCard({
   return (
     <Card className="recommendation-card">
       <div className="recommendation-top">
-        <span className="move-number">0{index + 1}</span>
+        <span className="move-number" aria-hidden="true">
+          0{index + 1}
+        </span>
         <span className="eyebrow">{rec.objective}</span>
         <DemoBadge origin={rec.data_origin} />
       </div>

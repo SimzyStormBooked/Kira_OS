@@ -52,6 +52,7 @@ export function WorkspaceGuide() {
           <p className="learning-guide-mode">{mode === "connected"
             ? "Your saved briefs, decisions, and lessons stay in your private workspace. Ask Raven and Connections show their current setup status. Nothing runs or publishes by itself."
             : "You are exploring a demo. Example intelligence is labeled DEMO, and changes stay in this browser."}</p>
+          <p className="learning-guide-mode">KIRA OS has one dark theme. It does not follow your device’s light or dark setting, and there is no light mode to switch to yet.</p>
         </div>
         <DialogFooter className="learning-guide-footer">
           {mode === "connected" && <Button asChild variant="outline"><Link href="/" onClick={() => { reopenGettingStarted(); setOpen(false); }}>Show my first steps</Link></Button>}

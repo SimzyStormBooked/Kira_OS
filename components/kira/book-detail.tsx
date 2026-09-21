@@ -18,6 +18,7 @@ import { useWorkspace } from "@/lib/db/demo-store";
 import type { Book } from "@/types/domain";
 import { BookCover } from "./book-card";
 import { DemoBadge } from "./origin-badge";
+import "./book-detail.css";
 const sections = [
   "Overview",
   "Series",

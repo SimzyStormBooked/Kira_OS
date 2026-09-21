@@ -57,7 +57,6 @@ export function MissionControl({
         </div>
       </div>
       <div className="metrics-heading">
-        <span className="eyebrow">THE BIG PICTURE</span>
         <span>
           Illustrative 30-day snapshot <DemoBadge />
         </span>
@@ -74,7 +73,7 @@ export function MissionControl({
             <span className="desk-icon">
               <FileCheck2 size={19} />
             </span>
-            <span className="eyebrow">THE HUMAN TOUCH</span>
+            <span className="eyebrow">YOUR DECISIONS</span>
             <DemoBadge />
           </div>
           <h2>
@@ -118,7 +117,6 @@ export function MissionControl({
       <section className="moves-section">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">SMALL MOVES. LONG GAME.</span>
             <h2>
               Today’s moves{" "}
               <span className="section-count">{recommendations.length}</span>
@@ -144,10 +142,9 @@ export function MissionControl({
         <AgentStatus />
         <Card className="community-card">
           <div className="section-heading">
-            <span className="eyebrow">A COMMUNITY, NOT A NUMBER</span>
-            <Camera size={17} />
+            <Camera size={17} aria-hidden="true" />
           </div>
-          <h2>Your readers, in one place.</h2>
+          <h2>Two hand-entered numbers.</h2>
           <div className="community-stats">
             <div>
               <strong>

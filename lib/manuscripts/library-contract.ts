@@ -29,10 +29,13 @@ export const libraryInputSchema = z.object({
 }).strict().refine(value => !(value.seriesId && value.seriesName), { message: "Choose an existing series or create a new one." });
 export const manuscriptSummarySchema = z.object({
   id: z.uuid(), version: z.number().int(), filename: z.string(),
+  size_bytes: z.number().int().nonnegative(),
   status: z.enum(["uploading", "queued", "processing", "ready", "failed"]),
   chunk_count: z.number().int().nonnegative(), completed_chunks: z.number().int().nonnegative(),
   created_at: z.string(), error_code: z.string().nullable(),
 });
+/** A short-lived, caller-scoped link so an author can take her own file back out. */
+export const manuscriptFileSchema = z.object({ url: z.string(), filename: z.string(), expires_in_seconds: z.number().int().positive() });
 export const manuscriptSourceSchema = z.object({ chunk: z.object({ id: z.uuid(), manuscript_id: z.uuid(), location: z.string(), text: z.string() }) });
 export const sourceResponseSchema = manuscriptSourceSchema;
 export const librarySearchSchema = z.object({
@@ -52,4 +55,5 @@ export type LibraryResponse = z.infer<typeof librarySchema>;
 export type LibraryInput = z.infer<typeof libraryInputSchema>;
 export type BookDetailResponse = z.infer<typeof bookDetailSchema>;
 export type ManuscriptSummary = z.infer<typeof manuscriptSummarySchema>;
+export type ManuscriptFileLink = z.infer<typeof manuscriptFileSchema>;
 export type LibrarySearchResult = z.infer<typeof librarySearchSchema>["results"][number];

@@ -5,3 +5,15 @@
 .studio-job-examples > div { display: grid; gap: 8px; border-left: 2px solid var(--gold); padding: 2px 0 2px 16px; }
 .studio-job-examples dt { color: var(--foreground); font-weight: 500; }
 .studio-job-examples dd { margin: 0; color: var(--muted-foreground); line-height: 1.8; }
+
+/* One live region for every loading state on this page: the element stays mounted and
+   only its text changes, so screen readers announce it reliably. */
+.studio-loading-status { font-size: 12px; color: var(--muted-foreground); line-height: 1.8; margin: 12px 0; }
+.studio-loading-status:empty { display: none; }
+
+/* Recent questions: a composed frame rather than one grey sentence on the page. */
+.studio-history-empty { margin-top: 8px; padding: 48px 26px; gap: 14px; }
+.studio-history-empty .eyebrow { color: var(--gold); }
+.studio-history-empty > svg { color: var(--gold); }
+.studio-history-empty p { margin: 0; font-size: 14px; line-height: 1.8; }
+.studio-history-empty[hidden] { display: none; }

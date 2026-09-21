@@ -21,6 +21,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
     clearScratchpad,
     canEdit,
     roleError,
+    draftStorageFailed,
   } = useWorkspace();
   const { title, draft } = scratchpad;
   const [consumedIdea, setConsumedIdea] = useState<string | null>(null);
@@ -120,7 +121,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
           <FilePlus2 size={21} strokeWidth={1.4} aria-hidden="true" />
         </span>
         <div>
-          <span className="eyebrow">A PLACE FOR YOUR NEXT GOOD IDEA</span>
+          <span className="eyebrow">A place for your next good idea</span>
           <h2>
             Add an <em>idea or request.</em>
           </h2>
@@ -245,7 +246,9 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
           <span id="manual-draft-state">
             <ShieldCheck size={14} aria-hidden="true" />
             {hasDraft
-              ? "Not saved yet · Kept in this tab until you save."
+              ? draftStorageFailed
+                ? "Not saved yet · This browser could not hold your draft."
+                : "Not saved yet · Kept in this tab until you save."
               : mode === "demo"
                 ? "Saving keeps this idea in this browser."
                 : "Saving keeps this idea in your private workspace."}
@@ -255,6 +258,12 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
             <ArrowRight size={15} />
           </Button>
         </div>
+        {/* Always in the DOM so the warning is announced when this browser refuses the write. */}
+        <p className="draft-storage-warning" role="alert">
+          {draftStorageFailed
+            ? "This browser could not hold your draft — copy it before reloading. Your words are still on screen and nothing you already saved is affected."
+            : ""}
+        </p>
         <p className="manual-review-saved" role="status" aria-live="polite">
           {saved && !hasDraft
             ? "Brief saved to Cassandra’s Desk. It is ready for your review."

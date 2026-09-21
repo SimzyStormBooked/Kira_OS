@@ -1,1 +1,254 @@
-.plans-page{max-width:1180px;display:grid;gap:24px}.plans-page>.page-heading{margin-bottom:0}.plan-card{padding:26px;display:grid;gap:16px}.plan-card h2,.plan-card h3,.plan-card p{margin:0}.plan-card h2{font-family:"Cormorant Garamond",Georgia,serif;font-size:28px}.plan-card p{line-height:1.65}.plan-form,.plan-form>fieldset{display:grid;gap:20px}.plan-form fieldset{border:0;padding:0;min-width:0}.plan-field{display:grid;gap:8px;min-width:0}.plans-page small{display:block;color:var(--muted-foreground);line-height:1.6}.plan-back{display:inline-flex;align-items:center;gap:8px}.plan-save-state{color:var(--muted-foreground);font-size:12px;line-height:1.6}.plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.plan-options{display:flex!important;flex-wrap:wrap;gap:14px!important}.plan-options legend{font-weight:600;margin-bottom:12px}.plan-options label{display:flex;align-items:center;gap:8px;border:1px solid var(--border);padding:10px;border-radius:8px}.plan-options p{width:100%}.plan-actions,.plan-presets{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.plan-section-heading{display:flex;justify-content:space-between;align-items:center;gap:16px}.plan-list{display:grid;gap:12px}.plan-row{display:flex;gap:12px;justify-content:space-between;border:1px solid var(--border);padding:16px;border-radius:8px}.plan-row:hover{border-color:var(--gold)}.plan-row span{font-size:12px;color:var(--gold);flex-shrink:0}.plan-recommendation,.plan-phase{border-top:1px solid var(--border);padding-top:20px;display:grid;gap:12px}.plan-task{border:1px solid var(--border);border-radius:10px;padding:18px;display:flex;justify-content:space-between;gap:20px}.plan-task>div{display:grid;gap:8px;min-width:0}.plan-task>.plan-task-progress{min-width:150px;align-self:start}.plans-page summary{cursor:pointer;padding:10px 0;color:var(--gold)}.plan-evidence{font-size:13px}.plan-evidence blockquote{border-left:2px solid var(--wine);padding-left:12px;margin:8px 0;white-space:pre-wrap}.plan-goal{border:1px solid var(--border)!important;padding:16px!important;border-radius:8px}.plan-generation{border-top:1px solid var(--border);padding:20px 0;display:grid;gap:14px;justify-items:start}.plan-generation h3{margin:0}.plan-generation-facts{display:grid;gap:10px;margin:0;width:100%}.plan-generation-facts>div{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr);gap:8px 18px}.plan-generation-facts dt{color:var(--muted-foreground);font-size:12px}.plan-generation-facts dd{margin:0;overflow-wrap:anywhere;line-height:1.6}.plan-alert{padding:16px;background:#3a2227;border:1px solid #945c61;border-radius:8px} @media(max-width:700px){.plans-page>.page-heading{align-items:flex-start;flex-direction:column}.plan-grid{grid-template-columns:1fr}.plan-task,.plan-row{flex-direction:column}.plan-card{padding:18px}.plan-section-heading{align-items:flex-start}.plan-task>.plan-task-progress{width:100%}.plan-actions>button{white-space:normal}.plan-generation-facts>div{grid-template-columns:1fr;gap:2px}}
+/* Marketing Plans and Back Catalog Opportunities.
+   Page-scoped tokens keep the one-off hex values in a single place; the shared
+   palette itself lives in app/globals.css. */
+.plans-page {
+  --plan-serif: "Cormorant Garamond", Georgia, serif;
+  --plan-rule: var(--border);
+  --plan-quote-rule: var(--wine);
+  max-width: 1180px;
+  display: grid;
+  gap: 24px;
+}
+.plans-page > .page-heading {
+  margin-bottom: 0;
+}
+
+.plan-card {
+  padding: 26px;
+  display: grid;
+  gap: 16px;
+}
+.plan-card h2,
+.plan-card h3,
+.plan-card p {
+  margin: 0;
+}
+.plan-card h2 {
+  font-family: var(--plan-serif);
+  font-size: 28px;
+}
+.plan-card p {
+  line-height: 1.65;
+}
+
+.plans-page .empty-state h2 {
+  font-family: var(--plan-serif);
+}
+.plan-demo-empty {
+  gap: 14px;
+}
+.plan-demo-empty .origin-badge {
+  margin-bottom: 2px;
+}
+
+/* One always-mounted live region, so loading, saving and saved all announce. */
+.plan-load-status {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 1px;
+}
+.plan-attempt-note {
+  color: var(--muted-foreground);
+  line-height: 1.65;
+}
+
+.plan-form,
+.plan-form > fieldset {
+  display: grid;
+  gap: 20px;
+}
+.plan-form fieldset {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.plan-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.plans-page small {
+  display: block;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+.plan-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.plan-save-state {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.plan-options {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 14px !important;
+}
+.plan-options legend {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.plan-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--plan-rule);
+  padding: 10px;
+  border-radius: 8px;
+}
+.plan-options p {
+  width: 100%;
+}
+.plan-actions,
+.plan-presets {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.plan-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.plan-list {
+  display: grid;
+  gap: 12px;
+}
+.plan-row {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  border: 1px solid var(--plan-rule);
+  padding: 16px;
+  border-radius: 8px;
+}
+.plan-row:hover {
+  border-color: var(--gold);
+}
+.plan-row span {
+  font-size: 12px;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.plan-recommendation,
+.plan-phase {
+  border-top: 1px solid var(--plan-rule);
+  padding-top: 20px;
+  display: grid;
+  gap: 12px;
+}
+.plan-task {
+  border: 1px solid var(--plan-rule);
+  border-radius: 10px;
+  padding: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+.plan-task > div {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.plan-task > .plan-task-progress {
+  min-width: 170px;
+  align-self: start;
+}
+.plan-task-progress button {
+  justify-self: start;
+}
+
+.plans-page summary {
+  cursor: pointer;
+  padding: 10px 0;
+  color: var(--gold);
+}
+.plan-evidence {
+  font-size: 13px;
+}
+.plan-evidence blockquote {
+  border-left: 2px solid var(--plan-quote-rule);
+  padding-left: 12px;
+  margin: 8px 0;
+  white-space: pre-wrap;
+}
+.plan-goal {
+  border: 1px solid var(--plan-rule) !important;
+  padding: 16px !important;
+  border-radius: 8px;
+}
+
+.plan-generation {
+  border-top: 1px solid var(--plan-rule);
+  padding: 20px 0;
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+}
+.plan-generation h3 {
+  margin: 0;
+}
+.plan-generation-facts {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  width: 100%;
+}
+.plan-generation-facts > div {
+  display: grid;
+  grid-template-columns: minmax(0, 190px) minmax(0, 1fr);
+  gap: 8px 18px;
+}
+.plan-generation-facts dt {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.plan-generation-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
+@media (max-width: 700px) {
+  .plans-page > .page-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .plan-grid {
+    grid-template-columns: 1fr;
+  }
+  .plan-task,
+  .plan-row {
+    flex-direction: column;
+  }
+  .plan-card {
+    padding: 18px;
+  }
+  .plan-section-heading {
+    align-items: flex-start;
+  }
+  .plan-task > .plan-task-progress {
+    width: 100%;
+  }
+  .plan-actions > button {
+    white-space: normal;
+  }
+  .plan-generation-facts > div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

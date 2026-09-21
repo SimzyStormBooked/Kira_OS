@@ -1,0 +1,7 @@
+/* Book detail (demo catalog page). Primary actions read as buttons, not bars. */
+.book-materials-card [data-slot="button"] {
+  justify-self: start;
+  align-self: flex-start;
+  width: auto;
+  max-width: 100%;
+}

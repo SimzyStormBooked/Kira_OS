@@ -25,6 +25,12 @@ const starters: Record<StudioJob, string> = {
   "agent-design": "Help me create a new business-agent idea. Start with a clear job, the information it would need, and a small example we can discuss. I will decide whether to share it.",
   learning: "Teach me how to give an AI assistant useful context for an author-business task. Give me a small example, then a question I can practice with.",
 };
+/**
+ * Question ids this tab is sending right now. A pending id restored from a previous tab
+ * session is not in here, so a question interrupted by a closed tab is recognised as
+ * unfinished instead of leaving the ask form stuck at "Raven is thinking…" forever.
+ */
+const inFlightQuestions = new Set<string>();
 function plainAnswer(generation: StudioGeneration) {
   const result = generation.result;
   if (!result) return "";
@@ -46,7 +52,8 @@ export function StudioPage({ generationId }: { generationId?: string }) {
   const [loading, setLoading] = useState(mode === "connected");
   const busy = Boolean(studioScratchpad.pendingRequestId);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [stalePending] = useState(() => Boolean(studioScratchpad.pendingRequestId && !inFlightQuestions.has(studioScratchpad.pendingRequestId)));
+  const [notice, setNotice] = useState<string | null>(() => stalePending ? "Your last question may not have been sent. Check recent questions below before asking it again — nothing is running in the background." : null);
   const [savingAnswer, setSavingAnswer] = useState(false);
   const [confirmNewQuestion, setConfirmNewQuestion] = useState(false);
   const keepQuestionRef = useRef<HTMLButtonElement>(null);
@@ -59,6 +66,12 @@ export function StudioPage({ generationId }: { generationId?: string }) {
     pageEpoch.current += 1;
     return () => { pageEpoch.current += 1; };
   }, []);
+  const staleChecked = useRef(false);
+  useEffect(() => {
+    if (staleChecked.current) return;
+    staleChecked.current = true;
+    if (stalePending) updateStudioScratchpad({ pendingRequestId: null });
+  }, [stalePending, updateStudioScratchpad]);
   const questionRef = useRef<HTMLTextAreaElement>(null);
   const resultRef = useRef<HTMLHeadingElement>(null);
   const canAsk = Boolean(view?.availability.available && view.role !== "viewer" && mode === "connected" && canEdit && ready);
@@ -117,6 +130,7 @@ export function StudioPage({ generationId }: { generationId?: string }) {
     const activeEpoch = pageEpoch.current;
     const stillOnThisPage = () => pageEpoch.current === activeEpoch;
     updateStudioScratchpad({ pendingRequestId: id });
+    inFlightQuestions.add(id);
     setError(null); setNotice(null); setSubmittedId(id);
     try {
       const response = await fetch("/api/studio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, job, prompt: cleanPrompt, bookIds, includeSpoilers }) });
@@ -140,7 +154,7 @@ export function StudioPage({ generationId }: { generationId?: string }) {
       requestAnimationFrame(() => { if (stillOnThisPage()) resultRef.current?.focus(); });
     } catch (failure) {
       if (stillOnThisPage()) setError(failure instanceof Error && !(failure instanceof z.ZodError) ? failure.message : "The response could not be confirmed. Check your saved question before sending it again.");
-    } finally { submitLock.current = false; finishStudioRequest(id); }
+    } finally { submitLock.current = false; inFlightQuestions.delete(id); finishStudioRequest(id); }
   }
 
   function startNewQuestion() {
@@ -195,13 +209,15 @@ export function StudioPage({ generationId }: { generationId?: string }) {
       <p className="studio-help">This question stays in this tab until you send it. It is not saved to your account yet.</p>
       {view?.role === "viewer" && <p className="studio-help">Your viewer access lets you read saved answers. An owner or editor can ask a new question.</p>}
       <div className="studio-submit"><Button type="submit" disabled={!canAsk || busy || loading}>{busy ? "Raven is thinking…" : <>Ask Raven <ArrowRight size={15} aria-hidden="true" /></>}</Button><span>Up to 20 questions per workspace each day. No automatic retries.</span></div>
+      <Button type="button" variant="link" className="studio-new-question" disabled={busy} onClick={requestNewQuestion}>Ask a new question <ArrowRight size={14} aria-hidden="true" /></Button>
+      <p className="studio-help">Ask a new question clears this form and starts over. Saved answers stay in your workspace.</p>
       {busy && <p role="status">Your question is being saved and considered. Its answer will be available in recent questions.</p>}
     </form></Card>}
 
     {!generationId && !canAsk && prompt.trim() && <Card className="studio-question-card"><h2>Your unfinished question is still here</h2><p className="studio-help">Raven cannot take a new question right now. Copy this draft to keep it before reloading, closing the tab, or signing out.</p><label htmlFor="studio-preserved-question">Your preserved question</label><Textarea id="studio-preserved-question" readOnly rows={6} value={prompt} /><Button type="button" variant="outline" onClick={async () => { try { await navigator.clipboard.writeText(prompt); setNotice("Your question is copied. Nothing was sent."); } catch { setNotice("Select your preserved question and use your device’s Copy command."); } }}><Clipboard size={14} aria-hidden="true" />Copy my question</Button></Card>}
     {!generationId && mode === "connected" && view?.role === "viewer" && <p className="studio-help">Your viewer access lets you read saved answers. An owner or editor can ask a new question.</p>}
 
-    {generationId && !generation && loading && <p role="status" className="studio-help">Loading this saved question…</p>}
+    <p role="status" className="studio-loading-status">{loading ? (generationId && !generation ? "Loading this saved question…" : !view ? "Loading your saved questions…" : "") : ""}</p>
     {generation && <Card className="studio-result" aria-labelledby="studio-result-title"><span className="eyebrow">{generation.status === "complete" ? "AI-GENERATED / FOR YOUR REVIEW" : "SAVED QUESTION"}</span><h2 ref={resultRef} tabIndex={-1} id="studio-result-title">{generation.result?.title ?? studioJobLabels[generation.job]}</h2><details className="studio-original"><summary>Your original question</summary><p>{generation.prompt}</p></details>
       {generation.status === "pending" ? <div className="studio-pending"><p>This question has not saved a completed answer yet. It may be in progress or may have been interrupted. Refresh in a moment; it will not run again automatically.</p><Button variant="outline" type="button" disabled={loading} onClick={refresh}><RefreshCw size={14} aria-hidden="true" />Refresh saved question</Button></div> : generation.status === "failed" ? <p className="studio-failure">{studioFailureMessages[generation.error_code ?? "provider_unavailable"]}</p> : generation.result && <>
         <p className="studio-summary">{generation.result.summary}</p><div className="studio-options">{generation.result.options.map((option, index) => <section className="studio-option" key={`${index}-${option.title}`}><span className="eyebrow">OPTION {index + 1}</span><h3>{option.title}</h3><p>{option.idea}</p><p><strong>Tradeoff:</strong> {option.tradeoff}</p><p><strong>First step:</strong> {option.first_step}</p>{option.verify.length > 0 && <><h4>Before you rely on it</h4><ul>{option.verify.map((check, item) => <li key={item}>{check}</li>)}</ul></>}</section>)}</div>
@@ -215,6 +231,7 @@ export function StudioPage({ generationId }: { generationId?: string }) {
     <Dialog open={confirmNewQuestion} onOpenChange={setConfirmNewQuestion}><DialogContent onOpenAutoFocus={(event) => { event.preventDefault(); keepQuestionRef.current?.focus(); }}><DialogHeader><DialogTitle>Keep your unfinished question?</DialogTitle><DialogDescription>You already have a different unsent question in this tab. Starting fresh discards that draft. Your previously saved answers stay in your workspace.</DialogDescription></DialogHeader><DialogFooter><Button ref={keepQuestionRef} type="button" onClick={() => { setConfirmNewQuestion(false); router.push("/studio"); }}>Keep my question</Button><Button type="button" variant="destructive" onClick={startNewQuestion}>Discard draft and start fresh</Button></DialogFooter></DialogContent></Dialog>
     {!askingHere && errorNote}
     <p role="status" aria-live="polite" className="studio-notice">{notice ?? ""}</p>
-    {mode === "connected" && <section className="studio-history" aria-labelledby="studio-history-title"><div className="studio-history-heading"><h2 id="studio-history-title">Recent questions</h2><Button type="button" variant="ghost" disabled={loading || busy} onClick={refresh}><RefreshCw size={14} aria-hidden="true" />Refresh history</Button></div>{view?.generations.length ? <ul>{view.generations.map((item) => <li key={item.id}><Link href={`/studio/${item.id}`} aria-current={generationId === item.id ? "page" : undefined}><span><strong>{item.result?.title ?? studioJobLabels[item.job]}</strong><span>{item.prompt.slice(0, 130)}{item.prompt.length > 130 ? "…" : ""}</span></span><span>{item.status === "complete" ? "Saved answer" : item.status === "failed" ? "Could not complete" : "Awaiting answer"}</span></Link></li>)}</ul> : <p>{loading ? "Loading your saved questions…" : "Your first question will appear here when you ask. Nothing runs in the background."}</p>}</section>}
+    {mode === "connected" && <section className="studio-history" aria-labelledby="studio-history-title"><div className="studio-history-heading"><h2 id="studio-history-title">Recent questions</h2><Button type="button" variant="ghost" disabled={loading || busy} onClick={refresh}><RefreshCw size={14} aria-hidden="true" />Refresh history</Button></div>{view?.generations.length ? <ul>{view.generations.map((item) => <li key={item.id}><Link href={`/studio/${item.id}`} aria-current={generationId === item.id ? "page" : undefined}><span><strong>{item.result?.title ?? studioJobLabels[item.job]}</strong><span>{item.prompt.slice(0, 130)}{item.prompt.length > 130 ? "…" : ""}</span></span><span>{item.status === "complete" ? "Saved answer" : item.status === "failed" ? "Could not complete" : "Awaiting answer"}</span></Link></li>)}</ul> : null}
+      <div className="studio-history-empty empty-state" hidden={Boolean(view?.generations.length)}><Bird size={28} strokeWidth={1.3} aria-hidden="true" /><span className="eyebrow">{loading ? "READING YOUR WORKSPACE" : "NOTHING SAVED YET"}</span><p>{loading ? "Loading your saved questions…" : "Your first question will appear here when you ask. Nothing runs in the background."}</p></div></section>}
   </div>;
 }

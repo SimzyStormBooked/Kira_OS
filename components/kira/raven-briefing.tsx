@@ -26,7 +26,7 @@ export function RavenBriefing() {
           <span className="eyebrow">
             <Feather size={14} /> THE RAVEN
           </span>
-          <span className="briefing-edition">{state.mode === "demo" ? "DEMO BRIEFING / 001" : "RECOMMENDATIONS / NOT MONITORING"}</span>
+          <span className="briefing-edition">{state.mode === "demo" ? "DEMO BRIEFING" : "RECOMMENDATIONS / NOT MONITORING"}</span>
           {state.mode === "demo" && <DemoBadge />}
         </div>
         <p className="raven-intro">

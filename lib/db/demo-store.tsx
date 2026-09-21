@@ -5,6 +5,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -72,32 +73,39 @@ const privateDraftsSchema = z.object({
   editDrafts: z.record(z.string().max(120), z.string().max(10000)),
 });
 const draftsStorageKey = (mode: Mode, viewerEmail: string | null) => `kira-os:drafts:v1:${mode}:${viewerEmail ?? "demo"}`;
-function restoreDrafts(key: string): PrivateScratchpads {
+function restoreDrafts(key: string): { drafts: PrivateScratchpads; unreadable: string | null } {
   const fresh = freshPrivateScratchpads();
+  let raw: string | null = null;
   try {
-    const raw = typeof sessionStorage === "undefined" ? null : sessionStorage.getItem(key);
-    if (!raw) return fresh;
+    raw = typeof sessionStorage === "undefined" ? null : sessionStorage.getItem(key);
+    if (!raw) return { drafts: fresh, unreadable: null };
     const stored = privateDraftsSchema.parse(JSON.parse(raw));
     return {
-      scratchpad: stored.scratchpad,
-      learnScratchpad: { ...stored.learnScratchpad, drafts: { ...fresh.learnScratchpad.drafts, ...stored.learnScratchpad.drafts } },
-      studioScratchpad: stored.studioScratchpad,
-      editDrafts: stored.editDrafts,
+      drafts: {
+        scratchpad: stored.scratchpad,
+        learnScratchpad: { ...stored.learnScratchpad, drafts: { ...fresh.learnScratchpad.drafts, ...stored.learnScratchpad.drafts } },
+        studioScratchpad: stored.studioScratchpad,
+        editDrafts: stored.editDrafts,
+      },
+      unreadable: null,
     };
   } catch {
-    // Unreadable drafts are dropped quietly; nothing she saved lives here.
-    return fresh;
+    // Words this version cannot read are never dropped behind her back: the raw text is
+    // handed back in a dialog so she can copy or download it before anything replaces it.
+    return { drafts: fresh, unreadable: raw };
   }
 }
+/** Returns false when this browser refused the write, so the UI can stop promising the draft is kept. */
 function persistDrafts(key: string, snapshot: Snapshot) {
   try {
-    if (typeof sessionStorage === "undefined") return;
+    if (typeof sessionStorage === "undefined") return true;
     sessionStorage.setItem(key, JSON.stringify({
       scratchpad: snapshot.scratchpad, learnScratchpad: snapshot.learnScratchpad,
       studioScratchpad: snapshot.studioScratchpad, editDrafts: snapshot.editDrafts,
     }));
+    return true;
   } catch {
-    // Per-tab storage is a convenience; the in-memory draft is still hers.
+    return false;
   }
 }
 function forgetDrafts(key: string) {
@@ -153,6 +161,14 @@ function hasPrivateDrafts(snapshot: Snapshot) {
   const editedBrief = snapshot.approvals.some((approval) => keptEditFor(snapshot.editDrafts, approval)[1] !== null);
   return Boolean(scratchpad.title.trim() || scratchpad.draft.trim() || changedRecipe || editedBrief || (studioScratchpad.prompt.trim() && studioScratchpad.savedSignature !== questionSignature));
 }
+/**
+ * A long-text field anywhere in the app can register itself here so the draft guard,
+ * the reload warning, the sign-out confirmation and the session-ended dialog all see it.
+ * The text is read on demand and never persisted; the registry lives in one workspace
+ * store instance, never in a process-wide singleton.
+ */
+export type KeptDraft = { key: string; label: string; text: string };
+type DraftRegistration = { label: string; getText: () => string };
 type Snapshot = WorkspaceState & {
   ready: boolean;
   busy: boolean;
@@ -169,6 +185,10 @@ type Snapshot = WorkspaceState & {
   editDrafts: Record<string, string>;
   sessionEnded: boolean;
   corruptWorkspace: string | null;
+  /** True once this browser has refused to hold a draft, so no screen keeps promising it is kept. */
+  draftStorageFailed: boolean;
+  /** Stored draft text this version could not read, kept verbatim until she decides. */
+  unreadableDrafts: string | null;
 };
 function createStore(
   mode: Mode,
@@ -191,14 +211,40 @@ function createStore(
     error: null,
     sessionEnded: false,
     corruptWorkspace: null,
+    draftStorageFailed: false,
+    unreadableDrafts: null,
   };
   const draftsKey = draftsStorageKey(mode, viewerEmail);
-  let snapshot: Snapshot = { ...server, ...restoreDrafts(draftsKey) };
+  const restored = restoreDrafts(draftsKey);
+  let snapshot: Snapshot = { ...server, ...restored.drafts, unreadableDrafts: restored.unreadable };
+  const registeredDrafts = new Map<string, DraftRegistration>();
+  const keptRegisteredDrafts = (): KeptDraft[] => {
+    const kept: KeptDraft[] = [];
+    for (const [key, entry] of registeredDrafts) {
+      let text = "";
+      try {
+        text = entry.getText();
+      } catch {
+        // A field that cannot report its text must not break the rescue path for the others.
+        continue;
+      }
+      if (text.trim()) kept.push({ key, label: entry.label, text });
+    }
+    return kept;
+  };
+  const hasAnyPrivateDrafts = () => hasPrivateDrafts(snapshot) || keptRegisteredDrafts().length > 0;
   const listeners = new Set<() => void>();
   const update = (patch: Partial<Snapshot>) => {
     snapshot = { ...snapshot, ...patch };
-    if ("scratchpad" in patch || "learnScratchpad" in patch || "studioScratchpad" in patch || "editDrafts" in patch)
-      persistDrafts(draftsKey, snapshot);
+    if (
+      ("scratchpad" in patch || "learnScratchpad" in patch || "studioScratchpad" in patch || "editDrafts" in patch) &&
+      // Never write over stored text she has not been offered back yet.
+      snapshot.unreadableDrafts === null
+    ) {
+      // A refused write is surfaced, not swallowed: the hints stop claiming the draft is kept.
+      if (!persistDrafts(draftsKey, snapshot) && !snapshot.draftStorageFailed)
+        snapshot = { ...snapshot, draftStorageFailed: true };
+    }
     listeners.forEach((fn) => fn());
   };
   const showError = (error: unknown) =>
@@ -224,7 +270,7 @@ function createStore(
   };
   /** Unfinished words are never thrown away by a background session loss; she decides when they go. */
   const endSession = () => {
-    if (hasPrivateDrafts(snapshot)) {
+    if (hasAnyPrivateDrafts()) {
       update({ sessionEnded: true, ready: false, busy: false });
       return true;
     }
@@ -345,13 +391,29 @@ function createStore(
   const actions = {
     showError,
     endSession,
-    hasUnsavedPrivateDrafts: () => hasPrivateDrafts(snapshot),
+    hasUnsavedPrivateDrafts: () => hasAnyPrivateDrafts(),
+    /** Any long-text field can join the draft guard; the text is read only when it is needed. */
+    registerDraft: (key: string, label: string, getText: () => string) => {
+      registeredDrafts.set(key, { label, getText });
+    },
+    releaseDraft: (key: string) => {
+      registeredDrafts.delete(key);
+    },
+    keptRegisteredDrafts,
+    downloadUnreadableDrafts: () => {
+      if (snapshot.unreadableDrafts !== null) downloadFile(snapshot.unreadableDrafts, "kira-os-unreadable-drafts.txt");
+    },
+    dismissUnreadableDrafts: () => {
+      if (snapshot.unreadableDrafts === null) return;
+      forgetDrafts(draftsKey);
+      update({ unreadableDrafts: null });
+    },
     clearPrivateScratchpads: () => {
-      update(freshPrivateScratchpads());
+      update({ ...freshPrivateScratchpads(), draftStorageFailed: false });
       forgetDrafts(draftsKey);
     },
     leaveEndedSession: () => {
-      update({ ...freshPrivateScratchpads(), sessionEnded: false });
+      update({ ...freshPrivateScratchpads(), sessionEnded: false, draftStorageFailed: false });
       forgetDrafts(draftsKey);
       window.location.replace("/login");
     },
@@ -593,7 +655,7 @@ function WorkspaceSessionProvider({
       void store.actions.refresh();
     };
     const beforeUnload = (event: BeforeUnloadEvent) => {
-      if (hasPrivateDrafts(store.getSnapshot())) {
+      if (store.actions.hasUnsavedPrivateDrafts()) {
         event.preventDefault();
         event.returnValue = "";
       }
@@ -624,4 +686,21 @@ export function useWorkspace() {
     ),
     ...store.actions,
   };
+}
+/**
+ * Join the draft guard from any unsaved long-text field, wherever it lives.
+ * Pass the text while it is unsaved and an empty string once it is saved or empty.
+ * Nothing here is persisted or sent; it only makes sure the reload warning, the
+ * sign-out confirmation and the session-ended dialog know the words exist.
+ */
+export function useRegisteredDraft(key: string, label: string, text: string) {
+  const { registerDraft, releaseDraft } = useWorkspace();
+  const latest = useRef(text);
+  useEffect(() => {
+    latest.current = text;
+  }, [text]);
+  useEffect(() => {
+    registerDraft(key, label, () => latest.current);
+    return () => releaseDraft(key);
+  }, [key, label, registerDraft, releaseDraft]);
 }

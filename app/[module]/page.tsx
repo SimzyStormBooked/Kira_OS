@@ -8,7 +8,6 @@ const modules = {
   "reader-pulse": {
     title: "Reader Pulse",
     heading: "Listen between the lines.",
-    phase: "03",
     description:
       "A future home for verified reviews, reader language, and audience understanding.",
     needs: [
@@ -20,7 +19,6 @@ const modules = {
   social: {
     title: "Social Intelligence",
     heading: "Less noise. More resonance.",
-    phase: "04",
     description:
       "Understand which existing marketing connects with the readers you want.",
     needs: [
@@ -32,9 +30,8 @@ const modules = {
   discoverability: {
     title: "Discoverability",
     heading: "Make your worlds findable.",
-    phase: "05",
     description:
-      "Build a source-backed picture of how readers discover Kira’s books.",
+      "Build a source-backed picture of how readers discover your books.",
     needs: [
       "Search Console access",
       "Verified catalog metadata",
@@ -44,7 +41,6 @@ const modules = {
   hunt: {
     title: "The Hunt",
     heading: "Opportunity has a tell.",
-    phase: "07",
     description:
       "Discover relevant creators, reviewers, and marketing opportunities with evidence.",
     needs: [
@@ -56,7 +52,6 @@ const modules = {
   campaigns: {
     title: "Campaigns",
     heading: "Give every move a purpose.",
-    phase: "06",
     description:
       "Plan approved campaigns and keep their evidence, assets, and learning together.",
     needs: [
@@ -68,11 +63,10 @@ const modules = {
   outreach: {
     title: "Outreach",
     heading: "Relationships worth remembering.",
-    phase: "07",
     description:
       "Keep a shared memory of reviewer, creator, and media relationships.",
     needs: [
-      "Owner-supplied contact records",
+      "Contact records you supply",
       "Existing relationship history",
       "Human-approved outreach rules",
     ],
@@ -80,7 +74,6 @@ const modules = {
   vault: {
     title: "The Vault",
     heading: "Nothing valuable gets forgotten.",
-    phase: "02",
     description:
       "The next chapter: approved source documents, read-only manuscript reference, and a provenance-backed knowledge graph.",
     needs: [
@@ -125,8 +118,7 @@ export default async function Page({
       </div>
       <Card className="future-panel">
         <div className="future-art">
-          <Telescope size={72} strokeWidth={0.6} />
-          <span aria-hidden="true">0{Number(item.phase)}</span>
+          <Telescope size={96} strokeWidth={0.6} aria-hidden="true" />
         </div>
         <div>
           <span className="eyebrow">

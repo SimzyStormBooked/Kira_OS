@@ -36,6 +36,10 @@ test("profile links persist as shortcuts, never OAuth, and can be removed", asyn
   await expect(instagram).toHaveAttribute("href", "https://www.instagram.com/kirastanleyauthor");
   await expect(page.locator(".connection-link-row").filter({ has: instagram })).toContainText("Link only · Not synced");
   await page.getByRole("button", { name: "Remove My author Instagram", exact: true }).click();
+  const removal = page.getByRole("dialog");
+  await expect(removal).toContainText("Nothing on Instagram changes");
+  await removal.getByRole("button", { name: "Remove link", exact: true }).click();
+  await expect(removal).not.toBeVisible();
   await expect(instagram).toHaveCount(0);
   await page.reload();
   await expect(instagram).toHaveCount(0);

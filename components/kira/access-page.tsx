@@ -35,6 +35,7 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
   const pending = useRef(false);
   const requestVersion = useRef(0);
   const statusRef = useRef<HTMLParagraphElement>(null);
+  const membersHeadingRef = useRef<HTMLHeadingElement>(null);
   const alertRef = useRef<HTMLParagraphElement>(null);
   const focusAlert = useRef(false);
   const removedMember = useRef(false);
@@ -98,7 +99,8 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
     } finally {
       pending.current = false;
       setBusy(false);
-      requestAnimationFrame(() => (focusAlert.current ? alertRef : statusRef).current?.focus());
+      // Success is announced by the live region; focus stays on the control she used.
+      if (focusAlert.current) requestAnimationFrame(() => alertRef.current?.focus());
     }
   }
   async function addMember(event: FormEvent<HTMLFormElement>) {
@@ -107,7 +109,7 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
   }
   return <>
     <div className="page-heading"><div><span className="eyebrow page-kicker">WORKSPACE / ACCESS</span>
-      <h1>Your trusted <em>circle.</em></h1><p>Choose who can work alongside you, and what they can do.</p></div><Users size={32} strokeWidth={1} /></div>
+      <h1>Your trusted <em>circle.</em></h1><p>{access && access.role !== "owner" ? "Who can see this workspace, and what each person can do." : "Choose who can work alongside you, and what they can do."}</p></div><Users size={32} strokeWidth={1} /></div>
     <Card className="settings-card access-intro">
       <div className="section-heading"><h2>Workspace access</h2><ShieldCheck size={19} /></div>
       <p>A shared link alone does not grant access. Every person needs their own existing, confirmed account and permission for this workspace.</p>
@@ -124,7 +126,7 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
     </Card>
     <p ref={alertRef} tabIndex={-1} role="alert" className="form-error access-alert">{error ?? ""}</p>
     <p ref={statusRef} tabIndex={-1} role="status" aria-live="polite" className="access-status">{notice ?? ""}</p>
-    {mode === "connected" && access?.role === "owner" && <div className="access-grid">
+    {mode === "connected" && access && (access.role === "owner" ? <div className="access-grid">
       <Card className="settings-card"><div className="section-heading"><h2>Add an existing account</h2><UserPlus size={19} /></div>
         <p>This adds permission only. The account must already exist with confirmed email. No invitation or email is sent.</p>
         <form className="access-form" onSubmit={addMember} aria-busy={busy}>
@@ -135,11 +137,13 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
             <option value="viewer">Viewer — read and export</option><option value="editor">Editor — write and make decisions</option>
           </select>
           <p className="quiet-note">Editors can approve and reject briefs as well as edit them. Viewers can read and export workspace records.</p>
+          <p className="quiet-note">These permissions do not include Owner. Ownership stays with the account that created this workspace and cannot be transferred inside KIRA OS.</p>
           <Button type="submit" disabled={busy}>{busy ? "Saving access…" : "Grant access"}</Button>
         </form>
       </Card>
-      <Card className="settings-card"><div className="section-heading"><h2>People with access</h2><Users size={19} /></div>
-        <div className="access-owner"><strong>{access.owner?.email ?? "Workspace owner"}</strong><span className="status-pill">OWNER</span><p className="quiet-note">Owner access cannot be changed here.</p></div>
+      <Card className="settings-card"><div className="section-heading"><h2 ref={membersHeadingRef} tabIndex={-1}>People with access</h2><Users size={19} /></div>
+        <p>Everyone listed here can read the same briefs, book records and manuscript knowledge you can.</p>
+        <div className="access-owner"><strong>{access.owner?.email ?? "Workspace owner"}</strong><span className="status-pill">OWNER</span><p className="quiet-note">Owner access cannot be changed here, and ownership cannot be transferred inside KIRA OS.</p></div>
         {access.members.length === 0 && <p className="quiet-note">No collaborators have been added yet.</p>}
         <ul className="access-members">{access.members.map((member) => <li key={member.id} className="access-member">
           <strong>{member.email ?? "Existing account"}</strong>
@@ -151,13 +155,17 @@ export function AccessPage({ mode, initialAccess, initialError = null }: {
             <Button variant="ghost" disabled={busy} onClick={() => { setError(null); removedMember.current = false; setRemoving(member); }}>Remove access</Button></div>
         </li>)}</ul>
       </Card>
-    </div>}
+    </div> : <Card className="settings-card access-people-readonly"><div className="section-heading"><h2 ref={membersHeadingRef} tabIndex={-1}>People with access</h2><Users size={19} /></div>
+      <p>Your own access is {roleNames[access.role]}. Everyone with access to this workspace can read the same briefs, book records and manuscript knowledge you can, including anything saved from a manuscript.</p>
+      <p className="quiet-note">KIRA OS shows the list of names and email addresses to the workspace owner only, so it is not on this page for your role. Ask the workspace owner who else can open this workspace.</p>
+      <p className="quiet-note">Ownership stays with the account that created this workspace and cannot be transferred inside KIRA OS.</p>
+    </Card>)}
     <Dialog open={Boolean(removing)} onOpenChange={(open) => { if (!open && !busy) setRemoving(null); }}>
       <DialogContent onCloseAutoFocus={(event) => {
         if (removedMember.current) {
           event.preventDefault();
           removedMember.current = false;
-          statusRef.current?.focus();
+          membersHeadingRef.current?.focus();
         }
       }}><DialogHeader><DialogTitle>Remove workspace access?</DialogTitle><DialogDescription>{removing?.email ?? "This account"} will lose access to this workspace. Their saved briefs, decisions, and lessons stay in place. This does not delete their account.</DialogDescription></DialogHeader>
         {error && <p role="alert" className="form-error">{error}</p>}

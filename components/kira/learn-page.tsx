@@ -147,7 +147,7 @@ export function LearnPage() {
         <summary><span>Five quick lessons, when you need them</span><ChevronDown size={16} aria-hidden="true" /></summary>
         <div className="learn-section-heading"><span className="eyebrow">A FEW THINGS THAT MAKE A DIFFERENCE</span><h2 id="learn-lessons-title">Learn one thing. <em>Try it below.</em></h2></div>
         <div className="learn-lesson-list">
-          {lessons.map((lesson, index) => <details className="learn-lesson" key={lesson.title}><summary><span className="learn-lesson-number">0{index + 1}</span><span>{lesson.title}</span><ChevronDown size={15} aria-hidden="true" /></summary><div className="learn-lesson-body"><p>{lesson.text}</p><blockquote>{lesson.example}</blockquote></div></details>)}
+          {lessons.map((lesson, index) => <details className="learn-lesson" key={lesson.title}><summary><span className="learn-lesson-number" aria-hidden="true">0{index + 1}</span><span>{lesson.title}</span><ChevronDown size={15} aria-hidden="true" /></summary><div className="learn-lesson-body"><p>{lesson.text}</p><blockquote>{lesson.example}</blockquote></div></details>)}
         </div>
       </details>
 
@@ -167,10 +167,10 @@ export function LearnPage() {
           <Card className="learn-input-card">
             <form onSubmit={assemble} className="learn-form" aria-busy={pending}>
               <h3>2. Make the job your own</h3>
-              <div className="learn-field"><label htmlFor="agent-blueprint-name">Give your idea a name</label><Input ref={nameRef} id="agent-blueprint-name" value={input.name} onChange={(event) => updateField("name", event.target.value)} maxLength={80} required disabled={pending} /></div>
-              <div className="learn-field"><label htmlFor="agent-blueprint-goal">What should it help you do?</label><Textarea id="agent-blueprint-goal" value={input.goal} onChange={(event) => updateField("goal", event.target.value)} maxLength={1000} required rows={3} disabled={pending} /></div>
+              <div className="learn-field"><label htmlFor="agent-blueprint-name">Give your idea a name</label><Input ref={nameRef} id="agent-blueprint-name" value={input.name} onChange={(event) => updateField("name", event.target.value)} maxLength={80} aria-required="true" aria-invalid={error ? true : undefined} aria-errormessage={error ? "learn-error" : undefined} disabled={pending} /></div>
+              <div className="learn-field"><label htmlFor="agent-blueprint-goal">What should it help you do?</label><Textarea id="agent-blueprint-goal" value={input.goal} onChange={(event) => updateField("goal", event.target.value)} maxLength={1000} aria-required="true" aria-invalid={error ? true : undefined} aria-errormessage={error ? "learn-error" : undefined} rows={3} disabled={pending} /></div>
               <div className="learn-field"><label htmlFor="agent-blueprint-context">What should it know first? <span>Optional</span></label><Textarea id="agent-blueprint-context" value={input.context} onChange={(event) => updateField("context", event.target.value)} maxLength={3000} rows={4} disabled={pending} aria-describedby="agent-context-help" placeholder={recipe.contextHint} /><p id="agent-context-help" className="learn-field-hint">Use approved facts or source references. Include only information you want in the final prompt.</p></div>
-              <div className="learn-field"><label htmlFor="agent-blueprint-success">What would a useful result look like?</label><Textarea id="agent-blueprint-success" value={input.success} onChange={(event) => updateField("success", event.target.value)} maxLength={1000} required rows={3} disabled={pending} /></div>
+              <div className="learn-field"><label htmlFor="agent-blueprint-success">What would a useful result look like?</label><Textarea id="agent-blueprint-success" value={input.success} onChange={(event) => updateField("success", event.target.value)} maxLength={1000} aria-required="true" aria-invalid={error ? true : undefined} aria-errormessage={error ? "learn-error" : undefined} rows={3} disabled={pending} /></div>
               <Button type="submit" disabled={pending}><PencilRuler size={15} aria-hidden="true" />{preview ? "Update my blueprint" : "Build my blueprint"}</Button>
               <p className="learn-field-hint">Your notes stay in this tab until you save or download them.</p>
             </form>
@@ -191,7 +191,7 @@ export function LearnPage() {
             </>}
           </Card>
         </div>
-        {error && <p className="learn-error form-error" role="alert" ref={errorRef} tabIndex={-1}>{error}</p>}
+        {error && <p id="learn-error" className="learn-error form-error" role="alert" ref={errorRef} tabIndex={-1}>{error}</p>}
         <p className="learn-notice" role="status" aria-live="polite">{notice ?? ""}</p>
       </section>
     </div>
