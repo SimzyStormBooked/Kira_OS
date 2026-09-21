@@ -3,16 +3,15 @@ import { z } from "zod";
 import { requireWorkspaceSession } from "@/lib/auth/session";
 import { getWorkspaceRole } from "@/lib/auth/workspace-role";
 import { libraryFailure, libraryJson, privateHeaders, requireLibraryEditor } from "@/lib/manuscripts/http";
-import { assertSameOrigin } from "@/lib/auth/security";
 import { characterProfileEditSchema } from "@/lib/characters/contract";
 import { createCharacterRepository } from "@/lib/characters/repository";
 
 export const runtime = "nodejs";
 type Context = { params: Promise<{ id: string }> };
 
-export async function GET(request: Request, context: Context) {
+// See the collection route: reads are session-guarded, not origin-guarded.
+export async function GET(_request: Request, context: Context) {
   try {
-    assertSameOrigin(request);
     const id = z.uuid().parse((await context.params).id);
     const session = await requireWorkspaceSession();
     const repo = createCharacterRepository(session.supabase, session.authorId);

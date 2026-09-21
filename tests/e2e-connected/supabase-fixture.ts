@@ -48,6 +48,22 @@ let manuscripts: FixtureManuscript[] = [];
 let manuscriptChunks: FixtureChunk[] = [];
 let manuscriptBatches: FixtureBatch[] = [];
 let intelligence: FixtureIntelligence[] = [];
+// Character Studio rows. Identity, portraits and notes are author-owned; characters[] stands
+// in for the extraction-owned table a confirmed link points at.
+type FixtureProfile = { id: string; author_id: string; universe_id: string | null; display_name: string; normalized_name: string; summary: string | null; primary_portrait_id: string | null; version: number; created_by: string; created_at: string; updated_at: string; data_origin: "manual" };
+type FixtureAlias = { id: string; author_id: string; profile_id: string; alias: string; normalized_alias: string; created_by: string; created_at: string };
+type FixturePortrait = { id: string; author_id: string; profile_id: string; storage_path: string; status: "uploading" | "ready" | "failed"; mime_type: string; size_bytes: number; content_hash: string; width: number | null; height: number | null; caption: string | null; source_credit: string | null; usage_permission: "private_reference_only" | "promotional_approved"; permission_granted_by: string; location_metadata_removed: boolean; sanitized_at: string | null; error_code: string | null; created_at: string; updated_at: string; data_origin: "manual" };
+type FixtureNote = { id: string; author_id: string; profile_id: string; book_id: string | null; kind: "author_confirmed" | "visual_inspiration"; body: string; version: number; created_by: string; created_at: string; updated_at: string };
+type FixtureLink = { id: string; author_id: string; profile_id: string; book_id: string; character_id: string; note: string | null; confirmed_by: string; confirmed_at: string };
+type FixtureCharacter = { id: string; author_id: string; book_id: string; name: string };
+let characterProfiles: FixtureProfile[] = [];
+let characterAliases: FixtureAlias[] = [];
+let characterPortraits: FixturePortrait[] = [];
+let characterNotes: FixtureNote[] = [];
+let characterLinks: FixtureLink[] = [];
+let bookCharacters: FixtureCharacter[] = [];
+const signedPortraitTokens = new Map<string, { path: string; expiresAt: number }>();
+const normalize = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
 let adsReports: Array<{id:string;author_id:string;account_id:string;created_at:string;snapshot:unknown}> = [];
 let adsBookLinks: Array<{author_id:string;campaign_id:string;book_id:string}> = [];
 let adsInspiration: Array<{id:string;author_id:string;title:string;url:string;note:string;created_at:string}> = [];
@@ -59,6 +75,8 @@ function resetLibrary() {
   librarySeries = seedSeries.map(item => ({ ...item, author_id: fixture.authorId }));
   librarySources = seedSources.filter(item => item.data_origin !== "demo").map(item => ({ ...item, author_id: fixture.authorId, metadata: {} }));
   manuscripts = []; manuscriptChunks = []; manuscriptBatches = []; intelligence = []; adsReports = []; adsInspiration = []; adsBookLinks = []; storedFiles.clear();
+  characterProfiles = []; characterAliases = []; characterPortraits = []; characterNotes = []; characterLinks = []; bookCharacters = [];
+  signedPortraitTokens.clear();
 }
 resetLibrary();
 function newManuscript(book: FixtureBook, input: { id: string; filename: string; mime: string; bytes: number; hash: string }, actor: string): FixtureManuscript {
@@ -164,6 +182,33 @@ const server = createServer(async (request, response) => {
       resetLibrary();
       return respond(response, 200, { simulated: true, reset: true });
     }
+    // Seeds the author-owned rows the interface only reads today, plus the extraction-owned
+    // character a confirmed link points at.
+    if (url.pathname === "/__test/characters" && request.method === "POST") {
+      const body = await jsonBody(request);
+      const profile = characterProfiles.find(item => item.id === body.profileId);
+      const book = libraryBooks.find(item => item.id === body.bookId);
+      if (!profile || !book) return respond(response, 404, { message: "Simulated character or book not found" });
+      const now = new Date().toISOString();
+      const character: FixtureCharacter = { id: randomUUID(), author_id: fixture.authorId, book_id: book.id, name: String(body.characterName ?? profile.display_name) };
+      bookCharacters.push(character);
+      characterLinks.push({ id: randomUUID(), author_id: fixture.authorId, profile_id: profile.id, book_id: book.id, character_id: character.id, note: String(body.linkNote ?? "") || null, confirmed_by: fixture.memberId, confirmed_at: now });
+      characterNotes.push({ id: randomUUID(), author_id: fixture.authorId, profile_id: profile.id, book_id: book.id, kind: "author_confirmed", body: String(body.note ?? "A synthetic author-confirmed detail."), version: 1, created_by: fixture.memberId, created_at: now, updated_at: now });
+      return respond(response, 200, { simulated: true, characterId: character.id });
+    }
+    // Lets a browser test read what actually reached private storage.
+    if (url.pathname === "/__test/portrait-bytes" && request.method === "GET") {
+      return respond(response, 200, characterPortraits.map(portrait => {
+        const bytes = storedFiles.get(portrait.storage_path) ?? null;
+        return {
+          id: portrait.id, status: portrait.status, stored: Boolean(bytes), size_bytes: bytes?.length ?? null,
+          registered_size: portrait.size_bytes, hash_matches: bytes ? sha256(bytes) === portrait.content_hash : null,
+          contains_location_metadata: bytes ? /GPS|Exif\0\0|eXIf/.test(bytes.toString("latin1")) : null,
+          location_metadata_removed: portrait.location_metadata_removed, sanitized_at: portrait.sanitized_at,
+          usage_permission: portrait.usage_permission, width: portrait.width, height: portrait.height,
+        };
+      }));
+    }
     if (url.pathname === "/__test/manuscripts" && request.method === "POST") {
       const body = await jsonBody(request);
       const book = libraryBooks.find(item => item.id === body.bookId);
@@ -218,6 +263,19 @@ const server = createServer(async (request, response) => {
       return respond(response, 200, issueSession(userFor(String(body.email))));
     }
     if (url.pathname === "/auth/v1/.well-known/jwks.json") return respond(response, 200, { keys: [] });
+    // A signed portrait link is served without a session, which is the point of signing it.
+    if (url.pathname.startsWith("/storage/v1/object/sign/kira-character-portraits/") && request.method === "GET") {
+      const path = decodeURIComponent(url.pathname.slice("/storage/v1/object/sign/kira-character-portraits/".length));
+      const token = url.searchParams.get("token") ?? "";
+      const issued = signedPortraitTokens.get(token);
+      if (!issued || issued.path !== path) return respond(response, 400, { statusCode: "400", message: "Simulated signature is not valid for this object" });
+      if (issued.expiresAt < Date.now()) return respond(response, 400, { statusCode: "400", message: "Simulated signature has expired" });
+      const bytes = storedFiles.get(path);
+      const portrait = characterPortraits.find(item => item.storage_path === path);
+      if (!bytes || !portrait) return respond(response, 404, { statusCode: "404", message: "Simulated private object unavailable" });
+      response.writeHead(200, { "Content-Type": portrait.mime_type, "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+      return response.end(bytes);
+    }
     const session = authenticated(request);
     if (!session) return respond(response, 401, { code: "bad_jwt", message: "Invalid fixture session" });
     if (url.pathname === "/auth/v1/user" && request.method === "PUT") {
@@ -240,6 +298,52 @@ const server = createServer(async (request, response) => {
       return respond(response, 200, member && url.searchParams.get("id") === `eq.${fixture.authorId}` ? [{ id: fixture.authorId, owner_user_id: fixture.memberId }] : []);
     }
     if (!member) return respond(response, 403, { code: "42501", message: "Fixture workspace access denied" });
+    if (url.pathname === "/storage/v1/object/sign/kira-character-portraits" && request.method === "POST") {
+      const body = await jsonBody(request);
+      const paths = Array.isArray(body.paths) ? body.paths.map(String) : [];
+      const expiresIn = Math.min(Number(body.expiresIn ?? 0) || 0, 3600);
+      if (!paths.length || !expiresIn) return respond(response, 400, { statusCode: "400", message: "Simulated signing needs paths and an expiry" });
+      return respond(response, 200, paths.map(path => {
+        const portrait = characterPortraits.find(item => item.storage_path === path && item.author_id === fixture.authorId);
+        if (!portrait || !storedFiles.has(path)) return { error: "Object not found", path, signedURL: null };
+        const token = `fixture-${sha256(`${path}:${expiresIn}:${randomUUID()}`).slice(0, 32)}`;
+        signedPortraitTokens.set(token, { path, expiresAt: Date.now() + expiresIn * 1000 });
+        return { error: null, path, signedURL: `/object/sign/kira-character-portraits/${path}?token=${token}` };
+      }));
+    }
+    if (url.pathname.startsWith("/storage/v1/object/") && url.pathname.includes("kira-character-portraits/")) {
+      const path = decodeURIComponent(url.pathname.replace(/^\/storage\/v1\/object\/(?:authenticated\/)?kira-character-portraits\//, ""));
+      const portrait = characterPortraits.find(item => item.storage_path === path);
+      if (!portrait) return respond(response, 404, { statusCode: "404", message: "Simulated portrait object unavailable" });
+      if (request.method === "POST") {
+        if ((!owner && membership?.role !== "editor") || portrait.permission_granted_by !== session.user.id || portrait.status !== "uploading") {
+          return respond(response, 403, { statusCode: "403", message: "Simulated portrait upload permission denied" });
+        }
+        if (request.headers["x-upsert"] === "true" || storedFiles.has(path)) return respond(response, 409, { statusCode: "409", error: "Duplicate", message: "Simulated object already exists" });
+        const parts: Buffer[] = [];
+        let size = 0;
+        for await (const part of request) {
+          const bytes = Buffer.from(part); size += bytes.length;
+          if (size > 8388608) return respond(response, 413, { message: "Simulated image limit exceeded" });
+          parts.push(bytes);
+        }
+        const bytes = Buffer.concat(parts);
+        // The uploaded bytes must be the registered ones, so only the sanitized image is kept.
+        if (bytes.length !== portrait.size_bytes || sha256(bytes) !== portrait.content_hash) return respond(response, 400, { message: "Simulated registered image mismatch" });
+        storedFiles.set(path, bytes);
+        return respond(response, 200, { Id: randomUUID(), Key: `kira-character-portraits/${path}` });
+      }
+      if (request.method === "GET" && storedFiles.has(path)) {
+        response.writeHead(200, { "Content-Type": portrait.mime_type, "Cache-Control": "no-store" });
+        return response.end(storedFiles.get(path));
+      }
+      if (request.method === "DELETE") {
+        if (!owner && membership?.role !== "editor") return respond(response, 403, { statusCode: "403", message: "Simulated portrait delete denied" });
+        storedFiles.delete(path);
+        return respond(response, 200, [{ name: path }]);
+      }
+      return respond(response, 403, { statusCode: "403", message: "Simulated object cannot be overwritten" });
+    }
     if (url.pathname.startsWith("/storage/v1/object/")) {
       const path = decodeURIComponent(url.pathname.replace(/^\/storage\/v1\/object\/(?:authenticated\/)?kira-manuscripts\//, ""));
       const row = manuscripts.find(item => item.storage_path === path);
@@ -458,6 +562,61 @@ const server = createServer(async (request, response) => {
         approvals.unshift(approval);
         return respond(response, 200, approval);
       }
+      if (method === "character_portrait_register" || method === "character_portrait_finish" || method === "character_portrait_fail") {
+        if (body.p_recording_key !== fixtureRecordingKey) return respond(response, 403, { code: "42501", message: "Simulated portrait capability required" });
+        if (!owner && membership?.role !== "editor") return respond(response, 403, { code: "42501", message: "Only an owner or editor can add character portraits." });
+        if (method === "character_portrait_register") {
+          const profile = characterProfiles.find(item => item.id === body.p_profile_id);
+          if (!profile) return respond(response, 404, { code: "P0002", message: "Character profile unavailable." });
+          const usage = String(body.p_usage_permission ?? "private_reference_only");
+          const credit = body.p_source_credit === null || body.p_source_credit === undefined ? null : String(body.p_source_credit);
+          if (usage === "promotional_approved" && !credit?.trim()) return respond(response, 400, { code: "22023", message: "Promotional permission requires a recorded source and credit." });
+          const existingById = characterPortraits.find(item => item.id === body.p_id);
+          if (existingById) {
+            if (existingById.profile_id !== body.p_profile_id || existingById.content_hash !== body.p_content_hash || existingById.permission_granted_by !== session.user.id) {
+              return respond(response, 409, { code: "40001", message: "This portrait ID has already been used." });
+            }
+            if (existingById.status === "failed" && existingById.error_code === "storage_error") { existingById.status = "uploading"; existingById.error_code = null; existingById.updated_at = now; }
+            return respond(response, 200, existingById);
+          }
+          const existingByHash = characterPortraits.find(item => item.profile_id === body.p_profile_id && item.content_hash === body.p_content_hash);
+          if (existingByHash) {
+            if (existingByHash.status === "failed" && existingByHash.error_code === "storage_error") {
+              if (existingByHash.permission_granted_by !== session.user.id) return respond(response, 403, { code: "42501", message: "This portrait belongs to another member." });
+              existingByHash.status = "uploading"; existingByHash.error_code = null; existingByHash.updated_at = now;
+            }
+            return respond(response, 200, existingByHash);
+          }
+          const row: FixturePortrait = {
+            id: String(body.p_id), author_id: fixture.authorId, profile_id: String(body.p_profile_id),
+            storage_path: `${fixture.authorId}/${String(body.p_profile_id)}/${String(body.p_id)}`,
+            status: "uploading", mime_type: String(body.p_mime_type), size_bytes: Number(body.p_size_bytes),
+            content_hash: String(body.p_content_hash), width: null, height: null,
+            caption: body.p_caption === null || body.p_caption === undefined ? null : String(body.p_caption),
+            source_credit: credit, usage_permission: usage as FixturePortrait["usage_permission"],
+            permission_granted_by: session.user.id, location_metadata_removed: false, sanitized_at: null,
+            error_code: null, created_at: now, updated_at: now, data_origin: "manual",
+          };
+          characterPortraits.push(row);
+          return respond(response, 200, row);
+        }
+        const row = characterPortraits.find(item => item.id === body.p_id);
+        if (!row) return respond(response, 404, { code: "P0002", message: "Portrait unavailable." });
+        if (row.permission_granted_by !== session.user.id) return respond(response, 403, { code: "42501", message: "This portrait belongs to another member." });
+        if (method === "character_portrait_finish") {
+          // Ready is unreachable without the server's own claim that metadata was removed.
+          if (body.p_location_metadata_removed !== true) return respond(response, 400, { code: "22023", message: "A portrait is stored only after its location metadata is removed." });
+          if (row.status === "ready") return respond(response, 200, row);
+          if (row.status !== "uploading") return respond(response, 409, { code: "40001", message: "This portrait upload has already failed." });
+          row.status = "ready"; row.location_metadata_removed = true; row.sanitized_at = now; row.error_code = null; row.updated_at = now;
+          row.width = body.p_width === null || body.p_width === undefined ? null : Number(body.p_width);
+          row.height = body.p_height === null || body.p_height === undefined ? null : Number(body.p_height);
+          return respond(response, 200, row);
+        }
+        if (!["storage_error", "sanitize_error", "unsupported_image"].includes(String(body.p_error_code))) return respond(response, 400, { code: "22023", message: "Invalid portrait failure." });
+        if (row.status === "uploading") { row.status = "failed"; row.error_code = String(body.p_error_code) as FixturePortrait["error_code"]; row.updated_at = now; }
+        return respond(response, 200, row);
+      }
       const approval = approvals.find((item) => item.id === body.p_approval_id);
       if (!approval) return respond(response, 404, { code: "P0002", message: "Fixture approval not found" });
       if (method === "decide_approval") {
@@ -476,6 +635,86 @@ const server = createServer(async (request, response) => {
         return respond(response, 200, lesson);
       }
       return respond(response, 400, { code: "42883", message: "Unsupported simulated RPC" });
+    }
+    // Character Studio reads and author-owned writes. Portrait rows stay read-only here:
+    // the interface reaches them only through the capability-gated RPCs above.
+    if (url.pathname.startsWith("/rest/v1/character_")) {
+      const table = url.pathname.slice("/rest/v1/".length);
+      const now = new Date().toISOString();
+      const writable = owner || membership?.role === "editor";
+      const rows: Record<string, object[]> = { character_profiles: characterProfiles, character_profile_aliases: characterAliases, character_portraits: characterPortraits, character_notes: characterNotes, character_profile_links: characterLinks };
+      if (!rows[table]) return respond(response, 404, { code: "42P01", message: "Unsupported simulated table" });
+      if (request.method === "GET") {
+        if (url.searchParams.get("author_id") !== `eq.${fixture.authorId}`) return respond(response, 403, { code: "42501", message: "Expected explicit fixture author filter" });
+        return respondRows(request, response, url, rows[table]);
+      }
+      if (table === "character_portraits") return respond(response, 403, { code: "42501", message: "Simulated portrait writes require the scoped RPC" });
+      if (!writable) return respond(response, 403, { code: "42501", message: "Fixture write access denied" });
+      if (request.method === "POST") {
+        const body = await jsonBody(request) as unknown;
+        const entries = (Array.isArray(body) ? body : [body]) as Record<string, unknown>[];
+        if (entries.some(entry => entry.author_id !== fixture.authorId)) return respond(response, 403, { code: "42501", message: "Fixture tenant mismatch" });
+        const created: object[] = [];
+        for (const entry of entries) {
+          if (table === "character_profiles") {
+            const displayName = String(entry.display_name ?? "");
+            if (!displayName.trim() || displayName.length > 120) return respond(response, 400, { code: "23514", message: "Invalid simulated character name" });
+            const row: FixtureProfile = {
+              id: randomUUID(), author_id: fixture.authorId, universe_id: null, display_name: displayName,
+              normalized_name: normalize(displayName), summary: entry.summary === null || entry.summary === undefined ? null : String(entry.summary),
+              primary_portrait_id: null, version: 1, created_by: session.user.id, created_at: now, updated_at: now, data_origin: "manual",
+            };
+            characterProfiles.push(row); created.push(row);
+          } else if (table === "character_profile_aliases") {
+            const alias = String(entry.alias ?? "");
+            const normalized = normalize(alias);
+            if (!alias.trim()) return respond(response, 400, { code: "23514", message: "Invalid simulated alias" });
+            if (characterAliases.some(item => item.profile_id === entry.profile_id && item.normalized_alias === normalized)) {
+              return respond(response, 409, { code: "23505", message: "Simulated alias already recorded" });
+            }
+            const row: FixtureAlias = { id: randomUUID(), author_id: fixture.authorId, profile_id: String(entry.profile_id), alias, normalized_alias: normalized, created_by: session.user.id, created_at: now };
+            characterAliases.push(row); created.push(row);
+          } else if (table === "character_notes") {
+            const kind = String(entry.kind ?? "");
+            if (!["author_confirmed", "visual_inspiration"].includes(kind) || !String(entry.body ?? "").trim()) {
+              return respond(response, 400, { code: "23514", message: "Invalid simulated note" });
+            }
+            const row: FixtureNote = { id: randomUUID(), author_id: fixture.authorId, profile_id: String(entry.profile_id), book_id: entry.book_id ? String(entry.book_id) : null, kind: kind as FixtureNote["kind"], body: String(entry.body), version: 1, created_by: session.user.id, created_at: now, updated_at: now };
+            characterNotes.push(row); created.push(row);
+          } else {
+            const row: FixtureLink = { id: randomUUID(), author_id: fixture.authorId, profile_id: String(entry.profile_id), book_id: String(entry.book_id), character_id: String(entry.character_id), note: entry.note ? String(entry.note) : null, confirmed_by: session.user.id, confirmed_at: now };
+            if (characterLinks.some(item => item.character_id === row.character_id)) return respond(response, 409, { code: "23505", message: "Simulated character is already linked" });
+            characterLinks.push(row); created.push(row);
+          }
+        }
+        return request.headers.accept?.includes("application/vnd.pgrst.object+json") && created.length === 1
+          ? respond(response, 201, created[0]) : respond(response, 201, created);
+      }
+      if (request.method === "PATCH" && table === "character_profiles") {
+        const body = await jsonBody(request);
+        const id = url.searchParams.get("id")?.replace("eq.", "");
+        const expected = url.searchParams.get("version")?.replace("eq.", "");
+        if (url.searchParams.get("author_id") !== `eq.${fixture.authorId}`) return respond(response, 403, { code: "42501", message: "Fixture tenant mismatch" });
+        // A stale version matches nothing, exactly as the real update does.
+        const row = characterProfiles.find(item => item.id === id && (!expected || String(item.version) === expected));
+        if (!row) return respond(response, 200, []);
+        if (body.primary_portrait_id !== undefined) {
+          const portrait = body.primary_portrait_id === null ? null : characterPortraits.find(item => item.id === body.primary_portrait_id);
+          if (body.primary_portrait_id !== null && (!portrait || portrait.profile_id !== row.id)) {
+            return respond(response, 409, { code: "23503", message: "Simulated portrait belongs to another character" });
+          }
+          row.primary_portrait_id = portrait ? portrait.id : null;
+        }
+        if (body.display_name !== undefined) { row.display_name = String(body.display_name); row.normalized_name = normalize(String(body.display_name)); }
+        if (body.summary !== undefined) row.summary = body.summary === null ? null : String(body.summary);
+        row.version += 1; row.updated_at = new Date().toISOString();
+        return request.headers.accept?.includes("application/vnd.pgrst.object+json") ? respond(response, 200, row) : respond(response, 200, [row]);
+      }
+      return respond(response, 405, { code: "42501", message: "Unsupported simulated character write" });
+    }
+    if (url.pathname === "/rest/v1/characters" && request.method === "GET") {
+      if (url.searchParams.get("author_id") !== `eq.${fixture.authorId}`) return respond(response, 403, { code: "42501", message: "Expected explicit fixture author filter" });
+      return respondRows(request, response, url, bookCharacters);
     }
     if (url.pathname.startsWith("/rest/v1/")) {
       if (url.searchParams.get("author_id") !== `eq.${fixture.authorId}`) return respond(response, 403, { code: "42501", message: "Expected explicit fixture author filter" });

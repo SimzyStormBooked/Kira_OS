@@ -52,7 +52,9 @@ The `kira-character-portraits` bucket is private, limited to 8 MB, and limited t
 
 Verified in a browser: the demo-mode page renders with no console errors on desktop and at 375px, and `/characters` passes the automated accessibility sweep on both viewports with zero violations.
 
-Not verified: the connected path in a browser. Exercising the real gallery, upload, and signed URLs needs either the hosted workspace's credentials or Character Studio support added to the simulated Supabase fixture in `tests/e2e-connected/supabase-fixture.ts`; neither has been done, so the connected UI is covered by route and repository unit tests only. No image has been uploaded to the hosted bucket.
+Verified in a connected browser: `tests/e2e-connected/characters.spec.ts` drives the real interface against the simulated Supabase boundary on desktop and mobile — creating a character, finding her again by alias, uploading a portrait, refusing one that cannot be cleaned, requiring a source credit for promotional use, choosing a cover, and reading a confirmed book link. It asserts against what actually reached private storage: the stored bytes carry no location metadata, their hash matches the registered hash, and the rendered image decodes at its true dimensions through an expiring signed link. The image decoding matters — a container rewrite can strip metadata and quietly corrupt the picture, and no unit test here decodes an image.
+
+Not verified: the hosted workspace. No image has been uploaded to the hosted bucket, and the simulated boundary is a transport double, not a database — SQL and RLS are proven separately by the PGlite tests.
 
 ## Upload route
 
@@ -73,7 +75,7 @@ The order is deliberate: metadata is removed first, so an image that cannot be c
 | `GET /api/characters/[id]` | One profile with all portrait URLs, notes, and links resolved to book titles and character names |
 | `PATCH /api/characters/[id]` | Renames, edits the description, or chooses the cover portrait; requires the version the client is holding |
 
-Portraits never travel as paths. A read produces a signed URL valid for five minutes, and the gallery signs only the cover so a long cast does not mint dozens of URLs per view. Next's image optimizer is deliberately bypassed for these: it would proxy and cache private portraits through a shared optimizer. A cover can only be a portrait of that same profile, which the composite foreign key enforces in SQL rather than in the route.
+A portrait's path is never exposed as a field, and reaching the image always requires a signature that expires. A read produces a signed URL valid for five minutes, and the gallery signs only the cover so a long cast does not mint dozens of URLs per view. The signed URL does contain the object path, because that is what Storage signs — the protection is the expiring signature and the bucket's policies, not a secret path. Next's image optimizer is deliberately bypassed for these: it would proxy and cache private portraits through a shared optimizer. A cover can only be a portrait of that same profile, which the composite foreign key enforces in SQL rather than in the route.
 
 Every edit sends the version the client is holding, so a stale save is refused with a conflict instead of overwriting a change made in another tab. The trigger advances the version on the server, so a client cannot forge one.
 
