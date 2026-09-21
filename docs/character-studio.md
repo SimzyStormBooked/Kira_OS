@@ -1,6 +1,6 @@
 # Character Studio — phase 1 schema
 
-Phase 1 adds the database foundation for author-owned character identity, private portraits, and author-written notes. It is schema only. There is no Character Studio page, upload route, gallery, home showcase, or relationship map in the application yet, and the migration has not been applied to the hosted database. The design preview in [design/character-studio-preview.html](design/character-studio-preview.html) remains a standalone concept.
+Phase 1 adds the database foundation for author-owned character identity, private portraits, and author-written notes. It is schema only. There is no Character Studio page, upload route, gallery, home showcase, or relationship map in the application yet. The migration is applied and recorded in the hosted database as of 2026-09-21; see VERIFICATION.md, including the note that an undocumented integration applied it on merge. The design preview in [design/character-studio-preview.html](design/character-studio-preview.html) remains a standalone concept.
 
 ## Why new tables were required
 
@@ -50,7 +50,7 @@ The `kira-character-portraits` bucket is private, limited to 8 MB, and limited t
 
 `tests/character-studio-database.test.ts` runs the real migrations in PGlite and covers tenant isolation, viewer denial, alias normalization, server-advanced versions and stale-edit detection, single reversible links, rejected foreign-book links, note kinds, direct-write refusal on portraits and on `book_characters`, capability and role requirements, registration idempotency, the sanitization requirement, bucket privacy and path binding, primary-portrait containment, and survival of portraits, notes, and links across a second manuscript reading. The full `npm run check` passes: TypeScript, ESLint, 525 unit/API/database tests, and the production build.
 
-Not verified, because it does not exist yet: any hosted behavior. The migration is pending for the hosted database, no EXIF-stripping upload route is implemented, and no image has been stored.
+Not verified, because it does not exist yet: any hosted behavior. No EXIF-stripping upload route is implemented and no image has been stored. The hosted objects were inspected directly and match this document; that is schema verification, not feature verification.
 
 ## Remaining in the sequence
 

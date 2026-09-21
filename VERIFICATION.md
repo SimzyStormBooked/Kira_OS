@@ -14,13 +14,23 @@ The audit was read-only. No migrations were re-applied, no migration history was
 
 The most recently verified application release is `131c4ed` (Vercel `dpl_4U9qGTk28nKBvxv33yDy7NNDEDnJ`), deployed at the canonical production alias. It includes the focused manuscript knowledge interface and evidence-carrying Raven/Desk actions. Release checks passed 515 unit/API/database tests, TypeScript, ESLint and the production build; all eight targeted manuscript desktop/mobile browser tests passed after the final changes, including automated accessibility checks. The authenticated production check confirmed the new UI bundle, available Celine knowledge, and anonymous API access denial. These are recorded results from that release, not a claim that a new adversarial review or physical-device study has completed.
 
-Current scope and open review items are captured in [the continuation handoff](docs/continuation-handoff-2026-09-20.md). **Character Studio has a phase 1 schema migration pending for the hosted database and no deployed feature; its interface remains a design preview.** Automatic report emails remain explicitly deferred by the owner. Meta Ads activation still requires provider configuration and consent; no live Meta account connection is claimed.
+Current scope and open review items are captured in [the continuation handoff](docs/continuation-handoff-2026-09-20.md). **Character Studio's phase 1 schema is applied to the hosted database; it has no deployed feature and its interface remains a design preview.** Automatic report emails remain explicitly deferred by the owner. Meta Ads activation still requires provider configuration and consent; no live Meta account connection is claimed.
 
-## Character Studio phase 1 — verified locally, not deployed
+## Character Studio phase 1 — applied to the hosted database
+
+`202609210001_character_studio.sql` is recorded in `supabase_migrations.schema_migrations` as `character_studio`, bringing the hosted total to **15** migrations with zero pending. Its stored SQL matches the repository file exactly (whitespace-normalized; recorded as a single statement). Checked directly on 2026-09-21 after the merge of `07b9ec2` to `main`.
+
+Verified present in the hosted database: all five tables (`character_profiles`, `character_profile_aliases`, `character_profile_links`, `character_notes`, `character_portraits`) with row level security enabled on each, 16 policies across them, 8 `kira_portrait*` policies on `storage.objects`, the three `character_portrait_*` RPCs, and the private `kira-character-portraits` bucket limited to 8388608 bytes and PNG/JPEG/WebP. The `authenticated` role holds only SELECT and DELETE on `character_portraits`, so portrait rows remain writable exclusively through the capability-gated functions. All five tables are empty, and the existing 31 characters, 31 `book_characters`, and 10 books are unchanged.
+
+Two honest limits on that check. The connection used TLS but did not verify the certificate chain, because Supabase's CA is not available on this machine; this is a weaker guarantee than the September 20 audit recorded. And the migration was **not** applied by hand here: it was already recorded when this workspace first connected, roughly ten minutes after the merge and the 17:26 UTC production deployment. No GitHub Actions workflow, build migration step, or deploy hook in this repository applies migrations, so an external integration does. **That mechanism is undocumented and should be confirmed in the Supabase dashboard**, because it means merging to `main` can change production schema without an explicit apply step — the opposite of what earlier handoffs assumed.
+
+Still absent: any Character Studio interface, the sanitizing upload route, a stored image, and any browser or hosted behavioral check for this feature. Schema in production is not a working feature.
+
+## Character Studio phase 1 — local schema checks
 
 `202609210001_character_studio.sql` adds author-owned character profiles, aliases, reversible author-confirmed book links, author notes, and private portraits with retained source, credit, and usage permission. `tests/character-studio-database.test.ts` applies the real migrations in PGlite and passes 10 checks covering tenant isolation and viewer denial, server-advanced versions and stale-edit detection, single reversible links, rejected foreign-book links, refusal of direct portrait and `book_characters` writes, the server-capability requirement, registration idempotency, the location-metadata requirement before an image counts as stored, bucket privacy and path binding, and survival of portraits, notes, and links across a second manuscript reading. The full `npm run check` passed: TypeScript, ESLint, 525 unit/API/database tests across 41 files, and the production build.
 
-This is a local schema result only. The migration has **not** been applied to the hosted database, no Character Studio interface or upload route exists, no image has been uploaded or sanitized, and no browser or hosted check was run for it.
+This is a local schema result. Hosted state is recorded in the entry above.
 
 ## Historical verification entries
 

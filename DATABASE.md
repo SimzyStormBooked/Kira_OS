@@ -27,7 +27,7 @@ The foundation, knowledge-vector, and connected-workspace migrations establish c
 
 ## Character Studio schema
 
-`202609210001_character_studio.sql` adds the author-writable layer that book-scoped `characters`, read-only `content_assets`, and extraction-owned `book_characters` cannot provide. Profiles, aliases, links, and notes use column-scoped member grants; portrait rows are written only by capability-gated RPCs (`character_portrait_register`, `character_portrait_finish`, `character_portrait_fail`) and stored in the private `kira-character-portraits` bucket. A link is an explicit author assertion and stays reversible; a portrait is never evidence for a statement about a book. The migration is verified in PGlite and has **not** been applied to the hosted database. See [docs/character-studio.md](docs/character-studio.md).
+`202609210001_character_studio.sql` adds the author-writable layer that book-scoped `characters`, read-only `content_assets`, and extraction-owned `book_characters` cannot provide. Profiles, aliases, links, and notes use column-scoped member grants; portrait rows are written only by capability-gated RPCs (`character_portrait_register`, `character_portrait_finish`, `character_portrait_fail`) and stored in the private `kira-character-portraits` bucket. A link is an explicit author assertion and stays reversible; a portrait is never evidence for a statement about a book. The migration is verified in PGlite and is applied and recorded in the hosted database (2026-09-21). See [docs/character-studio.md](docs/character-studio.md).
 
 ## Provenance
 
