@@ -25,3 +25,11 @@ No API credentials or consenting Meta account were configured during initial imp
 Apply migrations `202609200002_ads_dashboard.sql` and `202609200003_character_organization.sql` before releasing code. Server uses user JWT plus narrowly scoped capability RPCs; no service-role key in web runtime. Public ads tables use RLS. Credentials and OAuth state are private.
 
 Run `npm run check`, plus connected desktop/mobile ads/manuscript tests. SQL tests verify tenant isolation, roles, OAuth state use, worker binding, disconnected-worker cancellation, schedule idempotence and email receipt races. Provider tests cover attribution, missing tracking, cross-account rejection and safe cursor pagination. Hosted verification must distinguish working UI/CSV from still-pending external setup.
+
+## Visual reporting
+
+The overview scopes its summary, weighted totals, timeline and campaign cards to All books, one explicitly mapped book, or unmapped campaigns. Book title tiles are identity placeholders, not real cover art. Preview mappings are fictional and isolated from saved mappings.
+
+Switch the seven-day chart among spend, link clicks and cost/link click; the optional dashed line compares the previous seven-day period by day position. Exact dates, keyboard-operable day selectors and a 14-day data table accompany the chart. Missing CPC breaks the line; no fake zero-cost point. CSV days without rows show zero reported activity with an explicit completeness note.
+
+Three deterministic observations explain the snapshot without making profit claims. Creative cards show the current and prior totals together with low-sample caveats. A next-step card can save an experiment to Desk; this does not change ads. Automatic email activation remains deferred by the owner.
