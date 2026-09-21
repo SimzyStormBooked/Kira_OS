@@ -19,10 +19,15 @@ Three migrations define 25 UUID-keyed, tenant-scoped tables. Every application t
 | On-demand AI | `workspace_generations` | Private questions, structured answers, status, actor, model, token/cost metadata |
 | Access audit | `workspace_access_events` | Owner-attributed grant/change/revoke events |
 | Connections | `workspace_links`, `meta_authorizations` | Manual shortcuts and separately verified account-authorization metadata |
+| Character Studio | `character_profiles`, `character_profile_aliases`, `character_profile_links`, `character_notes`, `character_portraits` | Author-owned identity, reversible confirmed book links, author notes, private portraits |
 
 The foundation, knowledge-vector, and connected-workspace migrations establish catalog, pgvector, and audited review operations. Later migrations add generations, access management, manual links, and Meta authorization. Apply them in filename order. Embeddings remain nullable; no ingestion, similarity endpoint, or ANN index is implemented.
 
 `20260918005218_studio_request_validation.sql` is a forward-only correction to Studio's private begin function. It validates request fields before looking up a reused UUID and uses null-safe identity comparisons. Its signature and grants remain unchanged; already-applied migrations are not rewritten.
+
+## Character Studio schema
+
+`202609210001_character_studio.sql` adds the author-writable layer that book-scoped `characters`, read-only `content_assets`, and extraction-owned `book_characters` cannot provide. Profiles, aliases, links, and notes use column-scoped member grants; portrait rows are written only by capability-gated RPCs (`character_portrait_register`, `character_portrait_finish`, `character_portrait_fail`) and stored in the private `kira-character-portraits` bucket. A link is an explicit author assertion and stays reversible; a portrait is never evidence for a statement about a book. The migration is verified in PGlite and has **not** been applied to the hosted database. See [docs/character-studio.md](docs/character-studio.md).
 
 ## Provenance
 
