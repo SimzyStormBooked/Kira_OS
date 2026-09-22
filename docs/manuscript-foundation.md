@@ -41,7 +41,7 @@ Retrying an identical upload recovers a lost upload response by checking the sto
 
 **What Raven learned** contains extracted observations and possible marketing directions, with model, reading date, and manuscript version. The extraction is selective; it is not a complete editorial analysis or a guarantee that every character or theme was found.
 
-- **Manuscript-supported · unreviewed** is an AI claim tied to a cited passage, not author verification. Exact quote checks establish that the quote exists in this version; you still judge whether it supports the conclusion.
+- **Manuscript-supported · unreviewed** is an AI claim tied to a cited passage, not author verification. Quote checks establish that the quote exists in this version: a citation is matched across the source's own line breaks and spacing, and what is stored is the passage's own text. You still judge whether it supports the conclusion. See [citation matching](citation-matching.md).
 - **Marketing / interpretive inference** is an interpretation or proposed direction for your judgment. It is not evidence of sales, audience response, or market performance.
 - **Show source** opens the original stored passage from that finding's manuscript version. The text is private reference material and may contain spoilers; it is not approved marketing copy.
 - Potential spoilers are hidden until you choose **Reveal plot details and potential spoilers**. Spoiler classification is also an AI judgment, so it cannot promise that every reveal was recognized.
@@ -97,7 +97,7 @@ The web runtime uses the signed-in caller's Supabase client, tenant-scoped queri
 
 Inspect `manuscripts` for status, error code and completion counts; `manuscript_batches` for request status, model, token usage, estimated cost and available generation references; and `book_intelligence` for the completed version's profile. Avoid copying manuscript text or credentials into incident logs. The original file, parsed chunks and cited source records are distinct from generated observations. Do not repair a failed job by replacing protected source text, marking partial work ready, or bypassing caller/recording checks.
 
-The model receives a simplified object/type/enum schema because the hosted Google/Vertex endpoints rejected the deeply constrained grammar. The application still validates every UUID, text/count bound, field, and exact source citation against the original strict contract before accepting output; SQL validates it again. [Google documents structured-output constraints](https://ai.google.dev/gemini-api/docs/structured-output).
+The model receives a simplified object/type/enum schema because the hosted Google/Vertex endpoints rejected the deeply constrained grammar. The application still validates every UUID, text/count bound, field, and source citation against the original strict contract before accepting output; SQL validates it again against the stored passage. [Google documents structured-output constraints](https://ai.google.dev/gemini-api/docs/structured-output).
 
 Optional embedding failure never requires rerunning successful extraction. This release has no embedding-backfill UI and does not expose semantic search in the author interface. Cost records are estimates, not a substitute for the provider's billing record.
 

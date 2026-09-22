@@ -31,6 +31,30 @@ The most recently verified application release is `131c4ed` (Vercel `dpl_4U9qGTk
 
 Current scope and open review items are captured in [the continuation handoff](docs/continuation-handoff-2026-09-20.md). **At this historical checkpoint Character Studio was a design preview. The schema, gallery, profile view and portrait upload feature were added subsequently; see the September 21 sections.** Automatic report emails remain explicitly deferred by the owner. Meta Ads activation still requires provider configuration and consent; no live Meta account connection is claimed.
 
+## Citation matching — September 22, 2026
+
+Manuscript citations were being rejected for their spacing. Extracted PDF passages keep the page's line breaks and padding: **601 of the 602 stored passages contain a newline** and 357 contain a double space, while a model re-quotes the same words with ordinary spacing. Both checks compared exactly, so genuine citations failed. Re-quoting spans of the real passages the way the model does, the old check accepted **636 of 2401 — 26.5%**. `Syndicate Princess` had stalled at **20 of 421 passages with 31 failed batches**, each a paid call that stored nothing: **$0.42 spent for no knowledge**.
+
+Matching now ignores whitespace runs only, and what is stored is the verbatim span of the passage, so a citation remains a literal substring of its source and the database's exact-substring check is left untouched and still meaningful. `202609210002_citation_whitespace.sql` bounds a quote by the content it carries (300 characters normalized) instead of its raw length; **173 of 2392** resolved spans exceed 300 raw characters, so a TypeScript-only fix would have passed its tests and still failed in production.
+
+Measured against the production corpus, read-only:
+
+| Check | Result |
+| --- | --- |
+| Simulated re-quotes of real passages that resolve | **2401 of 2401**, against 636 before |
+| Resolved spans literally present in their source and normalizing to the requested words | 2401 of 2401 |
+| Altered-wording probes rejected (changed letters, added words, reordered, recased) | 796 of 796 |
+| Citations already stored in production that still validate | **852 of 852** — nothing existing is invalidated |
+| Largest stored batch payload against the 100000-byte cap | 10780 bytes |
+
+Automated: `npm run check` passes with **600 tests across 46 files**, including 28 unit tests for the matcher and 4 database tests that run the real migration in PGlite. The 122-test connected browser suite passes.
+
+An adversarial review of the change found two real defects before it merged, each reproduced independently and each now covered by a regression test that was confirmed to fail when the defect is put back. First, the application's citation schema still capped a quote at 300 raw characters, so the database would have accepted and stored verbatim spans that every read-back path — book detail, `/api/opportunities`, the ads report worker — would then refuse to parse. Second, PostgreSQL's `\s` does not match U+00A0, U+1680, U+2007, U+202F or U+FEFF while JavaScript's does, so a passage padded with non-breaking spaces would have been accepted by the application and rejected by the database, failing the whole batch.
+
+Known limits are recorded in [citation matching](docs/citation-matching.md): hyphenated line breaks (`wa-\nterfall`) are still rejected because removing a hyphen is not a whitespace difference, and page furniture spliced mid-passage still defeats a quote. That note also records a pre-existing hazard this work surfaced but did not fix — `private.strategy_begin` joins a chunk's stored quotes with newlines and validates plan citations against the joined text, so adjacent quotes create an adjacency the manuscript never had.
+
+This is a local and corpus-measured result. Nothing was deployed and no manuscript was re-read as part of it.
+
 ## Character Studio phase 1 — applied to the hosted database
 
 `202609210001_character_studio.sql` is recorded in `supabase_migrations.schema_migrations` as `character_studio`, bringing the hosted total to **15** migrations with zero pending. Its stored SQL matches the repository file exactly (whitespace-normalized; recorded as a single statement). Checked directly on 2026-09-21 after the merge of `07b9ec2` to `main`.

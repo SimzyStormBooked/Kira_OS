@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MANUSCRIPT_QUOTE_MAX, MANUSCRIPT_STORED_QUOTE_MAX, normalizeQuoteWhitespace, resolveCitationQuote } from "./citations";
 
 export const MANUSCRIPT_MAX_BYTES = 4 * 1024 * 1024;
 export const MANUSCRIPT_MAX_TEXT = 1_500_000;
@@ -30,7 +31,15 @@ export const manuscriptChunkSchema = z.object({
 }).strict();
 export type ManuscriptChunk = z.infer<typeof manuscriptChunkSchema>;
 export interface ParsedManuscript { chunks: ManuscriptChunk[]; textHash: string; parserVersion: string }
-export const manuscriptCitationSchema = z.object({ chunk_id: z.uuid(), quote: z.string().trim().min(1).max(300) }).strict();
+export const manuscriptCitationSchema = z.object({
+  chunk_id: z.uuid(),
+  // Two budgets, mirroring the database: raw length leaves room for the source's own line
+  // breaks and padding, while the CONTENT a citation may carry stays capped. A stored quote
+  // is the verbatim span of its passage, so it is longer than what the model quoted.
+  quote: z.string().trim().min(1).max(MANUSCRIPT_STORED_QUOTE_MAX)
+    .refine(value => normalizeQuoteWhitespace(value).length <= MANUSCRIPT_QUOTE_MAX,
+      { message: `A quote may carry at most ${MANUSCRIPT_QUOTE_MAX} characters of content` }),
+}).strict();
 const citations = z.array(manuscriptCitationSchema).min(1).max(4);
 export const manuscriptFactSchema = z.object({
   category: z.enum(["genre", "synopsis", "theme", "trope", "tone", "setting", "plot", "reader_promise", "content", "marketing_hook", "comparable"]),
@@ -63,16 +72,31 @@ export interface ManuscriptEmbedding { chunk_id: string; embedding: number[]; mo
 export interface ManuscriptExtractionReply {
   result: ManuscriptExtraction; usage: ManuscriptUsage; embeddings: ManuscriptEmbedding[];
 }
+/**
+ * Resolves each citation to the verbatim span of its passage, or returns null when any
+ * citation is not supported by the passages in this batch. Whitespace runs differ between
+ * extracted source text and a model's re-quote, so matching ignores them; everything
+ * stored is the source's own text, not the model's spacing.
+ */
+function resolveItemCitations<T extends ManuscriptFact | ManuscriptCharacter>(item: T, known: Map<string, string>): T | null {
+  const citations = [];
+  for (const citation of item.citations) {
+    // An unknown chunk_id resolves against no text, so it stays unsupported.
+    const resolved = resolveCitationQuote(known.get(citation.chunk_id) ?? "", citation.quote);
+    if (!resolved) return null;
+    citations.push({ ...citation, quote: resolved.quote });
+  }
+  return { ...item, citations } as T;
+}
+
 /** Citations must be from this exact batch. All accepted items remain unreviewed candidates. */
 export function validateManuscriptExtraction(value: unknown, chunks: ManuscriptChunk[]): ManuscriptExtraction {
   const output = manuscriptExtractionSchema.parse(value);
   const known = new Map(chunks.map(chunk => [chunk.id, chunk.reference_text]));
-  for (const item of [...output.facts, ...output.characters]) {
-    for (const citation of item.citations) {
-      if (!known.get(citation.chunk_id)?.includes(citation.quote)) throw new Error("Unsupported manuscript citation");
-    }
-  }
-  return output;
+  const facts = output.facts.map(item => resolveItemCitations(item, known));
+  const characters = output.characters.map(item => resolveItemCitations(item, known));
+  if ([...facts, ...characters].some(item => item === null)) throw new Error("Unsupported manuscript citation");
+  return { facts: facts as ManuscriptFact[], characters: characters as ManuscriptCharacter[] };
 }
 
 /** One unsupported candidate must not discard independently verified findings.
@@ -83,10 +107,9 @@ export function validateManuscriptExtraction(value: unknown, chunks: ManuscriptC
 export function selectVerifiedManuscriptExtraction(value: unknown, chunks: ManuscriptChunk[]): ManuscriptExtraction {
   const output = manuscriptExtractionSchema.parse(value);
   const known = new Map(chunks.map(chunk => [chunk.id, chunk.reference_text]));
-  const supported = (item: ManuscriptFact | ManuscriptCharacter) =>
-    item.citations.every(citation => known.get(citation.chunk_id)?.includes(citation.quote));
-  const result = { facts: output.facts.filter(supported), characters: output.characters.filter(supported) };
-  if (output.facts.length + output.characters.length > 0 && result.facts.length + result.characters.length === 0)
+  const facts = output.facts.map(item => resolveItemCitations(item, known)).filter((item): item is ManuscriptFact => item !== null);
+  const characters = output.characters.map(item => resolveItemCitations(item, known)).filter((item): item is ManuscriptCharacter => item !== null);
+  if (output.facts.length + output.characters.length > 0 && facts.length + characters.length === 0)
     throw new Error("No supported manuscript citations");
-  return validateManuscriptExtraction(result, chunks);
+  return { facts, characters };
 }

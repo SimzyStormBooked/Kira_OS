@@ -78,7 +78,7 @@ beforeAll(async () => {
     grant usage on schema storage to authenticated,anon;
     grant select,insert,update,delete on storage.objects to authenticated,anon;
     create policy unrelated_permissive_storage_policy on storage.objects for all to authenticated,anon using(true) with check(true);`);
-  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609200001_background_reading", "202609200003_character_organization"]) {
+  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609200001_background_reading", "202609200003_character_organization", "202609210002_citation_whitespace"]) {
     await db.exec(readFileSync(`supabase/migrations/${name}.sql`, "utf8"));
   }
   await db.query("insert into private.workspace_generation_config(singleton,recording_key_hash) values(true,encode(sha256(convert_to($1,'UTF8')),'hex'))", [recordingKey]);
@@ -341,5 +341,64 @@ describe("durable manuscript jobs", () => {
     await asUser(owner); await expect(control(m)).rejects.toThrow();
     const retry = await control(m, "start", true); expect(retry.id).not.toBe(j.id);
     expect((await worker(retry, randomUUID())).chunks).toHaveLength(4);
+  });
+});
+
+describe("citations that carry the source's own whitespace", () => {
+  // A PDF page's line breaks and padding live inside the stored passage, so the verbatim
+  // span of a quote the model kept within its 300-character content limit can be far
+  // longer in raw characters. The SQL boundary must bound the content, not the padding.
+  const padded = (words: number) => Array.from({ length: words }, (_, index) => `word${index}`).join("\n   ");
+  const cite = (chunk: Chunk, quote: string) => ({
+    facts: [{ category: "theme", statement: "The passage repeats a padded refrain.", kind: "supported", spoiler: false, citations: [{ chunk_id: chunk.id, quote }] }],
+    characters: [],
+  });
+  async function batchOver(text: string) {
+    const target = await book(`Padded book ${text.length}`);
+    const manuscript = await register(target.id, `padded ${text.length}`);
+    const value = [{ id: randomUUID(), chunk_index: 0, section: "Chapter 1", reference_text: text, content_hash: hash(text) }];
+    await store(manuscript, value);
+    const begun = await begin(manuscript);
+    return { manuscript, batch: begun.batch!, chunk: begun.chunks[0] };
+  }
+
+  it("accepts a verbatim quote longer than 300 raw characters when its content fits", async () => {
+    const text = padded(40);
+    const normalized = text.replace(/\s+/g, " ").trim();
+    expect(text.length).toBeGreaterThan(300);
+    expect(normalized.length).toBeLessThanOrEqual(300);
+    const { manuscript, batch, chunk } = await batchOver(text);
+    const finished = await finish(manuscript, batch, cite(chunk, chunk.reference_text));
+    expect(finished.batch.status).toBe("complete");
+    expect(finished.manuscript.completed_chunks).toBe(1);
+  });
+
+  it("rejects a quote whose content exceeds the limit however it is spaced", async () => {
+    const text = padded(60);
+    expect(text.replace(/\s+/g, " ").trim().length).toBeGreaterThan(300);
+    const { manuscript, batch, chunk } = await batchOver(text);
+    await expect(finish(manuscript, batch, cite(chunk, chunk.reference_text))).rejects.toMatchObject({ code: "22023" });
+  });
+
+  it("counts the same characters as whitespace that the application does", async () => {
+    // PostgreSQL's own \\s does not match these; JavaScript's does. If the two disagreed,
+    // the app would accept a citation the database then rejected, failing the whole batch.
+    for (const code of [0x00a0, 0x1680, 0x2007, 0x202f, 0xfeff]) {
+      const space = String.fromCodePoint(code);
+      const text = Array.from({ length: 40 }, (_, index) => `word${index}`).join(`${space}${space} `);
+      expect(text.replace(/\s+/g, " ").trim().length).toBeLessThanOrEqual(300);
+      expect(text.length).toBeGreaterThan(300);
+      const { manuscript, batch, chunk } = await batchOver(text);
+      const finished = await finish(manuscript, batch, cite(chunk, chunk.reference_text));
+      expect(finished.batch.status, `U+${code.toString(16)} must be treated as whitespace`).toBe("complete");
+    }
+  });
+
+  it("still requires the quote to appear literally in the passage", async () => {
+    const text = padded(20);
+    const { manuscript, batch, chunk } = await batchOver(text);
+    // Same words, but spacing the source does not contain: the database stays exact.
+    await expect(finish(manuscript, batch, cite(chunk, chunk.reference_text.replace(/\s+/g, " ")))).rejects.toMatchObject({ code: "22023" });
+    await expect(finish(manuscript, batch, cite(chunk, "a refrain the page never carried"))).rejects.toMatchObject({ code: "22023" });
   });
 });
