@@ -23,6 +23,8 @@ Three migrations define 25 UUID-keyed, tenant-scoped tables. Every application t
 
 The foundation, knowledge-vector, and connected-workspace migrations establish catalog, pgvector, and audited review operations. Later migrations add generations, access management, manual links, and Meta authorization. Apply them in filename order. Embeddings remain nullable; no ingestion, similarity endpoint, or ANN index is implemented.
 
+`202609210002_citation_whitespace.sql` is a forward-only correction to citation validation. A citation quote is bounded by the content it carries (300 characters after collapsing whitespace) rather than by its raw length, because the application now stores the verbatim span of the passage, line breaks included. The exact-substring requirement is unchanged. See [docs/citation-matching.md](docs/citation-matching.md).
+
 `20260918005218_studio_request_validation.sql` is a forward-only correction to Studio's private begin function. It validates request fields before looking up a reused UUID and uses null-safe identity comparisons. Its signature and grants remain unchanged; already-applied migrations are not rewritten.
 
 ## Character Studio schema
