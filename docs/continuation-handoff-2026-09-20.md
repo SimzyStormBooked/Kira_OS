@@ -1,6 +1,6 @@
 # KIRA OS continuation handoff — September 20, 2026
 
-> September 21 update: both Claude branches are now integrated in the release checkout. Character Studio phase 1 is applied to the hosted database; the gallery/upload UI remains unbuilt. Round-one and round-two adversarial results are now in `docs/ux-review/`; round two still contains open findings. The September 20 snapshot below is historical.
+> September 21 update: both Claude branches are now integrated in the release checkout. Character Studio phase 1 is applied to the hosted database; the gallery UI remains unbuilt; the sanitizing upload backend from `1ba80ff` is included. Round-one and round-two adversarial results are now in `docs/ux-review/`; the later `82e0320` fix commit addresses round-two findings, but no third-round score has been commissioned. The September 20 snapshot below is historical.
 
 
 ## Safe starting point

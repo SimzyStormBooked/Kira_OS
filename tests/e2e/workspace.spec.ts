@@ -178,6 +178,7 @@ test("search and responsive navigation work without overflow", async ({
   } else {
     await page.getByRole("link", { name: "Settings", exact: true }).click();
   }
+  await expect(page).toHaveURL(/\/settings$/, { timeout: 20000 });
   await expect(
     page.getByRole("heading", { name: "The creative firewall" }),
   ).toBeVisible();

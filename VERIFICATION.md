@@ -4,7 +4,7 @@
 
 The migration applier is now identified: this Codex integration session applied `202609210001_character_studio.sql` at **2026-09-21 12:51:33 UTC**, using the existing operator Postgres credentials over verified TLS with the saved Supabase CA (`rejectUnauthorized: true`). The SQL and migration-history insert committed in one transaction under the `kira-hosted-migrations` advisory lock. Five tables had RLS enabled and the portrait bucket was private with the required size/type limits at commit. See [the sanitized result](docs/character-studio-hosted-checkpoint.json). The separate check below lacked this session's context; no unknown automation or merge-triggered migration runner has been established.
 
-This integration preserves Claude's subsequent portrait-upload backend on main and the updated UX branch. The gallery, profile interface, home showcase and Quiet Room remain future work. Automatic emails remain deferred and Meta Ads still requires app setup and account consent.
+This integration preserves Claude's subsequent portrait-upload backend on main and the updated UX branch through `8c0d9be` (including `82e0320` round-two fixes). No third-round score has been commissioned. The gallery, profile interface, home showcase and Quiet Room remain future work. Automatic emails remain deferred and Meta Ads still requires app setup and account consent.
 
 
 ## Current checkpoint — September 20, 2026
