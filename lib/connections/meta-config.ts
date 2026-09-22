@@ -22,6 +22,10 @@ export function getMetaConfig(env: Readonly<Record<string, string | undefined>> 
   const serverProof = createHmac("sha256", credentialKey).update("KIRA_META_SERVER_CAPABILITY_V1").digest("hex");
   return { appId, appSecret, loginConfigId, graphVersion, origin, callbackUrl: `${origin}/api/connections/meta/callback`, credentialKey, serverProof };
 }
+/** App-wide revocation/deletion callbacks serve either configured connector; OAuth still requires its own login configuration. */
+export function getMetaLifecycleConfig(env: Readonly<Record<string, string | undefined>> = process.env): MetaConfig | null {
+  return getMetaConfig(env) ?? getMetaConfig({ ...env, KIRA_META_LOGIN_CONFIG_ID: env.KIRA_META_ADS_LOGIN_CONFIG_ID });
+}
 /** Provision only this hash in private.meta_connector_config; keep the key/proof server-only. */
 export function metaCapabilityHash(config: MetaConfig): string {
   return createHash("sha256").update(config.serverProof).digest("hex");

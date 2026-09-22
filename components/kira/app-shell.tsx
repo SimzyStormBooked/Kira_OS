@@ -60,7 +60,7 @@ import { SessionEndedDialog } from "./session-ended-dialog";
 import { useKeptDrafts, type KeptDraft } from "./kept-drafts";
 import "./shell.css";
 
-const navigation = [
+const availableNavigation = [
   {
     href: "/",
     title: "Mission Control",
@@ -85,6 +85,8 @@ const navigation = [
     description: "Your cast, their portraits & your notes",
     icon: Users2,
   },
+];
+const plannedNavigation = [
   {
     href: "/reader-pulse",
     title: "Reader Pulse",
@@ -128,6 +130,7 @@ const navigation = [
     icon: FolderOpen,
   },
 ];
+const navigation = [...availableNavigation, ...plannedNavigation];
 const creativeNavigation = [
   { href: "/ads", title: "Ads & Next Steps", description: "Facebook results & your next experiment", icon: Megaphone },
   { href: "/opportunities", title: "Catalog Opportunities", description: "Find connections between your books", icon: Telescope },
@@ -162,9 +165,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
       </div>
       <div className="nav-label">YOUR WORKSPACE</div>
       <nav aria-label="Main navigation">
-        {navigation
-          .slice(0, 3)
-          .map(({ href, title, description, icon: Icon }) => (
+        {availableNavigation.map(({ href, title, description, icon: Icon }) => (
             <Link
               key={href}
               href={href}
@@ -230,7 +231,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
           hidden={!plannedOpen}
         >
           <p>Preview what can grow with your workspace.</p>
-          {navigation.slice(3).map(({ href, title, description, icon: Icon }) => (
+          {plannedNavigation.map(({ href, title, description, icon: Icon }) => (
             <Link
               className={cn("nav-item nav-item-planned", path === href && "active")}
               key={href}

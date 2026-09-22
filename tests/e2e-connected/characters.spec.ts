@@ -76,7 +76,11 @@ test.beforeEach(async ({ page, request }) => {
 });
 
 test("an empty studio invites a first character and finds it again by an alias", async ({ page }) => {
-  await page.goto("/characters");
+  const menu = page.getByRole("button", { name: "Open navigation", exact: true });
+  if (await menu.isVisible()) await menu.click();
+  const navigation = page.getByRole("navigation", { name: "Main navigation", exact: true }).filter({ visible: true });
+  await navigation.getByRole("link", { name: /Character Studio/ }).click();
+  await expect(page).toHaveURL(/\/characters$/);
   await expect(page.getByRole("heading", { name: "Your cast starts here.", exact: true })).toBeVisible();
   await addCharacter(page, "Celine Dubois", "The Lark, Cee");
   await expect(page.getByText("Also known as Cee, The Lark", { exact: true })).toBeVisible();

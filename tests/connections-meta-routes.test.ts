@@ -46,6 +46,12 @@ describe("Meta OAuth HTTP boundary", () => {
     vi.stubEnv("KIRA_META_APP_SECRET", ""); expect((await start(request("POST"))).status).toBe(503);
     expect(repo.begin).not.toHaveBeenCalled();
   });
+  it("keeps organic OAuth unavailable when only the Ads login configuration is set", async () => {
+    vi.stubEnv("KIRA_META_LOGIN_CONFIG_ID", ""); vi.stubEnv("KIRA_META_ADS_LOGIN_CONFIG_ID", "765432");
+    expect((await start(request("POST"))).status).toBe(503);
+    expect((await callback(callbackRequest(newOAuthState()))).status).toBe(503);
+    expect(repo.begin).not.toHaveBeenCalled(); expect(exchangeMetaCode).not.toHaveBeenCalled();
+  });
   it("consumes matching session state before exchanging and saves only verified authorization", async () => {
     const state = newOAuthState(); const response = await callback(callbackRequest(state));
     expect(repo.consume).toHaveBeenCalledWith(stateHash(state));

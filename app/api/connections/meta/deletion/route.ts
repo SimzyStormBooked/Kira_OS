@@ -1,12 +1,12 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createWorkspaceSupabaseClient } from "@/lib/auth/client";
-import { getMetaConfig } from "@/lib/connections/meta-config";
+import { getMetaLifecycleConfig } from "@/lib/connections/meta-config";
 import { signedMetaUser } from "@/lib/connections/meta-crypto";
 import { revokeMetaIdentity } from "@/lib/connections/meta-repository";
 import { metaHeaders, readSmallBody } from "@/lib/connections/meta-http";
 export async function POST(request: Request) {
-  const config = getMetaConfig();
+  const config = getMetaLifecycleConfig();
   if (!config) return NextResponse.json({ error: "Setup pending." }, { status: 503, headers: metaHeaders });
   let userId: string;
   try { userId = signedMetaUser(new URLSearchParams(await readSmallBody(request)).get("signed_request") ?? "", config.appSecret); }
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   } catch { return NextResponse.json({ error: "Please retry this event." }, { status: 503, headers: metaHeaders }); }
 }
 export async function GET(request: Request) {
-  const config = getMetaConfig();
+  const config = getMetaLifecycleConfig();
   const code = new URL(request.url).searchParams.get("code") ?? "";
   const [nonce, signature, extra] = code.split(".");
   if (!config || extra || !/^[A-Za-z0-9_-]{32}$/.test(nonce ?? "") || !/^[A-Za-z0-9_-]{43}$/.test(signature ?? ""))

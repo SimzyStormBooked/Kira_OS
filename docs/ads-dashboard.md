@@ -14,7 +14,9 @@ Private route `/ads`. Read-only Facebook advertising insights; no ad creation, p
 
 ## External activation
 
-Meta requires `KIRA_META_APP_ID`, `KIRA_META_APP_SECRET`, `KIRA_META_ADS_LOGIN_CONFIG_ID`, `KIRA_META_GRAPH_VERSION`, existing encrypted-credential key, and the server recording capability. Register `https://kira-os-dusky.vercel.app/api/ads/meta/callback`. Configure Facebook Login for Business with read-only `ads_read`; complete applicable Meta access/review requirements and have the account holder consent. Test real account access before declaring connected. Existing organic connections use their separate login configuration.
+Meta requires `KIRA_META_APP_ID`, `KIRA_META_APP_SECRET`, `KIRA_META_ADS_LOGIN_CONFIG_ID`, `KIRA_META_GRAPH_VERSION`, existing encrypted-credential key, and the server recording capability. Register `https://kira-os-dusky.vercel.app/api/ads/meta/callback`. Configure Facebook Login for Business to issue User access tokens with read-only `ads_read`; complete applicable Meta access/review requirements and have the account holder consent. Also register the shared deauthorization and deletion callbacks listed in [the Meta setup guide](../lib/connections/SETUP.md); those callbacks support Ads-only setup without the organic login configuration. Test real account access before declaring connected. Existing organic connections use their separate login configuration.
+
+Daily refresh requires `CRON_SECRET` and the deployed `/api/cron/ads` schedule, even while email delivery remains deferred. The scheduler rejects requests without its matching authorization secret.
 
 Email requires verified sender DNS, `RESEND_API_KEY`, `KIRA_ADS_EMAIL_FROM`, `RESEND_WEBHOOK_SECRET`, `KIRA_ADS_EMAIL_VERIFIED=true`, and `CRON_SECRET`. Signed events endpoint: `https://kira-os-dusky.vercel.app/api/ads/webhook`; subscribe to delivered, bounced, complained and suppressed events. Never mark verified based on creation/terms acceptance alone. Confirm a real delivered test before promising emails.
 

@@ -1,6 +1,6 @@
 # KIRA OS continuation handoff — September 20, 2026
 
-> September 21 update: both Claude branches are now integrated in the release checkout. Character Studio phase 1 is applied to the hosted database; the gallery UI remains unbuilt; the sanitizing upload backend from `1ba80ff` is included. Round-one and round-two adversarial results are now in `docs/ux-review/`; the later `82e0320` fix commit addresses round-two findings, but no third-round score has been commissioned. The September 20 snapshot below is historical.
+> September 21 update: both Claude branches are now integrated in the release checkout. Character Studio phase 1 is applied to the hosted database; the gallery, profile view and sanitizing upload backend through `1f5e8ca` are included. Round-one and round-two adversarial results are now in `docs/ux-review/`; the later `82e0320` fix commit addresses round-two findings, but no third-round score has been commissioned. The September 20 snapshot below is historical.
 
 
 ## Safe starting point
@@ -38,7 +38,7 @@ The screenshot’s “all three migrations unrecorded” wording is stale: the d
 
 - Automatic Monday/Thursday reports: owner explicitly deferred email setup. Do not enable sending or subscriptions as part of this checkpoint. Resend domain DNS/sender verification remains setup work; existing preview/report code does not prove delivery readiness.
 - Meta Ads: dashboard/import/preview code exists, but developer-app credentials and consent are still activation gates. Do not imply live Facebook account analytics or advertising changes.
-- Character Studio: concept only when this checkpoint was written. Phase 1 schema was added afterwards in `202609210001_character_studio.sql` (September 21) and is pending on the hosted database; there is still no upload feature, gallery, or stored image. See [character-studio.md](character-studio.md).
+- Character Studio: concept only when this checkpoint was written. The schema was subsequently applied to the hosted database, and the gallery, profile view and sanitized portrait upload were implemented through `1f5e8ca`. Hosted portrait writes have not been exercised by this release session. See [character-studio.md](character-studio.md).
 - Production manuscript snapshot contained one ready and one failed version; no processing was active and no retries were attempted in this migration audit. That aggregate alone does not identify a new failure or supersede the available completed knowledge.
 
 ## Review artifacts retained in the workspace
