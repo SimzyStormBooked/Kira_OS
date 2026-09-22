@@ -27,6 +27,7 @@ import {
   Telescope,
   TriangleAlert,
   Users,
+  Users2,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,12 @@ const navigation = [
     title: "The Universe",
     description: "Your books & their details",
     icon: BookOpen,
+  },
+  {
+    href: "/characters",
+    title: "Character Studio",
+    description: "Your cast, their portraits & your notes",
+    icon: Users2,
   },
   {
     href: "/reader-pulse",
