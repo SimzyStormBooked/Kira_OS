@@ -53,7 +53,15 @@ An adversarial review of the change found two real defects before it merged, eac
 
 Known limits are recorded in [citation matching](docs/citation-matching.md): hyphenated line breaks (`wa-\nterfall`) are still rejected because removing a hyphen is not a whitespace difference, and page furniture spliced mid-passage still defeats a quote. That note also records a pre-existing hazard this work surfaced but did not fix — `private.strategy_begin` joins a chunk's stored quotes with newlines and validates plan citations against the joined text, so adjacent quotes create an adjacency the manuscript never had.
 
-This is a local and corpus-measured result. Nothing was deployed and no manuscript was re-read as part of it.
+### Deployed — September 22, 2026
+
+Application release `84958b9` reached production at 21:42 UTC. Merging did not apply the migration — nothing in this project applies SQL on merge — so `202609210002_citation_whitespace.sql` was applied explicitly with `supabase db push` after a dry run confirmed it was the only pending migration. Verified over chain-verified TLS (`rejectUnauthorized: true`, the saved Supabase CA) at 21:46 UTC: **16** migrations recorded, the stored statements rejoin to exactly the repository file, and the live `private.valid_manuscript_citations` carries the new whitespace class and caps with `strpos` intact and execution granted to `postgres` only.
+
+A read-only probe of the live function against a real `Syndicate Princess` passage accepted the verbatim 288-character span the application now stores, and rejected both the model's own spacing (not literally present) and invented text.
+
+Simulated on the eight passages the failed batches kept retrying, sentence-sized quotes resolve **159 of 159**, against 26 before; the first of them went from 1 of 17 to 17 of 17. No manuscript has been re-read yet. Resuming is an owner or editor action in the app and was not performed here.
+
+Marketing Plans is not exposed today: it draws on Celine's passages 1, 2, 3 and 5, none of which hold a multi-line quote. A book first read after this change would give Plans multi-line evidence that its exact check would reject — fail-closed, no bad data — and that, together with the pre-existing seam hazard above, is the next change.
 
 ## Character Studio phase 1 — applied to the hosted database
 
