@@ -131,6 +131,7 @@ export function ManualReviewForm({ ideaId }: { ideaId?: string }) {
         This is a place to save an idea or request with a little context. Capture a promotion,
         reader question, or book update. You can refine it before deciding.
       </p>
+      {mode === "connected" && <p className="quiet-note">Workspace members can read saved briefs. Keep passwords and API keys out of your notes; use Connections for account setup.</p>}
       {!canEdit && <p className="quiet-note" role="status">{roleError ? "Saving is paused until your permissions can be checked. Your unfinished draft stays here while you explore." : "You have viewer access. You can read ideas and evidence; an owner or editor can save changes. Any unfinished draft stays here while you explore."}</p>}
       {needsChoice && (
         <div

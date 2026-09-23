@@ -178,13 +178,13 @@ export function ApprovalCard({ approval }: { approval: ApprovalRequest }) {
       {lessons.length > 0 && (
         <div className="saved-lessons">
           <span className="eyebrow">
-            Your guidance · {lessons.length} saved
+            Saved guidance · {lessons.length} saved
           </span>
           {lessons.map((l) => (
             <p key={l.id}>
               “{l.feedback}”
               <small>
-                Your note · {l.created_at.slice(0, 10)} ·{" "}
+                Saved note · {l.created_at.slice(0, 10)} ·{" "}
                 {mode === "demo" ? "Stored locally" : "Saved to workspace"}
               </small>
             </p>

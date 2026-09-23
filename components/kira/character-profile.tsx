@@ -125,12 +125,12 @@ function ConnectedCharacterProfile({ id }: { id: string }) {
       </section>
 
       <section aria-labelledby="notes-heading" className="character-section">
-        <h2 id="notes-heading"><Sparkles size={18} /> Your notes</h2>
+        <h2 id="notes-heading"><Sparkles size={18} /> Author notes</h2>
         {data.notes.length > 0
           ? <ul className="character-notes">{data.notes.map(note => <li key={note.id}>
-              <span className="eyebrow">{note.kind === "author_confirmed" ? "You confirmed this" : "Visual inspiration"}</span>
+              <span className="eyebrow">{note.kind === "author_confirmed" ? "Author-confirmed reference" : "Visual inspiration"}</span>
               <p>{note.body}</p></li>)}</ul>
-          : <p className="quiet-note">Notes you write here stay separate from what a manuscript reading observed, so your own word is never mixed with an extraction.</p>}
+          : <p className="quiet-note">Character note editing is coming later. For now, <Link className="text-link" href="/desk">save a character reference note at your Desk</Link> and include the character’s name. Your notes stay separate from manuscript findings.</p>}
       </section>
 
       <section aria-labelledby="books-heading" className="character-section">

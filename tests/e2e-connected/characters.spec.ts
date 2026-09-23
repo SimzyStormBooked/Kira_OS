@@ -185,7 +185,7 @@ test("a chosen cover reaches the gallery card and a confirmed link shows where t
   });
   expect(seeded.ok()).toBe(true);
   await page.reload();
-  await expect(page.getByText("You confirmed this", { exact: true })).toBeVisible();
+  await expect(page.getByText("Author-confirmed reference", { exact: true })).toBeVisible();
   await expect(page.getByText("She never lies about the harbour.", { exact: true })).toBeVisible();
   await expect(page.locator(".character-links")).toContainText(book.title);
   await expect(page.locator(".character-links")).toContainText("as Celine");

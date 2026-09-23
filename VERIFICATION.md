@@ -1,5 +1,11 @@
 # KIRA OS verification
 
+## Saved-note readiness — September 23, 2026
+
+Shared guidance is labeled as a saved note rather than attributed to whichever member is currently viewing it. Character notes use author-reference wording, and the empty state explicitly routes members to the Desk while character-note editing is unavailable. Connected brief creation explains workspace visibility and directs credentials away from shared notes. Existing member records, approval decisions and original evidence are unchanged.
+
+`npm run check` passed TypeScript, ESLint, **637 unit/API/database tests** and the production build. **20 connected desktop/mobile checks** for Desk saving/review, planning and Character Studio passed; the existing character-label assertion was updated for the corrected wording and its two viewport cases reran successfully. Authenticated production GET checks verified the seven main pages and corresponding private APIs, saved plan revisions, AI availability, and manuscript download size/PDF signature. The readiness check made no AI generation requests or changes to customer records.
+
 ## Manuscript recovery — September 23, 2026
 
 The background reader now permits one SQL-reserved recovery for a known invalid AI response. The failed attempt and its usage are saved before the same passages receive a distinct recovery ID. A unique passage-set index preserves the automatic retry limit across resumed jobs. Unknown outcomes, timeouts, funding failures and repeated invalid responses still stop safely. Completed passages are never skipped or reread by the recovery path. Pause and terminal sibling failures remain authoritative, and replayed result saves cannot authorize another model call.
