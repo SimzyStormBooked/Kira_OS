@@ -78,7 +78,7 @@ beforeAll(async () => {
     grant usage on schema storage to authenticated,anon;
     grant select,insert,update,delete on storage.objects to authenticated,anon;
     create policy unrelated_permissive_storage_policy on storage.objects for all to authenticated,anon using(true) with check(true);`);
-  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609200001_background_reading", "202609200003_character_organization", "202609210002_citation_whitespace"]) {
+  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609200001_background_reading", "202609200003_character_organization", "202609210002_citation_whitespace", "202609230001_manuscript_batch_recovery"]) {
     await db.exec(readFileSync(`supabase/migrations/${name}.sql`, "utf8"));
   }
   await db.query("insert into private.workspace_generation_config(singleton,recording_key_hash) values(true,encode(sha256(convert_to($1,'UTF8')),'hex'))", [recordingKey]);
@@ -292,7 +292,7 @@ async function control(m: Manuscript, action = "start", retry = false) {
 }
 async function worker(job: Job, batch: string, action = "claim", payload: unknown = {}, run = "run_test", key = recordingKey) {
   await db.exec("reset role; set role anon");
-  return scalar<{ state: string; created: boolean; chunks: Chunk[] }>("select public.manuscript_reading_worker($1,$2,$3,$4,$5,$6) as value", [job.id, run, action, batch, JSON.stringify(payload), key]);
+  return scalar<{ state: string; created: boolean; chunks: Chunk[]; recoveryBatchId?: string; recoveryPending?: boolean }>("select public.manuscript_reading_worker($1,$2,$3,$4,$5,$6) as value", [job.id, run, action, batch, JSON.stringify(payload), key]);
 }
 describe("durable manuscript jobs", () => {
   it("binds one run, reserves disjoint groups with a cap of two, and finishes out of order", async () => {
@@ -341,6 +341,163 @@ describe("durable manuscript jobs", () => {
     await asUser(owner); await expect(control(m)).rejects.toThrow();
     const retry = await control(m, "start", true); expect(retry.id).not.toBe(j.id);
     expect((await worker(retry, randomUUID())).chunks).toHaveLength(4);
+  });
+});
+
+describe("bounded automatic manuscript recovery", () => {
+  const failed = (recoveryBatchId: string, errorCode = "invalid_output", stats = usage) => ({ result: null, usage: stats, embeddings: [], errorCode, recoveryBatchId });
+  const succeeded = (chunk: Chunk, stats = usage) => ({ result: result(chunk), usage: stats, embeddings: [], errorCode: null });
+  async function state(m: Manuscript, j: Job) {
+    await asUser(owner);
+    return scalar<{ manuscript: Manuscript & { error_code: string | null }; job: Job & { error_code: string | null } }>(
+      "select jsonb_build_object('manuscript',to_jsonb(m),'job',to_jsonb(j)) as value from public.manuscripts m join public.manuscript_reading_jobs j on j.manuscript_id=m.id where m.id=$1 and j.id=$2", [m.id, j.id]);
+  }
+
+  it("records both attempts separately and preserves completed passages", async () => {
+    const m = await register((await book()).id); await store(m, chunks(9)); const j = await control(m);
+    const done = randomUUID(), initial = randomUUID(), recovery = randomUUID();
+    const first = await worker(j, done); await worker(j, done, "finish", succeeded(first.chunks[0]));
+    const claimed = await worker(j, initial);
+    const reserved = await worker(j, initial, "finish", failed(recovery));
+    expect(reserved).toMatchObject({ state: "running", created: true, recoveryBatchId: recovery });
+    expect(reserved.chunks).toEqual(claimed.chunks);
+    const recoveryUsage = { ...usage, inputTokens: 500, gatewayGenerationId: "generation_recovery" };
+    expect((await worker(j, recovery, "finish", succeeded(reserved.chunks[0], recoveryUsage))).state).toBe("running");
+    const snapshot = await state(m, j);
+    expect(snapshot.manuscript).toMatchObject({ status: "processing", completed_chunks: 8, error_code: null });
+    const batches = await db.query<{ id: string; status: string; input_tokens: number; gateway_generation_id: string; recovery_of_batch_id: string | null }>(
+      "select id,status,input_tokens,gateway_generation_id,recovery_of_batch_id from public.manuscript_batches where manuscript_id=$1", [m.id]);
+    expect(batches.rows).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: done, status: "complete", recovery_of_batch_id: null }),
+      expect.objectContaining({ id: initial, status: "failed", input_tokens: 400, gateway_generation_id: "generation_fixture" }),
+      expect.objectContaining({ id: recovery, status: "complete", input_tokens: 500, gateway_generation_id: "generation_recovery", recovery_of_batch_id: initial }),
+    ]));
+    const lastId = randomUUID(), last = await worker(j, lastId);
+    expect(last.chunks).toHaveLength(1);
+    expect((await worker(j, lastId, "finish", succeeded(last.chunks[0]))).state).toBe("complete");
+  });
+
+  it("does not repeat a reservation after a lost response or replay an old failure after success", async () => {
+    const m = await register((await book()).id); await store(m, chunks(5)); const j = await control(m);
+    const initial = randomUUID(), recovery = randomUUID(); await worker(j, initial);
+    const reserved = await worker(j, initial, "finish", failed(recovery));
+    expect(await worker(j, initial, "finish", failed(randomUUID()))).toMatchObject({ state: "running", created: false, recoveryPending: true, chunks: [] });
+    await worker(j, recovery, "finish", succeeded(reserved.chunks[0]));
+    expect(await worker(j, initial, "finish", failed(randomUUID()))).toMatchObject({ state: "running", created: false, recoveryPending: false, chunks: [] });
+    expect((await state(m, j)).manuscript).toMatchObject({ status: "processing", completed_chunks: 4, error_code: null });
+    expect((await db.query("select id from public.manuscript_batches where manuscript_id=$1", [m.id])).rows).toHaveLength(2);
+  });
+
+  it("allows only one automatic recovery for the same passage set across resumed jobs", async () => {
+    const m = await register((await book()).id); await store(m, chunks(4)); const j = await control(m);
+    const initial = randomUUID(), recovery = randomUUID(); await worker(j, initial);
+    expect((await worker(j, initial, "finish", failed(recovery))).created).toBe(true);
+    expect(await worker(j, recovery, "finish", failed(randomUUID()))).toMatchObject({ state: "needs_attention", created: false });
+    await asUser(owner); const resumed = await control(m, "start", true); const next = randomUUID();
+    expect((await worker(resumed, next)).chunks).toHaveLength(4);
+    expect(await worker(resumed, next, "finish", failed(randomUUID()))).toMatchObject({ state: "needs_attention", created: false });
+    await asUser(owner);
+    expect((await db.query("select id from public.manuscript_batches where manuscript_id=$1 and recovery_of_batch_id is not null", [m.id])).rows).toHaveLength(1);
+  });
+
+  it("enforces the exact-set budget even if passage IDs are reordered", async () => {
+    const m = await register((await book()).id); await store(m, chunks(4)); const j = await control(m);
+    const initial = randomUUID(), recovery = randomUUID(); await worker(j, initial);
+    await worker(j, initial, "finish", failed(recovery));
+    await worker(j, recovery, "finish", failed(randomUUID()));
+    await asUser(owner); const resumed = await control(m, "start", true); const next = randomUUID(); await worker(resumed, next);
+    await db.exec("reset role");
+    await db.query("update public.manuscript_batches set chunk_ids=array(select id from unnest(chunk_ids) with ordinality ids(id,n) order by n desc) where id=$1", [next]);
+    expect(await worker(resumed, next, "finish", failed(randomUUID()))).toMatchObject({ state: "needs_attention", created: false });
+  });
+
+  it.each(["timeout", "provider_unavailable", "funding_required", "policy_blocked"])("does not recover %s failures", async error => {
+    const m = await register((await book()).id); await store(m, chunks()); const j = await control(m); const initial = randomUUID();
+    await worker(j, initial);
+    expect(await worker(j, initial, "finish", failed(randomUUID(), error))).toMatchObject({ state: "needs_attention", created: false });
+    expect((await state(m, j)).job.error_code).toBe(error);
+    expect((await db.query("select id from public.manuscript_batches where manuscript_id=$1", [m.id])).rows).toHaveLength(1);
+  });
+
+  it("preserves pause while recording a failed in-flight attempt and never authorizes recovery", async () => {
+    const m = await register((await book()).id); await store(m, chunks()); const j = await control(m); const initial = randomUUID();
+    await worker(j, initial); await asUser(owner); await control(m, "pause");
+    expect(await worker(j, initial, "finish", failed(randomUUID()))).toMatchObject({ state: "paused", created: false });
+    expect((await state(m, j)).job.state).toBe("paused");
+    expect((await db.query("select status,input_tokens from public.manuscript_batches where id=$1", [initial])).rows).toEqual([{ status: "failed", input_tokens: 400 }]);
+    expect((await worker(j, initial, "attention")).state).toBe("paused");
+  });
+
+  it("rechecks run binding and editor permission before recording or reserving recovery", async () => {
+    await asUser(editor); const m = await register((await book()).id); await store(m, chunks()); const j = await control(m); const initial = randomUUID();
+    await worker(j, initial);
+    expect(await worker(j, initial, "finish", failed(randomUUID()), "wrong_run")).toMatchObject({ state: "superseded", created: false });
+    await db.exec("reset role"); await db.query("delete from public.author_members where user_id=$1", [editor]);
+    try {
+      expect(await worker(j, initial, "finish", failed(randomUUID()))).toMatchObject({ state: "needs_attention", created: false });
+      expect((await state(m, j)).job.error_code).toBe("permission_required");
+      expect((await db.query("select status from public.manuscript_batches where manuscript_id=$1", [m.id])).rows).toEqual([{ status: "pending" }]);
+    } finally {
+      await db.exec("reset role"); await db.query("insert into public.author_members(author_id,user_id,role) values($1,$2,'editor')", [author, editor]);
+    }
+  });
+
+  it("rechecks source permission before reserving recovery", async () => {
+    const m = await register((await book()).id); await store(m, chunks()); const j = await control(m); const initial = randomUUID(); await worker(j, initial);
+    await db.exec("reset role");
+    await db.query("select set_config('kira.manuscript_recording_key',$1,false)", [recordingKey]);
+    await db.query("update public.content_assets set rights_status='restricted' where id=$1", [m.asset_id]);
+    expect(await worker(j, initial, "finish", failed(randomUUID()))).toMatchObject({ state: "needs_attention", created: false });
+    expect((await state(m, j)).job.error_code).toBe("permission_required");
+  });
+
+  it("counts recovery against the shared daily limit while retaining the failed attempt's usage", async () => {
+    const m = await register((await book()).id); await store(m, chunks()); const j = await control(m); const initial = randomUUID(); const claim = await worker(j, initial);
+    await db.exec("reset role");
+    await db.query("insert into public.manuscript_batches(id,author_id,manuscript_id,created_by,chunk_ids,status,error_code,completed_at) select gen_random_uuid(),$1,$2,$3,$4::uuid[],'failed','interrupted',now() from generate_series(1,149)", [author, m.id, owner, claim.chunks.map(c => c.id)]);
+    expect(await worker(j, initial, "finish", failed(randomUUID()))).toMatchObject({ state: "needs_attention", created: false });
+    expect((await state(m, j)).job.error_code).toBe("daily_limit");
+    expect((await db.query("select input_tokens from public.manuscript_batches where id=$1", [initial])).rows).toEqual([{ input_tokens: 400 }]);
+    expect((await db.query("select id from public.manuscript_batches where manuscript_id=$1", [m.id])).rows).toHaveLength(150);
+  });
+
+  it("keeps two disjoint recoveries within the pending cap", async () => {
+    const m = await register((await book()).id); await store(m, chunks(9)); const j = await control(m);
+    const a = randomUUID(), b = randomUUID(), recoveryA = randomUUID(), recoveryB = randomUUID();
+    await worker(j, a); await worker(j, b);
+    const ra = await worker(j, a, "finish", failed(recoveryA)), rb = await worker(j, b, "finish", failed(recoveryB));
+    expect(ra.created).toBe(true); expect(rb.created).toBe(true);
+    expect(ra.chunks.some(c => rb.chunks.some(d => c.id === d.id))).toBe(false);
+    expect((await worker(j, randomUUID())).created).toBe(false);
+    await asUser(owner);
+    expect((await db.query("select id from public.manuscript_batches where manuscript_id=$1 and status='pending'", [m.id])).rows).toHaveLength(2);
+  });
+
+  it.each(["before", "after"])("keeps a sibling terminal failure authoritative when it arrives %s recovery", async order => {
+    const m = await register((await book()).id); await store(m, chunks(8)); const j = await control(m);
+    const a = randomUUID(), b = randomUUID(), recovery = randomUUID(); await worker(j, a); await worker(j, b);
+    if (order === "before") await worker(j, b, "finish", failed(randomUUID(), "funding_required"));
+    const reserved = await worker(j, a, "finish", failed(recovery));
+    if (order === "after") {
+      expect(reserved.created).toBe(true);
+      await worker(j, b, "finish", failed(randomUUID(), "funding_required"));
+      expect((await worker(j, recovery, "finish", succeeded(reserved.chunks[0]))).state).toBe("needs_attention");
+    } else expect(reserved.created).toBe(false);
+    const snapshot = await state(m, j);
+    expect(snapshot.job).toMatchObject({ state: "needs_attention", error_code: "funding_required" });
+    expect(snapshot.manuscript).toMatchObject({ status: "failed", error_code: "funding_required" });
+  });
+
+  it("cannot change the new active job or manuscript by finalizing an abandoned older attempt", async () => {
+    const m = await register((await book()).id); await store(m, chunks(5)); const old = await control(m); const initial = randomUUID(); await worker(old, initial);
+    await db.exec("reset role");
+    await db.query("update public.manuscript_batches set created_at=now()-interval '5 minutes' where id=$1", [initial]);
+    await db.query("update public.manuscript_reading_jobs set updated_at=now()-interval '5 minutes' where id=$1", [old.id]);
+    await asUser(owner); const resumed = await control(m, "start", true); const current = randomUUID(); await worker(resumed, current);
+    expect(await worker(old, initial, "finish", failed(randomUUID()))).toMatchObject({ state: "paused", created: false });
+    const snapshot = await state(m, resumed);
+    expect(snapshot.job.state).toBe("running"); expect(snapshot.manuscript.status).toBe("processing");
+    expect((await db.query("select id from public.manuscript_batches where manuscript_id=$1 and recovery_of_batch_id is not null", [m.id])).rows).toHaveLength(0);
   });
 });
 

@@ -1,0 +1,15 @@
+{
+  "appliedAt": "2026-09-23T22:16:47.932Z",
+  "file": "202609230001_manuscript_batch_recovery.sql",
+  "sqlSha256": "16fbf65811d78085ab0141c2c0c8104b8e1e1a7bcd4498417ff51b6524333213",
+  "indexes": [
+    {
+      "indexname": "manuscript_one_recovery_per_batch"
+    },
+    {
+      "indexname": "manuscript_one_recovery_per_chunk_set"
+    }
+  ],
+  "pending": 0,
+  "activeJobs": 0
+}

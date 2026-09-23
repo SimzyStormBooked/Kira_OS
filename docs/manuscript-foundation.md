@@ -35,7 +35,7 @@ The screen says “4 MB”; the enforced file limit is **4 MiB (4,194,304 bytes)
 | Daily reading limit reached | Resume after the next UTC day begins. Completed work stays saved. The limit is shared by the workspace. |
 | File cannot be read | Export an unencrypted supported format and try again. Format/parse errors occur before registration and AI spending. |
 
-Retrying an identical upload recovers a lost upload response by checking the stored file's size and checksum before attaching passages. A failed reading step is retried only after an explicit resume/retry request; there is no automatic paid retry loop after an error.
+Retrying an identical upload recovers a lost upload response by checking the stored file's size and checksum before attaching passages. The background reader can now reserve one recorded recovery attempt when an AI response cannot be verified. This uses workspace credits and preserves completed passages; it is not an unlimited retry loop. Unknown outcomes and a failed recovery still require explicit resume. See [background manuscript reading](background-manuscript-reading.md) for current limits and pause behavior.
 
 ### Check what Raven learned
 
