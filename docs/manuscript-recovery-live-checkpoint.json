@@ -1,0 +1,18 @@
+{
+  "verifiedAt": "2026-09-23T22:27:39.696Z",
+  "deploymentCommit": "433c70a8138875a6e70c6264504bfa8834e36ea5",
+  "book": "Syndicate Princess",
+  "status": "ready",
+  "passages": 421,
+  "totalPassages": 421,
+  "distinctCompletedPassages": 421,
+  "indexedPassages": 421,
+  "activeBookKnowledge": true,
+  "pendingBatches": 0,
+  "automaticRecoveries": 3,
+  "automaticRecoveriesCompleted": 3,
+  "sourceCitationVerified": true,
+  "passageSearchWorking": true,
+  "anonymousPassageAccessDenied": true,
+  "bookUrl": "https://kira-os-dusky.vercel.app/universe/syndicate-princess-e8a743f7"
+}
