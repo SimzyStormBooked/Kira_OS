@@ -100,12 +100,6 @@ const plannedNavigation = [
     icon: Radio,
   },
   {
-    href: "/discoverability",
-    title: "Discoverability",
-    description: "A source-backed picture of how readers find your books",
-    icon: Telescope,
-  },
-  {
     href: "/hunt",
     title: "The Hunt",
     description: "Relevant creators, reviewers and opportunities, with evidence",
@@ -132,6 +126,7 @@ const plannedNavigation = [
 ];
 const navigation = [...availableNavigation, ...plannedNavigation];
 const creativeNavigation = [
+  { href: "/discoverability", title: "Find Your Readers", description: "Website checks, search reports & Amazon listing reviews", icon: Search },
   { href: "/ads", title: "Ads & Next Steps", description: "Facebook results & your next experiment", icon: Megaphone },
   { href: "/opportunities", title: "Catalog Opportunities", description: "Find connections between your books", icon: Telescope },
   { href: "/plans", title: "Marketing Plans", description: "Goals, review & your next steps", icon: Target },

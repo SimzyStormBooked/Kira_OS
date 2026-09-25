@@ -13,6 +13,7 @@ import { books as seedBooks, series as seedSeries, sources as seedSources, seedT
 import { libraryInputSchema, type LibraryMetadata } from "../../lib/manuscripts/library-contract";
 import { manuscriptChunkSchema, manuscriptFormat, validateManuscriptExtraction, type ManuscriptChunk, type ManuscriptExtraction } from "../../lib/manuscripts/contract";
 import { adsSnapshotSchema } from "../../lib/ads/contract";
+import { auditSchema, discoveryInputSchema, searchSnapshotSchema, type DiscoveryView } from "../../lib/discovery/contract";
 import { fixture } from "./fixture-data";
 
 const signingSecret = "local-test-fixture-signing-secret-not-for-production";
@@ -67,6 +68,12 @@ const normalize = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleL
 let adsReports: Array<{id:string;author_id:string;account_id:string;created_at:string;snapshot:unknown}> = [];
 let adsBookLinks: Array<{author_id:string;campaign_id:string;book_id:string}> = [];
 let adsInspiration: Array<{id:string;author_id:string;title:string;url:string;note:string;created_at:string}> = [];
+// Synthetic discovery records exist only in this loopback fixture. Website observations
+// are explicitly injected by tests; the browser suite never crawls a real author's site.
+let discoveryPages: DiscoveryView['pages'] = [];
+let discoveryListings: DiscoveryView['listings'] = [];
+let discoveryReports: DiscoveryView['reports'] = [];
+let discoveryActions: DiscoveryView['actions'] = [];
 const storedFiles = new Map<string, Buffer>();
 const fixtureRecordingKey = "a".repeat(64);
 const sha256 = (text: string | Buffer) => createHash("sha256").update(text).digest("hex");
@@ -77,6 +84,7 @@ function resetLibrary() {
   manuscripts = []; manuscriptChunks = []; manuscriptBatches = []; intelligence = []; adsReports = []; adsInspiration = []; adsBookLinks = []; storedFiles.clear();
   characterProfiles = []; characterAliases = []; characterPortraits = []; characterNotes = []; characterLinks = []; bookCharacters = [];
   signedPortraitTokens.clear();
+  discoveryPages = []; discoveryListings = []; discoveryReports = []; discoveryActions = [];
 }
 resetLibrary();
 function newManuscript(book: FixtureBook, input: { id: string; filename: string; mime: string; bytes: number; hash: string }, actor: string): FixtureManuscript {
@@ -181,6 +189,21 @@ const server = createServer(async (request, response) => {
       passwords.set(fixture.memberEmail, fixture.password); passwords.set(fixture.outsiderEmail, fixture.password);
       resetLibrary();
       return respond(response, 200, { simulated: true, reset: true });
+    }
+    if (url.pathname === "/__test/discovery-audit" && request.method === "POST") {
+      const body = await jsonBody(request);
+      const page = discoveryPages.find(item => item.id === body.pageId);
+      if (!page) return respond(response, 404, { simulated: true });
+      page.audit = auditSchema.parse(body.audit);
+      return respond(response, 200, { simulated: true });
+    }
+    if (url.pathname === "/__test/discovery-listing-conflict" && request.method === "POST") {
+      const body = await jsonBody(request);
+      const listing = discoveryListings.find(item => item.id === body.id);
+      if (!listing) return respond(response, 404, { simulated: true });
+      listing.version += 1;
+      listing.description = "Synthetic edit saved by another member.";
+      return respond(response, 200, { simulated: true });
     }
     // Seeds the author-owned rows the interface only reads today, plus the extraction-owned
     // character a confirmed link points at.
@@ -400,6 +423,52 @@ const server = createServer(async (request, response) => {
       if (body.p_author_id !== fixture.authorId) return respond(response, 403, { code: "42501", message: "Fixture tenant mismatch" });
       const method = url.pathname.split("/").pop();
       const now = new Date().toISOString();
+      if (method === "discovery_control") {
+        if (body.p_key !== fixtureRecordingKey) return respond(response, 403, { code: "42501" });
+        const canEdit = owner || membership?.role === "editor";
+        if (body.p_action === "view") return respond(response, 200, {
+          available: true, canEdit, books: libraryBooks.map(book => ({ id: book.id, title: book.title })),
+          pages: discoveryPages, listings: discoveryListings, reports: discoveryReports, actions: discoveryActions, jobs: [],
+          google: { configured: false, connected: false, properties: [], selectedProperty: null, connectedAt: null, lastError: null },
+        });
+        if (!canEdit) return respond(response, 403, { code: "42501" });
+        const payload = body.p_payload as Record<string, unknown>;
+        if (body.p_action === "search") {
+          const snapshot = searchSnapshotSchema.parse(payload.snapshot);
+          if (snapshot.data_origin !== "manual_snapshot") return respond(response, 400, { code: "22023" });
+          const content = (report: typeof snapshot) => JSON.stringify({ ...report, fetchedAt: undefined });
+          if (!discoveryReports.some(report => content(report.snapshot) === content(snapshot))) discoveryReports.unshift({ id: randomUUID(), snapshot, createdAt: now });
+          return respond(response, 200, {});
+        }
+        const parsed = discoveryInputSchema.safeParse(payload);
+        if (!parsed.success) return respond(response, 400, { code: "22023" });
+        const input = parsed.data;
+        if ('bookId' in input && input.bookId && !libraryBooks.some(book => book.id === input.bookId)) return respond(response, 404, { code: "P0002" });
+        if (input.action === "page") {
+          if (discoveryPages.some(page => page.url === input.url)) return respond(response, 409, { code: "23505" });
+          const page = { url: input.url, label: input.label, kind: input.kind, bookId: input.bookId };
+          discoveryPages.unshift({ ...page, id: randomUUID(), audit: null, updatedAt: now });
+        } else if (input.action === "remove_page") {
+          discoveryPages = discoveryPages.filter(page => page.id !== input.id);
+          discoveryActions = discoveryActions.map(action => action.pageId === input.id ? { ...action, pageId: null } : action);
+        } else if (input.action === "listing") {
+          const asin = new URL(input.amazonUrl).pathname.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})(?:\/|$)/i)![1].toUpperCase();
+          const existing = discoveryListings.find(listing => listing.bookId === input.bookId && listing.asin === asin);
+          if (existing ? existing.version !== input.expectedVersion : input.expectedVersion !== null) return respond(response, 409, { code: "40001" });
+          const listing = { bookId: input.bookId, amazonUrl: input.amazonUrl, edition: input.edition, description: input.description, keywords: input.keywords, categories: input.categories, status: input.status };
+          if (existing) Object.assign(existing, listing, { version: existing.version + 1, updatedAt: now });
+          else discoveryListings.unshift({ ...listing, id: randomUUID(), asin, updatedAt: now, version: 0 });
+        } else if (input.action === "action") {
+          if (input.pageId && !discoveryPages.some(page => page.id === input.pageId)) return respond(response, 404, { code: "P0002" });
+          const saved = { pageId: input.pageId, bookId: input.bookId, title: input.title, detail: input.detail };
+          discoveryActions.unshift({ ...saved, id: randomUUID(), status: "planned", createdAt: now, updatedAt: now });
+        } else if (input.action === "action_status") {
+          const existing = discoveryActions.find(action => action.id === input.id);
+          if (!existing) return respond(response, 404, { code: "P0002" });
+          existing.status = input.status; existing.updatedAt = now;
+        }
+        return respond(response, 200, {});
+      }
       if (method === "ads_control") {
         if (body.p_key !== fixtureRecordingKey) return respond(response,403,{code:"42501"});
         if (body.p_action === "view") return respond(response,200,null);

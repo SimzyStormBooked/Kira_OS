@@ -15,6 +15,7 @@ const places = [
   { name: "Cassandra’s Desk", plain: "Your decisions", description: "Save an idea, review a brief, and keep the decisions and lessons that follow.", href: "/desk", icon: FileCheck2 },
   { name: "Ask Raven", plain: "A thinking partner", description: "Ask a business question when AI is connected, then revisit the saved answer.", href: "/studio", icon: Lightbulb },
   { name: "Learn & Create", plain: "Your agent workshop", description: "Try a short lesson and turn a useful job into an assistant blueprint.", href: "/learn", icon: GraduationCap },
+  { name: "Find Your Readers", plain: "Discovery & next steps", description: "Check website pages, bring in Google search reports, and review each Amazon edition. Save useful actions to your Desk.", href: "/discoverability", icon: Compass },
   { name: "Connections", plain: "Your tools, together", description: "Keep useful social links and see what is needed to authorize Instagram and Facebook.", href: "/connections", icon: Link2 },
 ];
 

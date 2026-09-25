@@ -27,17 +27,6 @@ const modules = {
       "Approved content library",
     ],
   },
-  discoverability: {
-    title: "Discoverability",
-    heading: "Make your worlds findable.",
-    description:
-      "Build a source-backed picture of how readers discover your books.",
-    needs: [
-      "Search Console access",
-      "Verified catalog metadata",
-      "Website page inventory",
-    ],
-  },
   hunt: {
     title: "The Hunt",
     heading: "Opportunity has a tell.",
