@@ -40,6 +40,7 @@ async function adsView(page: Page): Promise<AdsView> {
 }
 
 async function verifyVisuals(page: Page, testInfo: TestInfo, name: string) {
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
   await page.screenshot({ path: testInfo.outputPath(`${name}.png`), fullPage: true, scale: "css" });
   if (name === "ads-overview" || name === "ads-manual-overview") {
     await page.locator(".ads-book-shelf").screenshot({ path: testInfo.outputPath(`${name}-books.png`), scale: "css" });

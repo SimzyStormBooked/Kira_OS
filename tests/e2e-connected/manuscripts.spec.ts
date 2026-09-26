@@ -28,19 +28,21 @@ test("a private book, series and audio details survive reload and appear in cata
 });
 test("upload requires permission, preserves queued work when AI is disabled and can be reopened",async({page})=>{
   const book=await addBook(page,"Synthetic Upload Book");const text="Synthetic reference text: Rowan is a coordinator. An archive stores the project records for the team.";
-  await page.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"reference.txt",mimeType:"text/plain",buffer:Buffer.from(text)});
-  const save=page.getByRole("button",{name:"Save manuscript",exact:true});await save.click();
-  await expect(page.locator(".library-form-error")).toHaveText("Confirm your permission before uploading.");
+  // Streaming HTML may retain a hidden server-rendered copy outside the active page.
+  const upload=page.locator("#main-content .library-form").filter({has:page.getByLabel("Manuscript file",{exact:true})});
+  await upload.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"reference.txt",mimeType:"text/plain",buffer:Buffer.from(text)});
+  const save=upload.getByRole("button",{name:"Save manuscript",exact:true});await save.click();
+  await expect(upload.locator(".library-form-error")).toHaveText("Confirm your permission before uploading.");
   expect((await page.evaluate(async(id)=>(await fetch(`/api/library/${id}`)).json(),book.id)).manuscripts).toHaveLength(0);
   // Saving the file and sending its text to a model are two separate consents,
   // and storing a permanent version asks once more before anything is written.
-  await page.getByLabel(/I have permission to upload/).check();await save.click();await confirmSave(page);await expect(page.getByRole("heading",{name:"Ready to read",exact:true})).toBeVisible();
-  await expect(page.locator(".library-success[role=status]")).toContainText("Nothing has been read yet");await expect(page.locator(".library-error[role=alert]")).toHaveCount(0);
+  await upload.getByLabel(/I have permission to upload/).check();await save.click();await confirmSave(page);await expect(page.getByRole("heading",{name:"Ready to read",exact:true})).toBeVisible();
+  await expect(upload.locator(".library-success[role=status]")).toContainText("Nothing has been read yet");await expect(page.locator(".library-error[role=alert]")).toHaveCount(0);
   const start=page.getByRole("button",{name:"Start reading with Raven",exact:true});await expect(start).toBeEnabled();await start.click();await expect(page.locator(".library-error[role=alert]")).toContainText("AI setup");
   await page.reload();await expect(page.locator("#main-content").getByText("reference.txt · 0 of 1 passages read",{exact:true})).toBeVisible();await expect(page.getByRole("button",{name:"Resume reading",exact:true})).toBeEnabled();
   const detail=await page.evaluate(async(id)=>(await fetch(`/api/library/${id}`)).json(),book.id);expect(detail.manuscripts).toHaveLength(1);expect(detail.intelligence).toBeNull();
-  await page.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"reference.txt",mimeType:"text/plain",buffer:Buffer.from(text)});await page.getByLabel(/I have permission to upload/).check();await save.click();await confirmSave(page);
-  await expect(page.locator(".library-success[role=status]")).toContainText("Nothing has been read yet");expect((await page.evaluate(async(id)=>(await fetch(`/api/library/${id}`)).json(),book.id)).manuscripts).toHaveLength(1);
+  await upload.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"reference.txt",mimeType:"text/plain",buffer:Buffer.from(text)});await upload.getByLabel(/I have permission to upload/).check();await save.click();await confirmSave(page);
+  await expect(upload.locator(".library-success[role=status]")).toContainText("Nothing has been read yet");expect((await page.evaluate(async(id)=>(await fetch(`/api/library/${id}`)).json(),book.id)).manuscripts).toHaveLength(1);
 });
 test("learned knowledge has private citations, hides spoilers, searches text, and retains the good version during replacement",async({page,request},testInfo)=>{
   const book=await addBook(page,"Synthetic Knowledge Book");

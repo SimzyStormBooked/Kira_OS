@@ -364,7 +364,7 @@ export function AppShell({
       href: n.href,
       title: n.title,
       keywords: `${n.description ?? ""} ${n.href === "/raven" ? "raven recommendations" : n.href === "/universe" ? "books catalog" : n.href === "/" ? "home dashboard" : ""}`,
-      kind: ["/", "/raven", "/universe"].includes(n.href)
+      kind: availableNavigation.some((item) => item.href === n.href)
         ? "Workspace"
         : "Coming later · Preview",
     })),
