@@ -31,13 +31,21 @@ async function navigate(page: Page, href: string) {
 }
 
 async function adsView(page: Page): Promise<AdsView> {
-  const response = await page.request.get("/api/ads");
-  expect(response.ok()).toBe(true);
-  return response.json();
+  const response = await page.evaluate(async () => {
+    const result = await fetch("/api/ads", { cache: "no-store" });
+    return { status: result.status, body: await result.json() };
+  });
+  expect(response.status).toBe(200);
+  return response.body;
 }
 
 async function verifyVisuals(page: Page, testInfo: TestInfo, name: string) {
-  await page.screenshot({ path: testInfo.outputPath(`${name}.png`), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath(`${name}.png`), fullPage: true, scale: "css" });
+  if (name === "ads-overview" || name === "ads-manual-overview") {
+    await page.locator(".ads-book-shelf").screenshot({ path: testInfo.outputPath(`${name}-books.png`), scale: "css" });
+    await page.locator(".ads-metrics").screenshot({ path: testInfo.outputPath(`${name}-metrics.png`), scale: "css" });
+    await page.locator(".ads-overview-grid").first().screenshot({ path: testInfo.outputPath(`${name}-chart-and-next-step.png`), scale: "css" });
+  }
   expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 }
@@ -91,9 +99,12 @@ test("honest disconnected state, isolated sample dashboard, useful visual report
   await expect(page.locator(".ads-campaign-grid > .ads-panel")).toHaveCount(1);
   await page.locator(".ads-tabs").getByRole("button", { name: "Overview", exact: true }).click();
   await verifyVisuals(page, testInfo, "ads-overview");
-  const email = await page.request.get("/api/ads/report?preview=true");
-  expect(email.status()).toBe(200);
-  expect(await email.text()).toContain("FICTIONAL SAMPLE DATA");
+  const email = await page.evaluate(async () => {
+    const response = await fetch("/api/ads/report?preview=true");
+    return { status: response.status, text: await response.text() };
+  });
+  expect(email.status).toBe(200);
+  expect(email.text).toContain("FICTIONAL SAMPLE DATA");
   expect((await adsView(page)).reports).toHaveLength(0);
   await page.getByRole("button", { name: "Return to my data", exact: true }).click();
   await expect(page.getByText("Syndicate · sample campaign", { exact: true })).toHaveCount(0);
@@ -107,7 +118,7 @@ test("explains hourly and ambiguous result exports before a save request", async
   page.on("request", request => { if (new URL(request.url()).pathname === "/api/ads/import") importRequests += 1; });
   await openSetup(page);
   await selectCsv(page, "This is not a CSV export", "unsupported.xlsx");
-  await expect(page.getByRole("alert")).toContainText("Choose a CSV file under 2 MB.");
+  await expect(page.locator(".ads-import-panel").getByRole("alert")).toContainText("Choose a CSV file under 2 MB.");
   await expect(page.getByRole("button", { name: "Review my import", exact: true })).toBeDisabled();
   const hourly = dailyCsv().replace("Day,", "Time of day (ad account time zone),Day,")
     .replace("2026-01-01,", "00:00:00 - 00:59:59,2026-01-01,")
