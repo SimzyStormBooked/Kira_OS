@@ -605,7 +605,7 @@ export function AppShell({
                 key={r.href}
                 href={r.href}
                 onNavigate={() => {
-                  searchDestination.current = { headingId: "headingId" in r ? r.headingId : null };
+                  searchDestination.current = { headingId: "headingId" in r && typeof r.headingId === "string" ? r.headingId : null };
                   setSearchOpen(false);
                 }}
               >
