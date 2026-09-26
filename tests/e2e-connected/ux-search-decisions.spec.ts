@@ -60,6 +60,7 @@ test("home and search open the selected brief, while search distinguishes availa
   dialog = await search(page, "password");
   await expect(dialog.getByRole("link", { name: "Settings Workspace", exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Search workspace", exact: true })).toBeFocused();
   dialog = await search(page, "Character Studio");
   await expect(dialog.getByRole("link", { name: "Character Studio Workspace", exact: true })).toBeVisible();
   await dialog.getByRole("link", { name: "Character Studio Workspace", exact: true }).click();

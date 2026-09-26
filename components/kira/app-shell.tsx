@@ -288,6 +288,8 @@ export function AppShell({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const searchOpener = useRef<HTMLElement | null>(null);
+  const searchDestination = useRef<{ headingId: string | null } | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [logoutConfirmation, setLogoutConfirmation] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
@@ -353,7 +355,8 @@ export function AppShell({
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         if (document.querySelector("[role=dialog]")) return;
         e.preventDefault();
-        setSearchOpen((o) => !o);
+        searchOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        setSearchOpen(true);
       }
     };
     window.addEventListener("keydown", handler);
@@ -375,6 +378,7 @@ export function AppShell({
     ...state.approvals.map((approval) => ({
       href: `/desk?brief=${encodeURIComponent(approval.id)}`,
       title: approval.title,
+      headingId: `brief-${approval.id}`,
       kind: approval.status === "pending" ? "Brief · Needs your eye" : `Brief · ${approval.status === "approved" ? "Approved" : "Rejected"}`,
       keywords: "brief approval decision",
     })),
@@ -425,7 +429,10 @@ export function AppShell({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setSearchOpen(true)}
+              onClick={(event) => {
+                searchOpener.current = event.currentTarget;
+                setSearchOpen(true);
+              }}
               aria-label="Search workspace"
             >
               <Search size={16} />
@@ -558,7 +565,25 @@ export function AppShell({
         </DialogContent>
       </Dialog>
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <DialogContent className="search-dialog">
+        <DialogContent className="search-dialog" onCloseAutoFocus={(event) => {
+          const destination = searchDestination.current;
+          searchDestination.current = null;
+          event.preventDefault();
+          if (!destination) {
+            searchOpener.current?.focus();
+            return;
+          }
+          // Selecting the current brief does not rerun the Desk's route effect.
+          // Wait until the dialog releases focus; other routes focus on arrival.
+          const headingId = destination.headingId;
+          if (headingId) requestAnimationFrame(() => {
+            const heading = document.getElementById(headingId);
+            if (heading && heading.getClientRects().length > 0) {
+              heading.focus({ preventScroll: true });
+              heading.scrollIntoView({ block: "center", behavior: "instant" });
+            }
+          });
+        }}>
           <DialogHeader>
             <DialogTitle>Search your universe</DialogTitle>
             <DialogDescription>
@@ -579,7 +604,10 @@ export function AppShell({
               <Link
                 key={r.href}
                 href={r.href}
-                onClick={() => setSearchOpen(false)}
+                onNavigate={() => {
+                  searchDestination.current = { headingId: "headingId" in r ? r.headingId : null };
+                  setSearchOpen(false);
+                }}
               >
                 <span>
                   {r.title}
