@@ -1,0 +1,42 @@
+name: Ads experience checks
+
+on:
+  pull_request:
+    paths:
+      - "components/kira/ads/**"
+      - "lib/ads/**"
+      - "app/api/ads/**"
+      - "app/ads/**"
+      - "tests/ads-*.test.ts"
+      - "tests/e2e-connected/**"
+      - "package*.json"
+      - ".github/workflows/ads-experience.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ads-experience-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npm run check
+      - run: npm run test:e2e:connected -- tests/e2e-connected/ads.spec.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ads-browser-evidence
+          path: test-results-connected/
+          retention-days: 7
