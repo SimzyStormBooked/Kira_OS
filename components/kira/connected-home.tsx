@@ -110,7 +110,7 @@ export function ConnectedHome({ dateKey }: { dateKey?: string }) {
               <ul className="connected-pending-list">
                 {pending.slice(0, 3).map((approval) => (
                   <li key={approval.id}>
-                    <Link href="/desk">
+                    <Link href={`/desk?brief=${encodeURIComponent(approval.id)}`}>
                       <span>{approval.title}</span>
                       <ArrowUpRight size={14} aria-hidden="true" />
                     </Link>

@@ -1,23 +1,14 @@
-name: Ads experience checks
+name: Workspace release checks
 
 on:
   pull_request:
-    paths:
-      - "components/kira/ads/**"
-      - "lib/ads/**"
-      - "app/api/ads/**"
-      - "app/ads/**"
-      - "tests/ads-*.test.ts"
-      - "tests/e2e-connected/**"
-      - "package*.json"
-      - ".github/workflows/ads-experience.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ads-experience-${{ github.ref }}
+  group: workspace-release-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -33,10 +24,10 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
       - run: npm run check
-      - run: npm run test:e2e:connected -- tests/e2e-connected/ads.spec.ts
+      - run: npm run test:e2e:connected -- tests/e2e-connected/ads.spec.ts tests/e2e-connected/manuscripts.spec.ts tests/e2e-connected/workspace.spec.ts tests/e2e-connected/experience.spec.ts tests/e2e-connected/ux-search-decisions.spec.ts
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ads-browser-evidence
+          name: workspace-browser-evidence
           path: test-results-connected/
           retention-days: 7

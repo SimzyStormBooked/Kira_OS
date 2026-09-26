@@ -32,11 +32,18 @@ test.beforeEach(async ({ page, request }) => {
   await expect(page.locator(".app-shell")).toBeVisible();
 });
 
-test("search finds saved pending and reviewed briefs, opens the correct tab, and focuses the result", async ({ page }) => {
+test("home and search open the selected brief, while search distinguishes available pages from previews", async ({ page }) => {
   const pending = await createBrief(page, "Quiet autumn opportunity");
   const reviewed = await createBrief(page, "A previously considered direction");
   await command(page, { action: "decide", id: reviewed.id, decision: { type: "approve" }, version: reviewed.version });
   await page.reload();
+  const homeBrief = page.locator(".connected-pending-list").getByRole("link", { name: pending.title, exact: true });
+  await expect(homeBrief).toHaveAttribute("href", `/desk?brief=${pending.id}`);
+  await homeBrief.click();
+  await expect(page).toHaveURL(new RegExp(`/desk\\?brief=${pending.id}$`));
+  await expect(page.getByRole("tab", { name: /Needs your eye/ })).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator(`#brief-${pending.id}`)).toBeFocused();
+  await expect(page.locator(`#brief-${pending.id}`)).toBeInViewport();
   let dialog = await search(page, pending.title);
   await dialog.getByRole("link", { name: `${pending.title} Brief · Needs your eye`, exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/desk\\?brief=${pending.id}$`));
@@ -52,6 +59,14 @@ test("search finds saved pending and reviewed briefs, opens the correct tab, and
   await expect(page.locator(`#brief-${reviewed.id}`)).toBeFocused();
   dialog = await search(page, "password");
   await expect(dialog.getByRole("link", { name: "Settings Workspace", exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Search workspace", exact: true })).toBeFocused();
+  dialog = await search(page, "Character Studio");
+  await expect(dialog.getByRole("link", { name: "Character Studio Workspace", exact: true })).toBeVisible();
+  await dialog.getByRole("link", { name: "Character Studio Workspace", exact: true }).click();
+  await expect(page).toHaveURL(/\/characters$/);
+  dialog = await search(page, "Reader Pulse");
+  await expect(dialog.getByRole("link", { name: "Reader Pulse Coming later · Preview", exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
   await page.goto("/desk?brief=not-a-uuid%3Cscript%3E");
   await expect(page.getByRole("tab", { name: /Needs your eye/ })).toHaveAttribute("aria-selected", "true");
