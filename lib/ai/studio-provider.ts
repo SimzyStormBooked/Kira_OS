@@ -3,7 +3,7 @@ import { compatibleModelSchema } from "@/lib/manuscripts/model-schema";
 import type { StudioKnowledge } from "./studio-contract";
 import { createGateway, isStepCount, Output, ToolLoopAgent } from "ai";
 import {
-  STUDIO_MODEL, studioOutputSchema, studioReferenceText, studioUsage, validateStudioOutput,
+  STUDIO_MODEL, studioOutputSchema, studioUsage, validateStudioOutput,
   type StudioAvailability, type StudioFailureCode, type StudioReply, type StudioRequest, type StudioUsage,
 } from "./studio-contract";
 
@@ -50,7 +50,7 @@ export async function generateStudioReply(input: StudioRequest, knowledge?: Stud
     });
     const result = await agent.generate({ prompt: JSON.stringify({ job: input.job, user_context: input.prompt, book_reference: knowledge??null }), timeout: 45000 });
     usage = studioUsage(result.totalUsage.inputTokens, result.totalUsage.outputTokens, result.providerMetadata?.gateway?.generationId);
-    try { return { result: validateStudioOutput(result.output, studioReferenceText(input.prompt, knowledge?.evidence.map(e=>e.text) ?? [])), usage }; }
+    try { return { result: validateStudioOutput(result.output, input.prompt, knowledge?.evidence.map(e=>e.text) ?? []), usage }; }
     catch { throw new StudioProviderError("invalid_output", usage); }
   } catch (error) {
     if (error instanceof StudioProviderError) throw error;

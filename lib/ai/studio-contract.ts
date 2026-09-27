@@ -15,6 +15,15 @@ export const studioRequestSchema = z.object({
 }).strict();
 export type StudioRequest = z.infer<typeof studioRequestSchema>;
 const shortText = z.string().trim().min(1).max(600);
+export const STUDIO_CONTEXT_QUOTE_MAX = 400;
+/**
+ * A context reference is bounded by the CONTENT it carries, not by its raw length: an exact
+ * quote of a passage keeps that passage's own line breaks, which can push a 400-character quote
+ * to well over 400 raw characters. This is the one schema; the model is still told 400 by the
+ * prompt, and the raw ceiling only bounds storage the way MANUSCRIPT_STORED_QUOTE_MAX does.
+ */
+const contextReference = z.string().trim().min(1).max(MANUSCRIPT_STORED_QUOTE_MAX)
+  .refine(value => quoteContentFits(value, STUDIO_CONTEXT_QUOTE_MAX), { message: `A context reference may carry at most ${STUDIO_CONTEXT_QUOTE_MAX} characters of content` });
 export const studioOutputSchema = z.object({
   kind: z.enum(["ideas", "boundary"]),
   title: z.string().trim().min(1).max(120),
@@ -25,22 +34,15 @@ export const studioOutputSchema = z.object({
     verify: z.array(z.string().trim().min(1).max(300)).max(4),
   }).strict()).max(3),
   questions: z.array(z.string().trim().min(1).max(300)).max(3),
-  context_used: z.array(z.string().trim().min(1).max(400)).max(4),
+  context_used: z.array(contextReference).max(4),
 }).strict();
 export type StudioOutput = z.infer<typeof studioOutputSchema>;
-export const STUDIO_CONTEXT_QUOTE_MAX = 400;
+/** Read back exactly what validateStudioOutput stores; kept as an alias since one schema now covers both. */
+export const storedStudioOutputSchema = studioOutputSchema;
 /**
- * What is stored: each context reference is the verbatim span of the source it came from, so
- * its raw length has room for that source's own line breaks while its CONTENT stays within
- * what the model was allowed. Stored answers and ads reports are read back through this form.
- */
-export const storedStudioOutputSchema = studioOutputSchema.extend({
-  context_used: z.array(z.string().trim().min(1).max(MANUSCRIPT_STORED_QUOTE_MAX)
-    .refine(value => quoteContentFits(value, STUDIO_CONTEXT_QUOTE_MAX), { message: `A context reference may carry at most ${STUDIO_CONTEXT_QUOTE_MAX} characters of content` })).max(4),
-}).strict();
-/**
- * The text Raven's context references are checked against: the question, then each evidence
- * item, divided by a seam no source can contain. Mirrors private.studio_reference_text.
+ * The full reference text as private.studio_reference_text joins it, question first. Kept for
+ * parity checks and tests; validateStudioOutput itself resolves the question and the evidence
+ * separately so a reference is attributed to the source it actually came from.
  */
 export function studioReferenceText(prompt: string, evidence: string[]) {
   return [prompt, ...evidence].join(`\n${EVIDENCE_SEAM}\n`);
@@ -88,15 +90,21 @@ export function assertStudioPrompt(prompt: string) {
     if (!/\b(?:do not|don't|never)\b[^.!?\n]*$/i.test(preceding)) throw new StudioPolicyError();
   }
 }
-export function validateStudioOutput(value: unknown, prompt: string): StudioOutput {
+export function validateStudioOutput(value: unknown, prompt: string, evidence: string[] = []): StudioOutput {
   const output = studioOutputSchema.parse(value);
   if ((output.kind === "boundary" && output.options.length !== 0) || (output.kind === "ideas" && output.options.length === 0)) throw new Error("Invalid response shape");
   // Each reference must come from one source, ignoring only whitespace runs, and is stored as
-  // that source's own text. A reference stitched across two sources is refused.
+  // that source's own text. A reference stitched across two sources is refused. Book evidence
+  // is tried first, so a passage the member also pasted into their own question is attributed
+  // to the book it actually supports; the question is tried second, and its own words may
+  // freely contain "Supporting passage:" since there is no manuscript boundary to protect there.
+  const evidenceText = evidence.join(`\n${EVIDENCE_SEAM}\n`);
   const context_used = output.context_used.map(quote => {
-    const resolved = resolveEvidenceQuote(prompt, quote, STUDIO_CONTEXT_QUOTE_MAX);
-    if (resolved === null) throw new Error("Unsupported context reference");
-    return resolved;
+    const fromEvidence = evidenceText ? resolveEvidenceQuote(evidenceText, quote, STUDIO_CONTEXT_QUOTE_MAX) : null;
+    if (fromEvidence !== null) return fromEvidence;
+    const fromPrompt = resolveEvidenceQuote(prompt, quote, STUDIO_CONTEXT_QUOTE_MAX, true);
+    if (fromPrompt !== null) return fromPrompt;
+    throw new Error("Unsupported context reference");
   });
   return storedStudioOutputSchema.parse({ ...output, context_used });
 }

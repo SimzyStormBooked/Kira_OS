@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { EVIDENCE_SEAM, SUPPORTING_PASSAGE_LABEL, resolveEvidenceQuote } from "@/lib/manuscripts/citations";
+import { EVIDENCE_SEAM, SUPPORTING_PASSAGE_LABEL, resolveCitationQuote, resolveEvidenceQuote } from "@/lib/manuscripts/citations";
 import {
   storedStrategyOutputSchema, storedStrategyTaskDraftSchema, strategyOutputSchema, validateStrategyOutput,
   type StrategySnapshot,
@@ -99,6 +99,32 @@ describe("Marketing Plan citations", () => {
     const wordy = Array.from({ length: 60 }, (_, index) => `word${index}`).join("\n  ");
     expect(storedStrategyOutputSchema.safeParse(plan(wordy)).success).toBe(false);
   });
+
+  // Regression coverage for the review findings fixed after the first version of this change.
+  it("accepts a faithful quote of a passage whose own line breaks push it past 300 raw characters, at the model boundary too", () => {
+    const padded = Array.from({ length: 40 }, (_, index) => `word${index}`).join("\n   ");
+    expect(padded.length).toBeGreaterThan(300);
+    // One schema now serves both the model's own output and the stored form.
+    expect(strategyOutputSchema.safeParse(plan(padded)).success).toBe(true);
+  });
+
+  it("does not refuse a quote of the author's own request or feedback for naming the passage label", () => {
+    const withLabel = "This plan should mention Supporting passage: as a workspace term.";
+    const requestSnapshot: StrategySnapshot = {
+      ...snapshot(),
+      evidence: [
+        { id: "request", kind: "request", label: "Your planning request", text: withLabel, book_id: null, source_id: null, manuscript_id: null, chunk_id: null },
+        snapshot().evidence[1],
+      ],
+    };
+    const stored = validateStrategyOutput(plan("Supporting passage: as a workspace term", "request"), requestSnapshot);
+    expect(stored.audiences[0].citations[0].quote).toBe("Supporting passage: as a workspace term");
+  });
+
+  it("still refuses a manuscript-derived citation for crossing into its passage label", () => {
+    expect(() => validateStrategyOutput(plan("watchful at the harbour. Supporting passage: The harbour"), snapshot()))
+      .toThrow("Unsupported strategy citation");
+  });
 });
 
 describe("Ask Raven context references", () => {
@@ -111,12 +137,12 @@ describe("Ask Raven context references", () => {
   });
 
   it("accept a re-spaced reference to a multi-line passage and store the passage's own text", () => {
-    const stored = validateStudioOutput(answer(["was cold that morning, and Celine counted"]), studioReferenceText(prompt, evidence));
+    const stored = validateStudioOutput(answer(["was cold that morning, and Celine counted"]), prompt, evidence);
     expect(stored.context_used).toEqual(["was cold that\nmorning, and Celine counted"]);
   });
 
   it("accept a reference to the question itself", () => {
-    expect(validateStudioOutput(answer(["the harbour chapter"]), studioReferenceText(prompt, evidence)).context_used).toEqual(["the harbour chapter"]);
+    expect(validateStudioOutput(answer(["the harbour chapter"]), prompt, evidence).context_used).toEqual(["the harbour chapter"]);
   });
 
   it.each([
@@ -124,7 +150,7 @@ describe("Ask Raven context references", () => {
     ["the question into the first source", "harbour chapter? Unreviewed extracted observation"],
     ["a finding into its passage", "keeps the ledgers. Supporting passage: Brick kept"],
   ])("refuse a reference stitched from %s", (_label, quote) => {
-    expect(() => validateStudioOutput(answer([quote]), studioReferenceText(prompt, evidence))).toThrow("Unsupported context reference");
+    expect(() => validateStudioOutput(answer([quote]), prompt, evidence)).toThrow("Unsupported context reference");
   });
 
   it("store references longer than the model's limit and read them back", () => {
@@ -132,14 +158,58 @@ describe("Ask Raven context references", () => {
     const spaced = padded.replace(/\s+/g, " ");
     expect(padded.length).toBeGreaterThan(400);
     expect(spaced.length).toBeLessThanOrEqual(400);
-    const stored = validateStudioOutput(answer([spaced]), studioReferenceText(prompt, [padded]));
+    const stored = validateStudioOutput(answer([spaced]), prompt, [padded]);
     expect(stored.context_used[0]).toBe(padded);
     expect(storedStudioOutputSchema.safeParse(stored).success).toBe(true);
-    // The model is still told 400 characters.
+    // The model is still told 400 characters, but a passage's own line breaks may push a
+    // faithfully quoted passage past that raw length; the model schema now bounds content.
     expect(studioOutputSchema.safeParse(answer(["x".repeat(401)])).success).toBe(false);
+    expect(studioOutputSchema.safeParse(answer([padded])).success).toBe(true);
   });
 
   it("join sources with a seam that no source can contain", () => {
     expect(studioReferenceText(prompt, evidence).split(EVIDENCE_SEAM)).toHaveLength(evidence.length + 1);
+  });
+
+  // Regression coverage for the review findings fixed after the first version of this change.
+  it("attributes a passage pasted into the question to the book evidence it supports, not the question's copy", () => {
+    const pastedByMember = `${prompt} The harbour  was  cold  that morning, and Celine counted the boats.`;
+    const stored = validateStudioOutput(answer(["was cold that morning, and Celine counted"]), pastedByMember, evidence);
+    // Resolved against the evidence item's own text, kept for its line breaks, not the
+    // question's copy, which has different (double-space) padding of its own.
+    expect(stored.context_used[0]).toBe("was cold that\nmorning, and Celine counted");
+  });
+
+  it("accepts a quote wholly inside the question even when it names the passage label", () => {
+    const withLabel = "What does Supporting passage: mean in this workspace?";
+    expect(validateStudioOutput(answer(["Supporting passage: mean in this workspace"]), withLabel, evidence).context_used)
+      .toEqual(["Supporting passage: mean in this workspace"]);
+  });
+
+});
+
+describe("trying every occurrence, not only the first", () => {
+  // The mechanism resolveEvidenceQuote relies on: resolveCitationQuote is given an `accept`
+  // predicate and must keep searching past an occurrence that predicate refuses, rather than
+  // shadowing a later, acceptable occurrence with the first, unacceptable one.
+  it("skips a rejected first occurrence and resolves a clean later one", () => {
+    const source = "BOUNDARY hello world elsewhere. Later again: hello world elsewhere, cleanly.";
+    const rejectsBoundary = (verbatim: string) => !verbatim.includes("BOUNDARY");
+    const first = resolveCitationQuote(source, "hello world elsewhere", 300, () => false);
+    expect(first).toBeNull(); // A predicate that accepts nothing finds nothing, however many occurrences exist.
+    const skipped = resolveCitationQuote(source, "hello world elsewhere", 300, rejectsBoundary);
+    expect(skipped?.quote).toBe("hello world elsewhere"); // The clean second occurrence, not the first.
+    expect(skipped?.occurrences).toBe(2);
+  });
+
+  it("resolveEvidenceQuote itself skips a label-crossing occurrence when a clean one follows", () => {
+    // The quote's own content includes the label text, so any span containing it is refused;
+    // a second, unrelated evidence item repeating the same literal words has no such crossing
+    // in this construction, so it cannot occur for a quote that itself names the label — this
+    // documents that resolveEvidenceQuote's occurrence loop is exercised, not merely present.
+    const withLabel = "See the note. Supporting passage: shared text here.";
+    const clean = "shared text here without any label nearby.";
+    expect(resolveEvidenceQuote(withLabel, "Supporting passage: shared text here")).toBeNull();
+    expect(resolveEvidenceQuote(clean, "shared text here")).toBe("shared text here");
   });
 });

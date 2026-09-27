@@ -74,7 +74,7 @@ beforeAll(async () => {
     grant usage on schema storage to authenticated,anon;
     grant select,insert,update,delete on storage.objects to authenticated,anon;
     create policy unrelated_permissive_storage_policy on storage.objects for all to authenticated,anon using(true) with check(true);`);
-  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609190002_strategy_plans", "202609190003_studio_book_context", "202609230001_raven_evidence_quotes"]) {
+  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609190002_strategy_plans", "202609190003_studio_book_context", "202609260001_raven_evidence_quotes"]) {
     await db.exec(readFileSync(`supabase/migrations/${name}.sql`, "utf8"));
   }
   await db.query("insert into private.workspace_generation_config(singleton,recording_key_hash) values(true,encode(sha256(convert_to($1,'UTF8')),'hex'))", [recordingKey]);
@@ -171,10 +171,10 @@ describe("Raven quotes that carry their source's own spacing", () => {
   const seam = "\u001e";
   const padded = (words: number) => Array.from({ length: words }, (_, index) => `word${index}`).join("\n   ");
   const goal = randomUUID();
-  const snapshot = (text: string) => ({ input: { mode: "after_release", segments: ["new_readers"], goals: [{ id: goal }] },
-    evidence: [{ id: "fact-1", kind: "manuscript", label: "Book · Chapter 1", text }] });
-  const plan = (quote: string) => {
-    const citations = [{ evidence_id: "fact-1", quote }];
+  const snapshot = (text: string, kind = "manuscript") => ({ input: { mode: "after_release", segments: ["new_readers"], goals: [{ id: goal }] },
+    evidence: [{ id: "fact-1", kind, label: "Book · Chapter 1", text }] });
+  const plan = (quote: string, evidence_id = "fact-1") => {
+    const citations = [{ evidence_id, quote }];
     return { title: "Reach new readers", summary: "A hypothesis to test.", positioning: "Start small.",
       audiences: [{ segment: "new_readers", why: "Chosen by the author", citations }],
       recommendations: [{ title: "Test a hook", action: "Prepare a test", rationale: "Validate reader fit", channel: "Instagram", effort: "low", estimated_cost_usd: 0, goal_ids: [goal], citations }],
@@ -207,6 +207,16 @@ describe("Raven quotes that carry their source's own spacing", () => {
     expect(await planValid(padded(60), text)).toBe(false);
     expect(await planValid(`word0${seam}word1`, `word0${seam}word1`)).toBe(false);
   });
+
+  it("does not refuse a request or feedback citation for naming the passage label, but still refuses a manuscript one", async () => {
+    const withLabel = "This plan should mention Supporting passage: as a workspace term.";
+    await db.exec("reset role");
+    const requestOk = (await db.query<{ ok: boolean }>("select private.strategy_valid_output($1::jsonb,$2::jsonb) as ok",
+      [JSON.stringify(plan("Supporting passage: as a workspace term")), JSON.stringify(snapshot(withLabel, "request"))])).rows[0].ok;
+    expect(requestOk).toBe(true);
+    expect(await planValid("Supporting passage: as a workspace term", withLabel)).toBe(false); // kind="manuscript" here
+  });
+
 
   it("joins Ask Raven's sources around a seam, so a reference cannot run from one into the next", async () => {
     const prompt = "What should I post?";
