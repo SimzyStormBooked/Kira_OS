@@ -34,12 +34,12 @@ Ports 3100 (demo dev), 3102 (connected prod) and 3107 (fixture) must be free; th
 
 Owner decisions (D1–D6 in `spec.md`) are unimplemented by design. Each has honest copy in the UI today instead of a silent limit:
 
-1. **D1 Plan approval.** Plans enter owner review automatically; only the owner approves and activates. Decide whether Cassy becomes Owner, editors approve their own plans, or the gate narrows to plans with spend. SQL: `202609190002_strategy_plans.sql`.
+1. **D1 Plan approval — decided, not yet applied.** Michael chose to make Cassy the Owner, which also resolves D3 for her. `docs/ownership-transfer.md` has the transaction, verification and rollback. It has not been run: it changes live data and needs credentials this repository does not hold.
 2. **D2 Manuscript removal.** Storage deletion is blocked by policy (`202609190001_manuscript_intelligence.sql:473`) and derived rows are guarded. Needs a migration, an RPC and a DELETE route. Today she can download a version and file a removal request brief.
-3. **D3 Member visibility.** `workspace_access_list` checks `owns_author`, so editors cannot see who can read the workspace. Copy names the exposure and links to `/access`.
-4. **D4 Idempotent saves.** `create_manual_review` takes no client id, so a lost response plus retry can duplicate a brief.
+3. **D3 Member visibility — still open for non-owners.** Making Cassy the Owner lets *her* see the roster, but any future Editor or Viewer still cannot before uploading a manuscript. Relaxing `workspace_access_list` from `owns_author` to `can_read_author` (mutations stay owner-only) was drafted and then backed out: a permission guard flagged it as weakening an authorization gate, which is a fair call for an unattended session. It needs an explicit go-ahead. `tests/access-database.test.ts` asserts the current owner-only contract and would need updating in the same change.
+4. **D4 Idempotent saves — done.** `create_manual_review` takes a client-supplied id, locks on it and returns the existing brief on a retry. Migration `202609270002_idempotent_manual_review.sql`; covered by `tests/connected-database.test.ts`.
 5. **D5 Light theme.** None exists; the palette is dark-only by choice.
-6. **D6 Per-tab drafts.** Implemented in `sessionStorage`, Zod-validated, cleared on sign-out and session end. Confirm that reading of AGENTS.md rule 12.
+6. **D6 Per-tab drafts — confirmed.** Implemented in `sessionStorage`, Zod-validated, cleared on sign-out and session end. Michael approved this reading of AGENTS.md rule 12 (per-tab, not durable, never a process-wide singleton).
 
 Known judge asks not yet done, all code-fixable: the ads stylesheet keeps some literal colors because mapping them to tokens drops below 3:1; several touched files were already unformatted at HEAD and were left that way (`npm run check` does not run Prettier).
 
