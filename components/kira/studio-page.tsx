@@ -8,6 +8,7 @@ import { ArrowRight, Bird, Check, Clipboard, Lightbulb, RefreshCw } from "lucide
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useWorkspace } from "@/lib/db/demo-store";
@@ -17,7 +18,7 @@ import "./studio.css";
 const responseSchema = z.object({
   role: z.enum(["owner", "editor", "viewer"]),
   availability: z.object({ available: z.boolean(), reason: z.enum(["ready", "disabled", "funding", "unavailable"]), message: z.string() }),
-  generations: studioGenerationSchema.array(), generation: studioGenerationSchema.nullable(),
+  generations: studioGenerationSchema.array(), nextCursor: z.string().nullable().default(null), generation: studioGenerationSchema.nullable(),
 });
 type StudioView = z.infer<typeof responseSchema>;
 const starters: Record<StudioJob, string> = {
@@ -38,13 +39,18 @@ function plainAnswer(generation: StudioGeneration) {
 }
 
 export function StudioPage({ generationId }: { generationId?: string }) {
-  const { mode, role, canEdit, ready, busy: workspaceBusy, approvals, createManualReview, studioScratchpad, updateStudioScratchpad, endSession, refresh: refreshWorkspace, markStudioQuestionSaved, finishStudioRequest } = useWorkspace();
+  const { mode, role, canEdit, ready, sessionEnded, busy: workspaceBusy, approvals, createManualReview, studioScratchpad, updateStudioScratchpad, endSession, refresh: refreshWorkspace, markStudioQuestionSaved, finishStudioRequest } = useWorkspace();
   const router = useRouter();
   const library=useLibrary();
   const {bookIds,includeSpoilers}=studioScratchpad;
   const setBookIds=(bookIds:string[])=>updateStudioScratchpad({bookIds});
   const setIncludeSpoilers=(includeSpoilers:boolean)=>updateStudioScratchpad({includeSpoilers});
   const [view, setView] = useState<StudioView | null>(null);
+  const [historyQuery, setHistoryQuery] = useState("");
+  const [historySearch, setHistorySearch] = useState("");
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const canRead = mode === "connected" && ready && !sessionEnded;
   const { job, prompt, submittedId } = studioScratchpad;
   const setJob = (next: StudioJob) => updateStudioScratchpad({ job: next });
   const setPrompt = (next: string) => updateStudioScratchpad({ prompt: next });
@@ -75,47 +81,63 @@ export function StudioPage({ generationId }: { generationId?: string }) {
   const questionRef = useRef<HTMLTextAreaElement>(null);
   const resultRef = useRef<HTMLHeadingElement>(null);
   const canAsk = Boolean(view?.availability.available && view.role !== "viewer" && mode === "connected" && canEdit && ready);
-  const generation = generationId && view?.generation?.id === generationId ? view.generation : null;
+  const generation = canRead && generationId && view?.generation?.id === generationId ? view.generation : null;
   const answerSource = generation ? `Source answer: /studio/${generation.id}` : "";
   const answerBrief = generation?.result ? ["ASK RAVEN ANSWER · SAVED FOR HUMAN REVIEW", "This AI-generated answer was explicitly copied to the desk by a workspace member. It is an unverified proposal, not a completed action.", answerSource, plainAnswer(generation)].join("\n\n") : "";
   const answerSaved = Boolean(answerSource && approvals.some((approval) => approval.draft.includes(answerSource) || approval.evidence.some((item) => item.excerpt_or_metric.includes(answerSource))));
 
-  const load = useCallback(async () => {
-    if (mode !== "connected") return;
+  const load = useCallback(async (cursor?: string) => {
+    if (!canRead) return;
     loadRequest.current?.abort();
     const controller = new AbortController();
     loadRequest.current = controller;
     const sequence = ++loadSequence.current;
     const current = () => !controller.signal.aborted && sequence === loadSequence.current;
-    setLoading(true);
+    setLoading(!cursor); setLoadingMore(Boolean(cursor)); setHistoryError(null);
+    const params = new URLSearchParams();
+    if (historySearch) params.set("q", historySearch);
+    if (generationId) params.set("id", generationId);
+    if (cursor) params.set("cursor", cursor);
     try {
-      const response = await fetch(`/api/studio${generationId ? `?id=${generationId}` : ""}`, { cache: "no-store", signal: controller.signal });
+      const response = await fetch(`/api/studio${params.size ? `?${params}` : ""}`, { cache: "no-store", signal: controller.signal });
       if (!current()) return;
       if (response.status === 401 || response.status === 403) {
+        setView(null);
         endSession();
         return;
       }
       const data = await response.json();
       if (!current()) return;
       if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : "Your saved questions could not be loaded.");
-      setView(responseSchema.parse(data));
+      const next = responseSchema.parse(data);
+      setView(previous => cursor && previous ? {
+        ...next, generations: [...previous.generations, ...next.generations.filter(item => !previous.generations.some(saved => saved.id === item.id))],
+      } : next);
       setError(null);
     } catch (failure) {
-      if (current()) setError(failure instanceof Error && !(failure instanceof z.ZodError) ? failure.message : "Your saved questions could not be loaded.");
+      if (current()) setHistoryError(failure instanceof Error && !(failure instanceof z.ZodError) ? failure.message : "Your saved questions could not be loaded.");
     } finally {
-      if (current()) setLoading(false);
+      if (current()) { setLoading(false); setLoadingMore(false); }
     }
-  }, [generationId, mode, endSession]);
+  }, [generationId, canRead, historySearch, endSession]);
   useEffect(() => {
     let cancelled = false;
-    void Promise.resolve().then(() => { if (!cancelled) void load(); });
+    void Promise.resolve().then(() => { if (!cancelled) { if (canRead) void load(); else { setView(null); setLoading(false); setLoadingMore(false); } } });
     return () => {
       cancelled = true;
       loadSequence.current += 1;
       loadRequest.current?.abort();
     };
-  }, [load]);
+  }, [load, canRead]);
   function refresh() { void load(); }
+  function searchHistory(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const next = historyQuery.trim();
+    if (next === historySearch) { void load(); return; }
+    loadRequest.current?.abort();
+    setView(previous => previous ? { ...previous, generations: [], nextCursor: null } : previous);
+    setHistorySearch(next);
+  }
 
   async function ask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -231,7 +253,9 @@ export function StudioPage({ generationId }: { generationId?: string }) {
     <Dialog open={confirmNewQuestion} onOpenChange={setConfirmNewQuestion}><DialogContent onOpenAutoFocus={(event) => { event.preventDefault(); keepQuestionRef.current?.focus(); }}><DialogHeader><DialogTitle>Keep your unfinished question?</DialogTitle><DialogDescription>You already have a different unsent question in this tab. Starting fresh discards that draft. Your previously saved answers stay in your workspace.</DialogDescription></DialogHeader><DialogFooter><Button ref={keepQuestionRef} type="button" onClick={() => { setConfirmNewQuestion(false); router.push("/studio"); }}>Keep my question</Button><Button type="button" variant="destructive" onClick={startNewQuestion}>Discard draft and start fresh</Button></DialogFooter></DialogContent></Dialog>
     {!askingHere && errorNote}
     <p role="status" aria-live="polite" className="studio-notice">{notice ?? ""}</p>
-    {mode === "connected" && <section className="studio-history" aria-labelledby="studio-history-title"><div className="studio-history-heading"><h2 id="studio-history-title">Recent questions</h2><Button type="button" variant="ghost" disabled={loading || busy} onClick={refresh}><RefreshCw size={14} aria-hidden="true" />Refresh history</Button></div>{view?.generations.length ? <ul>{view.generations.map((item) => <li key={item.id}><Link href={`/studio/${item.id}`} aria-current={generationId === item.id ? "page" : undefined}><span><strong>{item.result?.title ?? studioJobLabels[item.job]}</strong><span>{item.prompt.slice(0, 130)}{item.prompt.length > 130 ? "…" : ""}</span></span><span>{item.status === "complete" ? "Saved answer" : item.status === "failed" ? "Could not complete" : "Awaiting answer"}</span></Link></li>)}</ul> : null}
-      <div className="studio-history-empty empty-state" hidden={Boolean(view?.generations.length)}><Bird size={28} strokeWidth={1.3} aria-hidden="true" /><span className="eyebrow">{loading ? "READING YOUR WORKSPACE" : "NOTHING SAVED YET"}</span><p>{loading ? "Loading your saved questions…" : "Your first question will appear here when you ask. Nothing runs in the background."}</p></div></section>}
+    {canRead && <section className="studio-history" aria-labelledby="studio-history-title"><div className="studio-history-heading"><h2 id="studio-history-title">Recent questions</h2><Button type="button" variant="ghost" disabled={loading || loadingMore || busy} onClick={refresh}><RefreshCw size={14} aria-hidden="true" />Refresh history</Button></div><form onSubmit={searchHistory} className="studio-history-search"><label htmlFor="studio-history-search">Search saved questions and answers</label><Input id="studio-history-search" type="search" maxLength={200} value={historyQuery} onChange={event => setHistoryQuery(event.target.value)} placeholder="Try a topic or a few words" /><Button type="submit" variant="outline" disabled={loading || loadingMore}>Search history</Button>{historySearch && <Button type="button" variant="ghost" onClick={() => { loadRequest.current?.abort(); setHistoryQuery(""); setHistorySearch(""); setView(previous => previous ? { ...previous, generations: [], nextCursor: null } : previous); }}>Clear search</Button>}</form><p className="studio-help">Search matches words in your questions and Raven’s saved answers. Newest first.</p>{historyError && <p role="alert" className="studio-error">{historyError}</p>}{view?.generations.length ? <ul>{view.generations.map((item) => <li key={item.id}><Link href={`/studio/${item.id}`} aria-current={generationId === item.id ? "page" : undefined}><span><strong>{item.result?.title ?? studioJobLabels[item.job]}</strong><span>{item.prompt.slice(0, 130)}{item.prompt.length > 130 ? "…" : ""}</span></span><span>{item.status === "complete" ? "Saved answer" : item.status === "failed" ? "Could not complete" : "Awaiting answer"}</span></Link></li>)}</ul> : null}
+      {view?.nextCursor && <Button type="button" variant="outline" disabled={loading || loadingMore} onClick={() => void load(view.nextCursor ?? undefined)}>{loadingMore ? "Loading older questions…" : "Load older questions"}</Button>}
+      <p role="status" className="studio-help">{loadingMore ? "Loading older questions…" : view?.generations.length ? `${view.generations.length} saved ${view.generations.length === 1 ? "question" : "questions"}${historySearch ? " match this search" : " shown"}.` : ""}</p>
+      <div className="studio-history-empty empty-state" hidden={Boolean(view?.generations.length || historyError)}><Bird size={28} strokeWidth={1.3} aria-hidden="true" /><span className="eyebrow">{loading ? "READING YOUR WORKSPACE" : historySearch ? "NO MATCHES" : "NOTHING SAVED YET"}</span><p>{loading ? "Loading your saved questions…" : historySearch ? "No saved questions match those words. Try fewer words or clear your search." : "Your first question will appear here when you ask. Nothing runs in the background."}</p></div></section>}
   </div>;
 }

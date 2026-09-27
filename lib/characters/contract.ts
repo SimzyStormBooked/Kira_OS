@@ -19,10 +19,11 @@ import { z } from "zod";
 
 export const PORTRAIT_URL_TTL_SECONDS = 300;
 const name = z.string().trim().min(1).max(120);
+const aliases = z.array(name).max(8).refine(values => new Set(values.map(value => value.replace(/\s+/g, " ").toLocaleLowerCase())).size === values.length, "Each other name must be different.");
 export const characterProfileInputSchema = z.object({
   displayName: name,
   summary: z.string().trim().max(2000).nullish().transform(value => value?.length ? value : null),
-  aliases: z.array(name).max(8).default([]),
+  aliases: aliases.default([]),
 });
 export const characterProfileEditSchema = characterProfileInputSchema.partial().extend({
   expectedVersion: z.number().int().positive(),
@@ -51,7 +52,8 @@ export const characterNoteSchema = z.object({
 });
 export const characterLinkSchema = z.object({
   id: z.uuid(), book_id: z.uuid(), character_id: z.uuid(), note: z.string().nullable(),
-  confirmed_at: z.string(), book_title: z.string().nullable(), character_name: z.string().nullable(),
+  source_manuscript_id: z.uuid().nullable().optional(), source_chunk_ids: z.array(z.uuid()).default([]),
+  confirmed_at: z.string(), book_title: z.string().nullable(), character_name: z.string().nullable(), book_slug: z.string().nullable().optional(),
 });
 export const characterProfileDetailSchema = z.object({
   role: z.enum(["owner", "editor", "viewer"]),
@@ -64,3 +66,21 @@ export type CharacterGallery = z.infer<typeof characterGallerySchema>;
 export type GalleryProfile = z.infer<typeof galleryProfileSchema>;
 export type GalleryPortrait = z.infer<typeof galleryPortraitSchema>;
 export type CharacterProfileDetail = z.infer<typeof characterProfileDetailSchema>;
+
+export const characterNoteInputSchema = z.object({
+  kind: z.enum(["author_confirmed", "visual_inspiration"]),
+  body: z.string().trim().min(1).max(4000),
+  bookId: z.uuid().nullable().default(null),
+});
+export const characterNoteEditSchema = characterNoteInputSchema.omit({ bookId: true }).extend({ expectedVersion: z.number().int().positive() });
+export const characterLinkInputSchema = z.object({
+  bookId: z.uuid(), characterId: z.uuid(), manuscriptId: z.uuid(), confirmed: z.literal(true),
+  note: z.string().trim().max(600).nullish().transform(value => value || null),
+});
+export const characterSourceSchema = z.object({
+  character_id: z.uuid(), book_id: z.uuid(), book_title: z.string(), book_slug: z.string(),
+  name: z.string(), manuscript_id: z.uuid(), observation_count: z.number(),
+  linked_profile_id: z.uuid().nullable(), source_chunk_ids: z.array(z.uuid()).default([]), source_sections: z.array(z.string()),
+});
+export const characterSourcesSchema = z.object({ sources: z.array(characterSourceSchema) });
+export type CharacterSource = z.infer<typeof characterSourceSchema>;

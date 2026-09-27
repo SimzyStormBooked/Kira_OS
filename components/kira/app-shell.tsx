@@ -58,6 +58,8 @@ import { InspirationDialogTrigger } from "./inspiration-shelf";
 import { WorkspacePermissionNotice } from "./workspace-permission-notice";
 import { SessionEndedDialog } from "./session-ended-dialog";
 import { useKeptDrafts, type KeptDraft } from "./kept-drafts";
+import { workspaceDestinations } from "@/lib/workspace-navigation";
+import { workspaceSearchResponseSchema, workspaceSearchHref, type WorkspaceSearchResult } from "@/lib/search/contract";
 import "./shell.css";
 
 const availableNavigation = [
@@ -288,6 +290,8 @@ export function AppShell({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [savedSearch, setSavedSearch] = useState<{ query: string; results: WorkspaceSearchResult[]; error: string | null } | null>(null);
+  const searchSequence = useRef(0);
   const searchOpener = useRef<HTMLElement | null>(null);
   const searchDestination = useRef<{ headingId: string | null } | null>(null);
   const [signingOut, setSigningOut] = useState(false);
@@ -362,33 +366,59 @@ export function AppShell({
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
+  const searchTerm = query.trim();
+  const canSearchSaved = state.mode === "connected" && state.ready && !state.sessionEnded;
+  const { endSession } = state;
+  useEffect(() => {
+    if (!searchOpen || !canSearchSaved || searchTerm.length < 2) return;
+    const controller = new AbortController();
+    const sequence = ++searchSequence.current;
+    const current = () => !controller.signal.aborted && sequence === searchSequence.current;
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`, { cache: "no-store", signal: controller.signal });
+        if (!current()) return;
+        if (response.status === 401 || response.status === 403) {
+          setSavedSearch(null); endSession(); return;
+        }
+        const data = await response.json();
+        if (!current()) return;
+        if (!response.ok) throw new Error("Saved characters and Raven answers could not be searched. Try again.");
+        const parsed = workspaceSearchResponseSchema.parse(data);
+        setSavedSearch({ query: searchTerm, results: parsed.results, error: null });
+      } catch {
+        if (current()) setSavedSearch({ query: searchTerm, results: [], error: "Saved characters and Raven answers could not be searched. Try again." });
+      }
+    }, 200);
+    return () => { clearTimeout(timer); controller.abort(); searchSequence.current += 1; };
+  }, [searchOpen, canSearchSaved, searchTerm, endSession]);
+  const privateResults = canSearchSaved && savedSearch?.query === searchTerm ? savedSearch : null;
+  const searchingSaved = canSearchSaved && searchTerm.length >= 2 && !privateResults;
   const results = [
-    ...navigation.map((n) => ({
-      href: n.href,
-      title: n.title,
-      keywords: `${n.description ?? ""} ${n.href === "/raven" ? "raven recommendations" : n.href === "/universe" ? "books catalog" : n.href === "/" ? "home dashboard" : ""}`,
-      kind: availableNavigation.some((item) => item.href === n.href)
-        ? "Workspace"
-        : "Coming later · Preview",
+    ...workspaceDestinations.filter(item => !item.ownerOnly || state.role === "owner").map(item => ({
+      href: item.href, title: item.title,
+      kind: item.group === "preview" ? "Coming later · Preview" : item.href === "/desk" ? "Briefs & decisions" : item.href === "/access" ? "Settings" : "Workspace",
+      keywords: `${item.description} ${item.href === "/" ? "home dashboard" : item.href === "/raven" ? "raven recommendations" : item.href === "/universe" ? "books catalog" : item.href === "/desk" ? "ideas approvals drafts lessons" : item.href === "/access" ? "people team roles collaborators sharing" : item.href === "/settings" ? "password account setup export" : ""}`,
     })),
-    { href: "/desk", title: "Cassandra’s Desk", kind: "Briefs & decisions", keywords: "ideas approvals drafts lessons" },
-    ...creativeNavigation.map((n) => ({ href: n.href, title: n.title, kind: "Workspace", keywords: n.description })),
-    { href: "/access", title: "Workspace access", kind: "Settings", keywords: "people team roles collaborators sharing" },
-    { href: "/settings", title: "Settings", kind: "Workspace", keywords: "password account setup export" },
-    ...state.approvals.map((approval) => ({
+    ...(state.mode === "demo" || canSearchSaved ? state.approvals : []).map((approval) => ({
       href: `/desk?brief=${encodeURIComponent(approval.id)}`,
       title: approval.title,
       headingId: `brief-${approval.id}`,
       kind: approval.status === "pending" ? "Brief · Needs your eye" : `Brief · ${approval.status === "approved" ? "Approved" : "Rejected"}`,
       keywords: "brief approval decision",
     })),
-    ...(state.mode === "connected" ? library.data?.books ?? [] : books).map((b) => ({
+    ...(state.mode === "connected" ? canSearchSaved ? library.data?.books ?? [] : [] : books).map((b) => ({
       href: `/universe/${b.slug}`,
       title: b.title,
       kind: "Book",
       keywords: "book catalog",
     })),
-  ].filter((n) => `${n.title} ${n.keywords}`.toLowerCase().includes(query.trim().toLowerCase()));
+    ].filter((n) => `${n.title} ${n.keywords}`.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 24);
+  const allResults = [...results, ...(privateResults?.results ?? []).map(result => ({
+    href: workspaceSearchHref(result), title: result.title,
+    kind: result.kind === "character" ? "Character profile" : "Raven answer",
+    excerpt: result.excerpt,
+  }))];
   return (
     <div className="app-shell">
       <a href="#main-content" className="skip-link">
@@ -564,7 +594,7 @@ export function AppShell({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+      <Dialog open={searchOpen && !state.sessionEnded} onOpenChange={(open) => { setSearchOpen(open); if (!open) setSavedSearch(null); }}>
         <DialogContent className="search-dialog" onCloseAutoFocus={(event) => {
           const destination = searchDestination.current;
           searchDestination.current = null;
@@ -587,20 +617,23 @@ export function AppShell({
           <DialogHeader>
             <DialogTitle>Search your universe</DialogTitle>
             <DialogDescription>
-              Find a book, saved brief, or workspace page.
+              Find a book, character, saved brief, Raven answer, or workspace page.
             </DialogDescription>
           </DialogHeader>
           <Input
-            placeholder="Books, saved briefs, pages…"
+            placeholder="Books, characters, Raven answers, briefs, pages…" maxLength={200}
             aria-label="Search books, briefs and pages"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
           <p className="sr-only" role="status">
-            {results.length} {results.length === 1 ? "result" : "results"}
+            {allResults.length} {allResults.length === 1 ? "result" : "results"}{searchingSaved ? "; searching saved characters and Raven answers" : ""}
           </p>
+          {searchingSaved && <p className="quiet-note" role="status">Searching saved characters and Raven answers…</p>}
+          {canSearchSaved && searchTerm.length < 2 && <p className="quiet-note">Enter at least two characters to search character profiles and Raven answers.</p>}
+          {privateResults?.error && <p className="form-error" role="alert">{privateResults.error}</p>}
           <div className="search-results">
-            {results.map((r) => (
+            {allResults.map((r) => (
               <Link
                 key={r.href}
                 href={r.href}
@@ -611,12 +644,12 @@ export function AppShell({
               >
                 <span>
                   {r.title}
-                  <small>{r.kind}</small>
+                  <small>{r.kind}</small>{"excerpt" in r && <small>{r.excerpt}</small>}
                 </span>
                 <ArrowUpRight size={16} />
               </Link>
             ))}
-            {results.length === 0 && (
+            {allResults.length === 0 && !searchingSaved && (
               <p className="quiet-note">
                 No matches. Try a book or saved brief title, or a page such as “Settings”.
               </p>

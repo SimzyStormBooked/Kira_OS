@@ -24,7 +24,7 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
       - run: npm run check
-      - run: npm run test:e2e:connected -- tests/e2e-connected/ads.spec.ts tests/e2e-connected/manuscripts.spec.ts tests/e2e-connected/workspace.spec.ts tests/e2e-connected/experience.spec.ts tests/e2e-connected/ux-search-decisions.spec.ts
+      - run: npm run test:e2e:connected -- tests/e2e-connected/ads.spec.ts tests/e2e-connected/manuscripts.spec.ts tests/e2e-connected/workspace.spec.ts tests/e2e-connected/experience.spec.ts tests/e2e-connected/ux-search-decisions.spec.ts tests/e2e-connected/characters.spec.ts tests/e2e-connected/history-search.spec.ts tests/e2e-connected/daily-workspace.spec.ts tests/e2e-connected/ux-drafts.spec.ts tests/e2e-connected/workspace-export.spec.ts
       - uses: actions/upload-artifact@v4
         if: always()
         with:

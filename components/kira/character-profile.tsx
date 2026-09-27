@@ -1,12 +1,14 @@
 "use client";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowLeft, BookOpen, Check, Image as ImageIcon, ShieldCheck, Sparkles, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWorkspace } from "@/lib/db/demo-store";
 import { PORTRAIT_MAX_BYTES, characterProfileDetailSchema, portraitFormat, type CharacterProfileDetail, type GalleryPortrait } from "@/lib/characters/contract";
 import { LibraryRequestError, useLibrary } from "./library-provider";
+import { CharacterDetailsForm, CharacterNoteForm, CharacterSourceLinker, CharacterSourcePassage, useCharacterDraft } from "./character-forms";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import "./characters.css";
 
 export function CharacterProfileView({ id }: { id: string }) {
@@ -19,7 +21,8 @@ function PortraitUpload({ profileId, onAdded }: { profileId: string; onAdded: ()
   const { request } = useLibrary();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [removed, setRemoved] = useState<string[] | null>(null);
-  const [promotional, setPromotional] = useState(false);
+  const { values, changed, change, clear, storageFailed } = useCharacterDraft(`character:${profileId}:portrait`, "Your unfinished portrait details", { caption: "", sourceCredit: "", promotional: "false" });
+  const promotional = values.promotional === "true";
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (busy) return;
     const file = input.current?.files?.[0]; setError(""); setRemoved(null);
@@ -35,21 +38,22 @@ function PortraitUpload({ profileId, onAdded }: { profileId: string; onAdded: ()
       const response = await request("/api/characters/portraits", { method: "POST", body: form });
       setRemoved((response as { removed?: string[] }).removed ?? []);
       if (input.current) input.current.value = "";
-      onAdded();
+      clear(); onAdded();
     } catch (failure) { setError(failure instanceof LibraryRequestError ? failure.message : "This portrait could not be kept. Nothing was stored."); }
     finally { setBusy(false); }
   }
-  return <form className="library-form portrait-form" onSubmit={submit} aria-busy={busy}>
+  return <form className="library-form portrait-form" onSubmit={submit} aria-busy={busy}><fieldset className="character-fields" disabled={busy}>
     <label>Portrait image<input ref={input} type="file" name="file" accept="image/png,image/jpeg,image/webp" required /></label>
-    <label>What this image is <span className="quiet-note">Optional</span><Input name="caption" maxLength={300} placeholder="Reference board, commissioned art, a mood photo" /></label>
-    <label className="library-check"><input type="checkbox" checked={promotional} onChange={event => setPromotional(event.target.checked)} />
+    <label>What this image is <span className="quiet-note">Optional</span><Input name="caption" value={values.caption} onChange={event => change("caption", event.target.value)} maxLength={300} placeholder="Reference board, commissioned art, a mood photo" /></label>
+    <label className="library-check"><input type="checkbox" checked={promotional} onChange={event => change("promotional", String(event.target.checked))} />
       I have permission to use this image publicly, not only as private reference</label>
-    {promotional && <label>Where it came from and who may use it<Input name="sourceCredit" maxLength={300} required placeholder="Illustrator, licence or written permission" /></label>}
+    {promotional && <label>Where it came from and who may use it<Input name="sourceCredit" value={values.sourceCredit} onChange={event => change("sourceCredit", event.target.value)} maxLength={300} required placeholder="Illustrator, licence or written permission" /></label>}
     <p className="quiet-note">Location details in the file are removed before the image is kept. It stays private to your workspace, and it is never used as proof of a fact in your book.</p>
+    {changed && <p className="quiet-note">{storageFailed ? "Your browser could not keep a recovery copy. Copy these details before refreshing or closing the tab." : "Your portrait details are kept in this tab. If you leave, choose the image file again when you return."}</p>}
     {error && <p role="alert" className="library-error">{error}</p>}
     {removed && <p role="status" className="portrait-cleaned"><ShieldCheck size={15} /> Kept privately{removed.length ? `, after removing ${removed.join(", ")}` : ", and it carried no hidden details"}.</p>}
     <div className="library-actions"><Button type="submit" disabled={busy}>{busy ? "Preparing…" : <><Upload size={16} /> Add portrait</>}</Button></div>
-  </form>;
+  </fieldset></form>;
 }
 
 function PortraitFigure({ portrait, name, isCover, canEdit, onChoose }: {
@@ -74,6 +78,10 @@ function PortraitFigure({ portrait, name, isCover, canEdit, onChoose }: {
 
 function ConnectedCharacterProfile({ id }: { id: string }) {
   const { request } = useLibrary();
+  const { formDrafts } = useWorkspace();
+  const [editing, setEditing] = useState(false), [noteId, setNoteId] = useState<string | null>(null);
+  const [unlinking, setUnlinking] = useState<string | null>(null);
+  const [showLinker, setShowLinker] = useState(false);
   const [data, setData] = useState<CharacterProfileDetail | null>(null);
   const [loading, setLoading] = useState(true); const [error, setError] = useState(""); const [saving, setSaving] = useState("");
   const mounted = useRef(true);
@@ -87,11 +95,11 @@ function ConnectedCharacterProfile({ id }: { id: string }) {
   // Deferred like the library provider: an effect must not set state synchronously.
   useEffect(() => {
     mounted.current = true;
-    void Promise.resolve().then(load);
+    void Promise.resolve().then(() => { if (new URLSearchParams(window.location.search).has("book")) setShowLinker(true); return load(); });
     return () => { mounted.current = false; };
   }, [load]);
   async function chooseCover(portraitId: string) {
-    if (!data) return;
+    if (!data || saving) return;
     setSaving(portraitId);
     try {
       await request(`/api/characters/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" },
@@ -99,6 +107,11 @@ function ConnectedCharacterProfile({ id }: { id: string }) {
       await load();
     } catch (failure) { setError(failure instanceof LibraryRequestError ? failure.message : "That change was not saved."); }
     finally { setSaving(""); }
+  }
+  async function unlink(linkId: string) {
+    if (saving) return; setSaving(linkId);
+    try { await request(`/api/characters/${id}/links`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ linkId }) }); setUnlinking(null); await load(); }
+    catch (failure) { setError(failure instanceof LibraryRequestError ? failure.message : "The link could not be removed."); } finally { setSaving(""); }
   }
   const profile = data?.profile;
   const canEdit = data?.role !== "viewer";
@@ -112,13 +125,13 @@ function ConnectedCharacterProfile({ id }: { id: string }) {
         <h1>{profile.display_name}</h1>
         {profile.aliases.length > 0 && <p className="character-aliases">Also known as {profile.aliases.join(", ")}</p>}
         {profile.summary && <p>{profile.summary}</p>}
-      </div></div>
+      </div>{canEdit && <Button variant="outline" onClick={() => setEditing(true)}>{formDrafts[`character:${id}:edit`] ? "Resume character edits" : "Edit character"}</Button>}</div>
 
       <section aria-labelledby="portraits-heading" className="character-section">
         <h2 id="portraits-heading"><ImageIcon size={18} /> Portraits</h2>
         {data.portraits.length > 0
           ? <div className="portrait-grid">{data.portraits.map(portrait => <PortraitFigure key={portrait.id} portrait={portrait}
-              name={profile.display_name} isCover={portrait.id === profile.primary_portrait_id} canEdit={Boolean(canEdit)}
+              name={profile.display_name} isCover={portrait.id === profile.primary_portrait_id} canEdit={Boolean(canEdit) && !saving}
               onChoose={() => void chooseCover(portrait.id)} />)}</div>
           : <p className="quiet-note">No portraits yet. How you picture someone is yours to keep, and it stays private.</p>}
         {canEdit && <PortraitUpload profileId={id} onAdded={() => void load()} />}
@@ -129,19 +142,24 @@ function ConnectedCharacterProfile({ id }: { id: string }) {
         {data.notes.length > 0
           ? <ul className="character-notes">{data.notes.map(note => <li key={note.id}>
               <span className="eyebrow">{note.kind === "author_confirmed" ? "Author-confirmed reference" : "Visual inspiration"}</span>
-              <p>{note.body}</p></li>)}</ul>
-          : <p className="quiet-note">Character note editing is coming later. For now, <Link className="text-link" href="/desk">save a character reference note at your Desk</Link> and include the character’s name. Your notes stay separate from manuscript findings.</p>}
+              <p>{note.body}</p>{canEdit && <Button variant="ghost" onClick={() => setNoteId(note.id)}>{formDrafts[`character:${id}:note:${note.id}`] ? "Resume note edits" : "Edit note"}</Button>}</li>)}</ul>
+          : <p className="quiet-note">Keep your confirmed details and visual inspiration here. Your notes stay separate from manuscript findings.</p>}
+        {canEdit && <Button variant="outline" onClick={() => setNoteId("new")}>{formDrafts[`character:${id}:note:new`] ? "Resume note" : "Add note"}</Button>}
+
       </section>
 
       <section aria-labelledby="books-heading" className="character-section">
         <h2 id="books-heading"><BookOpen size={18} /> Where they appear</h2>
         {data.links.length > 0
           ? <ul className="character-links">{data.links.map(link => <li key={link.id}>
-              <strong>{link.book_title ?? "A book in your workspace"}</strong>
+              <strong>{link.book_slug ? <Link className="text-link" href={`/universe/${link.book_slug}?knowledge=characters#book-knowledge`}>{link.book_title ?? "Open source book"}</Link> : link.book_title ?? "A book in your workspace"}</strong>
               {link.character_name && <span className="quiet-note"> as {link.character_name}</span>}
-              {link.note && <p>{link.note}</p>}</li>)}</ul>
+              {link.note && <p>{link.note}</p>}{link.source_manuscript_id && link.source_chunk_ids[0] && <CharacterSourcePassage manuscriptId={link.source_manuscript_id} chunkId={link.source_chunk_ids[0]} />}<p className="quiet-note">Identity confirmed {new Date(link.confirmed_at).toLocaleDateString()}. Source observations remain unreviewed in the book.</p>{canEdit && (unlinking === link.id ? <div className="library-actions"><span>Remove this identity link? Both records stay saved.</span><Button variant="outline" disabled={Boolean(saving)} onClick={() => void unlink(link.id)}>Confirm unlink</Button><Button variant="ghost" onClick={() => setUnlinking(null)}>Keep link</Button></div> : <Button variant="ghost" onClick={() => setUnlinking(link.id)}>Unlink book character</Button>)}</li>)}</ul>
           : <p className="quiet-note">Not linked to a book yet. A shared name is not proof of the same person, so each link is a decision you confirm and can undo.</p>}
+        {canEdit && <><Button variant="outline" aria-expanded={showLinker} aria-controls="character-link-form" onClick={() => setShowLinker(value => !value)}>{showLinker ? "Close link form" : "Link a manuscript character"}</Button>{showLinker && <div id="character-link-form"><Suspense fallback={<p>Opening source choices…</p>}><CharacterSourceLinker profileId={id} onSaved={() => void load()} /></Suspense></div>}</>}
       </section>
+      <Dialog open={editing} onOpenChange={setEditing}><DialogContent className="library-dialog" aria-labelledby="edit-character-title"><DialogHeader><DialogTitle id="edit-character-title">Edit character</DialogTitle><DialogDescription>Your own names and description. Closing keeps your unfinished edits in this tab.</DialogDescription></DialogHeader><CharacterDetailsForm profile={profile} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); void load(); }} /></DialogContent></Dialog>
+      <Dialog open={noteId !== null} onOpenChange={open => { if (!open) setNoteId(null); }}><DialogContent className="library-dialog" aria-labelledby="character-note-title"><DialogHeader><DialogTitle id="character-note-title">{noteId === "new" ? "Add character note" : "Edit character note"}</DialogTitle><DialogDescription>Author-confirmed reference and visual inspiration stay distinct.</DialogDescription></DialogHeader>{noteId && <CharacterNoteForm key={noteId} profileId={id} note={data.notes.find(note => note.id === noteId)} onClose={() => setNoteId(null)} onSaved={() => { setNoteId(null); void load(); }} />}</DialogContent></Dialog>
     </>}
   </div>;
 }

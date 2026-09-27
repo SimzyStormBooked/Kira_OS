@@ -72,7 +72,7 @@ beforeAll(async () => {
     grant usage on schema storage to authenticated,anon;
     grant select,insert,update,delete on storage.objects to authenticated,anon;
     create policy unrelated_permissive_storage_policy on storage.objects for all to authenticated,anon using(true) with check(true);`);
-  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609200001_background_reading", "202609200003_character_organization", "202609210001_character_studio"]) {
+  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609200001_background_reading", "202609200003_character_organization", "202609210001_character_studio", "202609260002_character_profile_editing"]) {
     await db.exec(readFileSync(`supabase/migrations/${name}.sql`, "utf8"));
   }
   await db.query("insert into private.workspace_generation_config(singleton,recording_key_hash) values(true,encode(sha256(convert_to($1,'UTF8')),'hex'))", [recordingKey]);
@@ -254,5 +254,43 @@ describe("private portraits with retained permission", () => {
     await db.query("delete from public.character_profiles where id=$1", [celine.id]);
     expect((await db.query("select id from public.characters where id=$1", [character])).rows).toHaveLength(1);
     expect((await db.query("select id from public.character_profile_links")).rows).toHaveLength(0);
+  });
+});
+
+describe("atomic profile details and aliases", () => {
+  const save = (id: string | null, version: number | null, changes: unknown, tenant = author) => scalar<Profile>("select public.character_profile_save($1,$2,$3,$4) as value", [tenant, id, version, JSON.stringify(changes)]);
+  it("creates and replaces aliases atomically, retains portrait choices and refuses stale updates", async () => {
+    const created = await save(null, null, { display_name: "Celine", summary: "Author description", aliases: ["Cee"] });
+    const updated = await save(created.id, 1, { display_name: "Celine Dubois", aliases: ["The Lark"] });
+    expect(updated.version).toBe(2);
+    expect((await db.query<{ alias: string }>("select alias from public.character_profile_aliases where profile_id=$1", [created.id])).rows).toEqual([{ alias: "The Lark" }]);
+    await expect(save(created.id, 1, { display_name: "Stale", aliases: ["Wrong"] })).rejects.toThrow(/Character changed/);
+    await expect(save(created.id, 2, { display_name: "Partial failure", aliases: ["Duplicate", "duplicate"] })).rejects.toThrow(/duplicate key/);
+    expect((await db.query<{ display_name: string; version: number }>("select display_name,version from public.character_profiles where id=$1", [created.id])).rows[0]).toEqual({ display_name: "Celine Dubois", version: 2 });
+    expect((await db.query<{ alias: string }>("select alias from public.character_profile_aliases where profile_id=$1", [created.id])).rows).toEqual([{ alias: "The Lark" }]);
+  });
+  it("rolls back an invalid new profile and denies viewers or foreign tenants", async () => {
+    await expect(save(null, null, { display_name: "Failed", aliases: ["Same", "same"] })).rejects.toThrow(/duplicate key/);
+    expect((await db.query("select id from public.character_profiles")).rows).toHaveLength(0);
+    const created = await save(null, null, { display_name: "Celine", aliases: [] });
+    await asUser(viewer);
+    await expect(save(created.id, 1, { display_name: "Viewer changed" })).rejects.toThrow(/Only an owner or editor/);
+    await asUser(outsider);
+    await expect(save(created.id, 1, { display_name: "Other workspace" })).rejects.toThrow(/Only an owner or editor/);
+    await asUser(owner);
+    await expect(save(null, null, { display_name: "Other workspace" }, otherAuthor)).rejects.toThrow(/Only an owner or editor/);
+  });
+});
+
+describe("confirmed link source provenance", () => {
+  it("retains the exact source version and rejects a source for another book character", async () => {
+    const targetBook = await book("Linked source"), otherBook = await book("Unrelated source");
+    const source = await readManuscript(targetBook), unrelated = await readManuscript(otherBook);
+    const target = await profile();
+    await expect(db.query("insert into public.character_profile_links(author_id,profile_id,book_id,character_id,source_manuscript_id) values($1,$2,$3,$4,$5)", [author, target.id, targetBook.id, source.character, unrelated.manuscript.id])).rejects.toThrow(/foreign key/);
+    await db.query("insert into public.character_profile_links(author_id,profile_id,book_id,character_id,source_manuscript_id) values($1,$2,$3,$4,$5)", [author, target.id, targetBook.id, source.character, source.manuscript.id]);
+    const newer = await readManuscript(targetBook);
+    expect(newer.manuscript.id).not.toBe(source.manuscript.id);
+    expect((await db.query<{ source_manuscript_id: string }>("select source_manuscript_id from public.character_profile_links where profile_id=$1", [target.id])).rows[0].source_manuscript_id).toBe(source.manuscript.id);
   });
 });

@@ -17,6 +17,7 @@ export function useKeptDrafts(): KeptDraft[] {
     studioScratchpad,
     approvals,
     editDrafts,
+    formDrafts,
     keptRegisteredDrafts,
   } = useWorkspace();
   const kept: KeptDraft[] = [];
@@ -62,6 +63,10 @@ export function useKeptDrafts(): KeptDraft[] {
       });
   }
   // Forms that joined the draft guard — plan details, book metadata, notes — come back too.
+  for (const [key, draft] of Object.entries(formDrafts)) {
+    const text = Object.entries(draft.values).filter(([, value]) => value.trim()).map(([field, value]) => `${field}\n${value}`).join("\n\n");
+    if (text) kept.push({ id: `form-${key}`, label: draft.label, text });
+  }
   for (const registered of keptRegisteredDrafts())
     kept.push({
       id: `registered-${registered.key}`,

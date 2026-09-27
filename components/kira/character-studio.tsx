@@ -1,16 +1,16 @@
 "use client";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUpRight, Image as ImageIcon, Plus, Search, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useWorkspace } from "@/lib/db/demo-store";
-import { characterGallerySchema, characterProfileInputSchema, type CharacterGallery, type GalleryProfile } from "@/lib/characters/contract";
+import { characterGallerySchema, type CharacterGallery, type GalleryProfile } from "@/lib/characters/contract";
 import { LibraryRequestError, useLibrary } from "./library-provider";
+import { CharacterDetailsForm, CharacterSourceLinker } from "./character-forms";
 import "./characters.css";
 
 export function CharacterStudio() {
@@ -46,39 +46,9 @@ function CharacterCover({ profile }: { profile: GalleryProfile }) {
   return <div className="character-cover character-cover-empty" aria-hidden="true"><span>{initials || "?"}</span></div>;
 }
 
-function NewCharacterForm({ onSaved, onCancel }: { onSaved: (profile: { id: string }) => void; onCancel: () => void }) {
-  const { request } = useLibrary();
-  const [busy, setBusy] = useState(false); const [error, setError] = useState("");
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); if (busy) return;
-    const form = new FormData(event.currentTarget); setError("");
-    const parsed = characterProfileInputSchema.safeParse({
-      displayName: form.get("displayName"), summary: form.get("summary"),
-      aliases: String(form.get("aliases") ?? "").split(",").map(alias => alias.trim()).filter(Boolean),
-    });
-    if (!parsed.success) { setError(parsed.error.issues[0]?.message ?? "Check the character details."); return; }
-    setBusy(true);
-    try {
-      const response = await request("/api/characters", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(parsed.data) });
-      onSaved((response as { profile: { id: string } }).profile);
-    } catch (failure) { setError(failure instanceof LibraryRequestError ? failure.message : "This character could not be saved. Your entries are still here."); }
-    finally { setBusy(false); }
-  }
-  return <form className="library-form" onSubmit={submit} aria-busy={busy}>
-    <label>Name<Input name="displayName" required maxLength={120} autoFocus placeholder="How you refer to them" /></label>
-    <label>Other names they go by <span className="quiet-note">Optional, separated by commas</span>
-      <Input name="aliases" maxLength={600} placeholder="Nicknames, titles, a name used in another book" /></label>
-    <label>Your own description <span className="quiet-note">Optional</span>
-      <Textarea name="summary" rows={4} maxLength={2000} placeholder="What you know about them. Your words stay yours." /></label>
-    <p className="quiet-note">Two characters may share a name. Linking this person to a book is a separate step you confirm yourself.</p>
-    {error && <p role="alert" className="library-error">{error}</p>}
-    <div className="library-actions"><Button type="submit" disabled={busy}>{busy ? "Saving…" : "Add character"}</Button>
-      <Button type="button" variant="ghost" disabled={busy} onClick={onCancel}>Cancel</Button></div>
-  </form>;
-}
-
 function ConnectedCharacterStudio() {
   const { request } = useLibrary(); const router = useRouter();
+  const { formDrafts } = useWorkspace();
   const [data, setData] = useState<CharacterGallery | null>(null);
   const [loading, setLoading] = useState(true); const [error, setError] = useState("");
   const [query, setQuery] = useState(""); const [adding, setAdding] = useState(false);
@@ -105,7 +75,7 @@ function ConnectedCharacterStudio() {
   const editable = data?.role !== "viewer";
   return <div className="character-page">
     <div className="page-heading"><StudioHeading />
-      {data && editable && <Button onClick={() => setAdding(true)}><Plus size={16} /> Add character</Button>}</div>
+      {data && editable && <Button onClick={() => setAdding(true)}><Plus size={16} /> {formDrafts["character:new"] ? "Resume new character" : "Add character"}</Button>}</div>
     {loading && !data && <p role="status">Opening your Character Studio…</p>}
     {error && <div role="alert" className="library-error"><p>{error}</p><Button variant="outline" onClick={() => void load()}>Try again</Button></div>}
     {data && <>
@@ -127,12 +97,13 @@ function ConnectedCharacterStudio() {
         <h2>{profiles.length ? "No character found." : "Your cast starts here."}</h2>
         <p>{profiles.length ? "Try another name or one of their other names." : "Add a character, then keep their portraits and your notes in one place. Nothing is published, and an image is never treated as proof of a fact in your book."}</p>
         {profiles.length > 0 && <Button variant="outline" onClick={() => setQuery("")}>Clear search</Button>}</div>}
+      {editable && <section className="character-section" aria-labelledby="link-source-heading"><h2 id="link-source-heading">Connect a manuscript character</h2><Suspense fallback={<p>Opening source choices…</p>}><CharacterSourceLinker profiles={profiles} onSaved={() => void load()} /></Suspense></section>}
       <p className="catalog-footnote">Portraits stay private to your workspace and open through short-lived private links. Location details in an image file are removed before it is kept.</p>
     </>}
-    <Dialog open={adding} onOpenChange={setAdding}><DialogContent className="library-dialog">
-      <DialogHeader><DialogTitle>Add a character</DialogTitle>
+    <Dialog open={adding} onOpenChange={setAdding}><DialogContent className="library-dialog" aria-labelledby="add-character-title">
+      <DialogHeader><DialogTitle id="add-character-title">Add a character</DialogTitle>
         <DialogDescription>A name is enough to start. Portraits, notes and book links come next.</DialogDescription></DialogHeader>
-      <NewCharacterForm onCancel={() => setAdding(false)} onSaved={profile => { setAdding(false); router.push(`/characters/${profile.id}`); }} />
+      <CharacterDetailsForm onClose={() => setAdding(false)} onSaved={id => { setAdding(false); const search = new URLSearchParams(window.location.search); router.push(`/characters/${id}${search.size ? `?${search.toString()}` : ""}`); }} />
     </DialogContent></Dialog>
   </div>;
 }

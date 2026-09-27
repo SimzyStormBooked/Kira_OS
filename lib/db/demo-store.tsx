@@ -51,6 +51,8 @@ export interface StudioScratchpad {
   submittedId: string | null;
   pendingRequestId: string | null;
 }
+export type FormDraft = { label: string; values: Record<string, string> };
+const formDraftSchema = z.object({ label: z.string().max(200), values: z.record(z.string().max(120), z.string().max(10000)) });
 const recipeIdSchema = z.enum(agentRecipeIds);
 const blueprintDraftSchema = z.object({ name: z.string().max(80), goal: z.string().max(1000), context: z.string().max(3000), success: z.string().max(1000) });
 const blueprintPreviewSchema = z.object({ title: z.string().max(400), prompt: z.string().max(20000), brief: z.string().max(20000), signature: z.string().max(40000) });
@@ -71,6 +73,7 @@ const privateDraftsSchema = z.object({
     submittedId: z.uuid().nullable(), pendingRequestId: z.uuid().nullable(),
   }),
   editDrafts: z.record(z.string().max(120), z.string().max(10000)),
+  formDrafts: z.record(z.string().max(160), formDraftSchema).default({}),
 });
 const draftsStorageKey = (mode: Mode, viewerEmail: string | null) => `kira-os:drafts:v1:${mode}:${viewerEmail ?? "demo"}`;
 function restoreDrafts(key: string): { drafts: PrivateScratchpads; unreadable: string | null } {
@@ -86,6 +89,7 @@ function restoreDrafts(key: string): { drafts: PrivateScratchpads; unreadable: s
         learnScratchpad: { ...stored.learnScratchpad, drafts: { ...fresh.learnScratchpad.drafts, ...stored.learnScratchpad.drafts } },
         studioScratchpad: stored.studioScratchpad,
         editDrafts: stored.editDrafts,
+        formDrafts: stored.formDrafts,
       },
       unreadable: null,
     };
@@ -102,6 +106,7 @@ function persistDrafts(key: string, snapshot: Snapshot) {
     sessionStorage.setItem(key, JSON.stringify({
       scratchpad: snapshot.scratchpad, learnScratchpad: snapshot.learnScratchpad,
       studioScratchpad: snapshot.studioScratchpad, editDrafts: snapshot.editDrafts,
+      formDrafts: snapshot.formDrafts,
     }));
     return true;
   } catch {
@@ -134,6 +139,7 @@ function freshPrivateScratchpads() {
     } satisfies LearnScratchpad,
     studioScratchpad: { bookIds: [], includeSpoilers: false, job: "brainstorm" as StudioJob, prompt: "", savedSignature: null, requestIdentity: null, submittedId: null, pendingRequestId: null } as StudioScratchpad,
     editDrafts: {} as Record<string, string>,
+    formDrafts: {} as Record<string, FormDraft>,
   };
 }
 export function editDraftKey(id: string, version: number) {
@@ -159,7 +165,8 @@ function hasPrivateDrafts(snapshot: Snapshot) {
   const questionSignature = studioRequestSignature(studioScratchpad);
   // An edited brief counts while her text still differs from the brief as it stands now.
   const editedBrief = snapshot.approvals.some((approval) => keptEditFor(snapshot.editDrafts, approval)[1] !== null);
-  return Boolean(scratchpad.title.trim() || scratchpad.draft.trim() || changedRecipe || editedBrief || (studioScratchpad.prompt.trim() && studioScratchpad.savedSignature !== questionSignature));
+  const unfinishedForm = Object.values(snapshot.formDrafts).some(draft => Object.values(draft.values).some(value => value.trim()));
+  return Boolean(scratchpad.title.trim() || scratchpad.draft.trim() || changedRecipe || editedBrief || unfinishedForm || (studioScratchpad.prompt.trim() && studioScratchpad.savedSignature !== questionSignature));
 }
 /**
  * A long-text field anywhere in the app can register itself here so the draft guard,
@@ -183,6 +190,7 @@ type Snapshot = WorkspaceState & {
   learnScratchpad: LearnScratchpad;
   studioScratchpad: StudioScratchpad;
   editDrafts: Record<string, string>;
+  formDrafts: Record<string, FormDraft>;
   sessionEnded: boolean;
   corruptWorkspace: string | null;
   /** True once this browser has refused to hold a draft, so no screen keeps promising it is kept. */
@@ -237,7 +245,7 @@ function createStore(
   const update = (patch: Partial<Snapshot>) => {
     snapshot = { ...snapshot, ...patch };
     if (
-      ("scratchpad" in patch || "learnScratchpad" in patch || "studioScratchpad" in patch || "editDrafts" in patch) &&
+      ("scratchpad" in patch || "learnScratchpad" in patch || "studioScratchpad" in patch || "editDrafts" in patch || "formDrafts" in patch) &&
       // Never write over stored text she has not been offered back yet.
       snapshot.unreadableDrafts === null
     ) {
@@ -400,6 +408,14 @@ function createStore(
       registeredDrafts.delete(key);
     },
     keptRegisteredDrafts,
+    /** Retained per tab and account, including after a form unmounts. Cleared only after save or an explicit discard. */
+    updateFormDraft: (key: string, label: string, values: Record<string, string> | null) => {
+      z.string().min(1).max(160).parse(key);
+      const next = { ...snapshot.formDrafts };
+      if (values === null) delete next[key];
+      else next[key] = formDraftSchema.parse({ label, values });
+      update({ formDrafts: next });
+    },
     downloadUnreadableDrafts: () => {
       if (snapshot.unreadableDrafts !== null) downloadFile(snapshot.unreadableDrafts, "kira-os-unreadable-drafts.txt");
     },

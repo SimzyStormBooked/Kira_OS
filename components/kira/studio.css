@@ -17,3 +17,7 @@
 .studio-history-empty > svg { color: var(--gold); }
 .studio-history-empty p { margin: 0; font-size: 14px; line-height: 1.8; }
 .studio-history-empty[hidden] { display: none; }
+
+.studio-history-search { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0 8px; }
+.studio-history-search label { flex-basis: 100%; font-size: 13px; font-weight: 500; }
+.studio-history-search input { flex: 1 1 220px; min-width: 0; }

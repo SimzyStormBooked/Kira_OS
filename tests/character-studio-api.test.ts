@@ -11,7 +11,12 @@ import { characterGallerySchema, characterProfileDetailSchema } from "@/lib/char
 import { GET as listCharacters, POST as createCharacter } from "@/app/api/characters/route";
 import { GET as readCharacter, PATCH as editCharacter } from "@/app/api/characters/[id]/route";
 
-const authorId = randomUUID(), userId = randomUUID(), profileId = randomUUID(), portraitId = randomUUID(), bookId = randomUUID(), characterId = randomUUID();
+import { GET as listSources } from "@/app/api/characters/sources/route";
+import { POST as addNote } from "@/app/api/characters/[id]/notes/route";
+import { PATCH as editNote } from "@/app/api/characters/[id]/notes/[noteId]/route";
+import { POST as linkCharacter, DELETE as unlinkCharacter } from "@/app/api/characters/[id]/links/route";
+
+const authorId = randomUUID(), userId = randomUUID(), profileId = randomUUID(), portraitId = randomUUID(), bookId = randomUUID(), manuscriptId = randomUUID(), characterId = randomUUID();
 const origin = "https://kira.test";
 const cover = { id: portraitId, caption: "Reference board", source_credit: null, usage_permission: "private_reference_only" as const, width: 800, height: 1000, created_at: new Date().toISOString(), url: "https://storage.test/signed?token=short-lived" };
 const profile = { id: profileId, display_name: "Celine", summary: null, universe_id: null, primary_portrait_id: portraitId, version: 2, updated_at: new Date().toISOString(), aliases: ["The Lark"], portrait_count: 1, book_count: 1, cover };
@@ -20,7 +25,7 @@ const detail = {
   notes: [{ id: randomUUID(), kind: "author_confirmed" as const, body: "She never lies about the harbour.", book_id: bookId, version: 1, created_at: new Date().toISOString() }],
   links: [{ id: randomUUID(), book_id: bookId, character_id: characterId, note: null, confirmed_at: new Date().toISOString(), book_title: "The Quiet Library", character_name: "Celine" }],
 };
-const repo = { listProfiles: vi.fn(), profileDetail: vi.fn(), createProfile: vi.fn(), updateProfile: vi.fn(), findProfile: vi.fn() };
+const repo = { listSources: vi.fn(), saveNote: vi.fn(), linkCharacter: vi.fn(), unlinkCharacter: vi.fn(), listProfiles: vi.fn(), profileDetail: vi.fn(), createProfile: vi.fn(), updateProfile: vi.fn(), findProfile: vi.fn() };
 const supabase = { storage: { from: vi.fn() } };
 const context = { params: Promise.resolve({ id: profileId }) };
 function get(path: string, site: string | null = origin) {
@@ -38,6 +43,7 @@ beforeEach(() => {
   repo.listProfiles.mockResolvedValue([profile]); repo.profileDetail.mockResolvedValue(detail);
   repo.createProfile.mockResolvedValue({ id: profileId, display_name: "Celine", normalized_name: "celine", universe_id: null, summary: null, primary_portrait_id: null, version: 1, updated_at: new Date().toISOString() });
   repo.updateProfile.mockResolvedValue({ ...profile, version: 3 });
+  repo.saveNote.mockResolvedValue(detail.notes[0]); repo.listSources.mockResolvedValue([]);
 });
 afterEach(() => vi.unstubAllEnvs());
 
@@ -105,5 +111,49 @@ describe("Character Studio gallery API", () => {
     expect(repo.updateProfile).toHaveBeenCalledWith(profileId, expect.objectContaining({ primaryPortraitId: portraitId }), 2);
     expect((await editCharacter(send(`/api/characters/${profileId}`, { displayName: "Renamed" }, "PATCH"), context)).status).toBe(400);
     expect(repo.updateProfile).toHaveBeenCalledOnce();
+  });
+});
+
+describe("author-confirmed Character Studio editing", () => {
+  it("passes aliases through profile edits and rejects duplicate names before saving", async () => {
+    expect((await editCharacter(send(`/api/characters/${profileId}`, { expectedVersion: 2, aliases: ["Cee"] }, "PATCH"), context)).status).toBe(200);
+    expect(repo.updateProfile).toHaveBeenCalledWith(profileId, expect.objectContaining({ aliases: ["Cee"] }), 2);
+    expect((await editCharacter(send(`/api/characters/${profileId}`, { expectedVersion: 2, aliases: ["The Lark", "the  lark"] }, "PATCH"), context)).status).toBe(400);
+  });
+});
+
+describe("character notes and source identity API boundaries", () => {
+  it("reads source choices through the verified caller and validates the book filter", async () => {
+    expect((await listSources(get(`/api/characters/sources?book=${bookId}`, null))).status).toBe(200);
+    expect(createCharacterRepository).toHaveBeenCalledWith(supabase, authorId);
+    expect(repo.listSources).toHaveBeenCalledWith(bookId);
+    expect((await listSources(get("/api/characters/sources?book=not-a-book"))).status).toBe(400);
+  });
+  it("requires an explicit identity confirmation, and never accepts a manuscript observation as an author note kind", async () => {
+    expect((await linkCharacter(send(`/api/characters/${profileId}/links`, { bookId, characterId }), context)).status).toBe(400);
+    expect(repo.linkCharacter).not.toHaveBeenCalled();
+    expect((await linkCharacter(send(`/api/characters/${profileId}/links`, { bookId, characterId, manuscriptId, confirmed: true, note: "I checked the source." }), context)).status).toBe(201);
+    expect(repo.linkCharacter).toHaveBeenCalledWith(profileId, expect.objectContaining({ bookId, characterId, manuscriptId, confirmed: true }));
+    expect((await addNote(send(`/api/characters/${profileId}/notes`, { kind: "manuscript_observation", body: "Imported text" }), context)).status).toBe(400);
+  });
+  it("creates author or inspiration notes and passes held versions on edits", async () => {
+    expect((await addNote(send(`/api/characters/${profileId}/notes`, { kind: "visual_inspiration", body: "My own reference idea" }), context)).status).toBe(201);
+    const noteId = detail.notes[0].id;
+    const noteContext = { params: Promise.resolve({ id: profileId, noteId }) };
+    expect((await editNote(send(`/api/characters/${profileId}/notes/${noteId}`, { kind: "author_confirmed", body: "My verified note", expectedVersion: 1 }, "PATCH"), noteContext)).status).toBe(200);
+    expect(repo.saveNote).toHaveBeenLastCalledWith(profileId, { kind: "author_confirmed", body: "My verified note" }, noteId, 1);
+    expect((await editNote(send(`/api/characters/${profileId}/notes/${noteId}`, { kind: "author_confirmed", body: "Missing version" }, "PATCH"), noteContext)).status).toBe(400);
+  });
+  it("denies viewer, expired-session and cross-origin writes before calling note or identity storage", async () => {
+    vi.mocked(getWorkspaceRole).mockResolvedValue("viewer");
+    expect((await addNote(send(`/api/characters/${profileId}/notes`, { kind: "author_confirmed", body: "No" }), context)).status).toBe(403);
+    expect((await linkCharacter(send(`/api/characters/${profileId}/links`, { bookId, characterId, manuscriptId, confirmed: true }), context)).status).toBe(403);
+    expect((await unlinkCharacter(send(`/api/characters/${profileId}/links`, { linkId: detail.links[0].id }, "DELETE"), context)).status).toBe(403);
+    vi.mocked(getWorkspaceRole).mockResolvedValue("editor");
+    expect((await addNote(send(`/api/characters/${profileId}/notes`, { kind: "author_confirmed", body: "No" }, "POST", "https://elsewhere.test"), context)).status).toBe(403);
+    const { WorkspaceAccessError } = await import("@/lib/auth/errors");
+    vi.mocked(requireWorkspaceSession).mockRejectedValue(new WorkspaceAccessError(401, "unauthenticated", "Sign in again."));
+    expect((await addNote(send(`/api/characters/${profileId}/notes`, { kind: "author_confirmed", body: "No" }), context)).status).toBe(401);
+    expect(repo.saveNote).not.toHaveBeenCalled(); expect(repo.linkCharacter).not.toHaveBeenCalled(); expect(repo.unlinkCharacter).not.toHaveBeenCalled();
   });
 });

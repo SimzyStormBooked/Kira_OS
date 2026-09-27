@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { ManuscriptError } from "@/lib/manuscripts/http";
 import { checkLibraryError } from "@/lib/manuscripts/repository";
-import { PORTRAIT_URL_TTL_SECONDS, PORTRAIT_USAGE_PERMISSIONS, type CharacterProfileInput } from "./contract";
+import { PORTRAIT_URL_TTL_SECONDS, PORTRAIT_USAGE_PERMISSIONS, type CharacterProfileInput, characterNoteSchema } from "./contract";
 
 export const storedPortraitSchema = z.object({
   id: z.uuid(), author_id: z.uuid(), profile_id: z.uuid(), storage_path: z.string(),
@@ -32,6 +32,11 @@ function recordingKey() {
   return key;
 }
 function singleComposite(value: unknown) { return Array.isArray(value) && value.length === 1 ? value[0] : value; }
+
+function citationIds(details: unknown): string[] {
+  const parsed = z.object({ observations: z.array(z.object({ citations: z.array(z.object({ chunk_id: z.uuid() })) })) }).parse(details);
+  return [...new Set(parsed.observations.flatMap(observation => observation.citations.map(citation => citation.chunk_id)))];
+}
 
 /** Every query uses the verified caller's client and explicit author scope, in addition to RLS. */
 export function createCharacterRepository(supabase: SupabaseClient, authorId: string) {
@@ -133,16 +138,20 @@ export function createCharacterRepository(supabase: SupabaseClient, authorId: st
         supabase.from("character_profile_aliases").select("alias").eq("author_id", authorId).eq("profile_id", profileId).order("normalized_alias"),
         readyPortraits([profileId]),
         supabase.from("character_notes").select("id,kind,body,book_id,version,created_at").eq("author_id", authorId).eq("profile_id", profileId).order("created_at", { ascending: false }).limit(200),
-        supabase.from("character_profile_links").select("id,book_id,character_id,note,confirmed_at").eq("author_id", authorId).eq("profile_id", profileId),
+        supabase.from("character_profile_links").select("id,book_id,character_id,source_manuscript_id,note,confirmed_at").eq("author_id", authorId).eq("profile_id", profileId),
       ]);
       for (const result of [aliases, notes, links]) checkLibraryError(result.error);
       const linkRows = links.data ?? [];
       // Composite tenant keys are not embeddable, so titles and names are fetched by ID.
-      const [books, characters] = await Promise.all([
-        linkRows.length ? supabase.from("books").select("id,title").eq("author_id", authorId).in("id", linkRows.map(row => String(row.book_id))) : Promise.resolve({ data: [], error: null }),
+      const sourceIds = linkRows.flatMap(row => row.source_manuscript_id ? [String(row.source_manuscript_id)] : []);
+      const [books, characters, sourceRows] = await Promise.all([
+        linkRows.length ? supabase.from("books").select("id,title,slug").eq("author_id", authorId).in("id", linkRows.map(row => String(row.book_id))) : Promise.resolve({ data: [], error: null }),
         linkRows.length ? supabase.from("characters").select("id,name").eq("author_id", authorId).in("id", linkRows.map(row => String(row.character_id))) : Promise.resolve({ data: [], error: null }),
+        sourceIds.length ? supabase.from("book_characters").select("manuscript_id,character_id,details").eq("author_id", authorId).in("manuscript_id", sourceIds) : Promise.resolve({ data: [], error: null }),
       ]);
-      checkLibraryError(books.error); checkLibraryError(characters.error);
+      checkLibraryError(books.error); checkLibraryError(characters.error); checkLibraryError(sourceRows.error);
+      const sourceChunks = new Map((sourceRows.data ?? []).map(row => [`${row.manuscript_id}:${row.character_id}`, citationIds(row.details)]));
+      const slugs = new Map((books.data ?? []).map(row => [String(row.id), String(row.slug)]));
       const titles = new Map((books.data ?? []).map(row => [String(row.id), String(row.title)]));
       const names = new Map((characters.data ?? []).map(row => [String(row.id), String(row.name)]));
       const presented = await present(portraits);
@@ -155,35 +164,79 @@ export function createCharacterRepository(supabase: SupabaseClient, authorId: st
         },
         portraits: presented,
         notes: notes.data ?? [],
-        links: linkRows.map(row => ({ ...row, book_title: titles.get(String(row.book_id)) ?? null, character_name: names.get(String(row.character_id)) ?? null })),
+        links: linkRows.map(row => ({ ...row, source_chunk_ids: sourceChunks.get(`${row.source_manuscript_id}:${row.character_id}`) ?? [], book_title: titles.get(String(row.book_id)) ?? null, book_slug: slugs.get(String(row.book_id)) ?? null, character_name: names.get(String(row.character_id)) ?? null })),
       };
     },
-    async createProfile(input: CharacterProfileInput) {
-      const { data, error } = await supabase.from("character_profiles")
-        .insert({ author_id: authorId, display_name: input.displayName, summary: input.summary })
-        .select("id,display_name,normalized_name,universe_id,summary,primary_portrait_id,version,updated_at").single();
+    async listSources(bookId?: string) {
+      let query = supabase.from("book_characters").select("book_id,character_id,manuscript_id,details").eq("author_id", authorId);
+      if (bookId) query = query.eq("book_id", bookId);
+      const { data, error } = await query.limit(1000);
       checkLibraryError(error);
-      const profile = characterProfileSchema.parse(data);
-      if (input.aliases.length) {
-        const { error: aliasError } = await supabase.from("character_profile_aliases")
-          .insert(input.aliases.map(alias => ({ author_id: authorId, profile_id: profile.id, alias })));
-        checkLibraryError(aliasError);
-      }
-      return profile;
+      const rows = data ?? [];
+      if (!rows.length) return [];
+      const [books, characters, links, chunks] = await Promise.all([
+        supabase.from("books").select("id,title,slug,active_manuscript_id").eq("author_id", authorId).in("id", [...new Set(rows.map(row => String(row.book_id)))]),
+        supabase.from("characters").select("id,name").eq("author_id", authorId).in("id", rows.map(row => String(row.character_id))),
+        supabase.from("character_profile_links").select("character_id,profile_id").eq("author_id", authorId).in("character_id", rows.map(row => String(row.character_id))),
+        supabase.from("knowledge_chunks").select("id,section").eq("author_id", authorId).in("manuscript_id", [...new Set(rows.map(row => String(row.manuscript_id)))]),
+      ]);
+      for (const result of [books, characters, links, chunks]) checkLibraryError(result.error);
+      const byBook = new Map((books.data ?? []).map(row => [row.id, row]));
+      const names = new Map((characters.data ?? []).map(row => [row.id, String(row.name)]));
+      const linked = new Map((links.data ?? []).map(row => [row.character_id, String(row.profile_id)]));
+      const sections = new Map((chunks.data ?? []).map(row => [String(row.id), String(row.section)]));
+      return rows.flatMap(row => {
+        const book = byBook.get(row.book_id);
+        if (!book || book.active_manuscript_id !== row.manuscript_id) return [];
+        const observations = z.object({ observations: z.array(z.object({ citations: z.array(z.object({ chunk_id: z.uuid() })) })) }).parse(row.details).observations;
+        return [{ character_id: row.character_id, book_id: row.book_id, book_title: book.title, book_slug: book.slug,
+          name: names.get(row.character_id) ?? "Unnamed character", manuscript_id: row.manuscript_id,
+          observation_count: observations.length, linked_profile_id: linked.get(row.character_id) ?? null,
+          source_chunk_ids: citationIds(row.details),
+          source_sections: [...new Set(observations.flatMap(item => item.citations.flatMap(citation => sections.get(citation.chunk_id) ? [sections.get(citation.chunk_id)!] : [])))],
+        }];
+      });
     },
-    /** The stored version must still match, so a stale edit fails instead of overwriting. */
-    async updateProfile(profileId: string, changes: { displayName?: string; summary?: string | null; primaryPortraitId?: string | null }, expectedVersion: number) {
+    async createProfile(input: CharacterProfileInput) {
+      const { data, error } = await supabase.rpc("character_profile_save", {
+        p_author_id: authorId, p_id: null, p_expected_version: null,
+        p_changes: { display_name: input.displayName, summary: input.summary, aliases: input.aliases },
+      });
+      checkLibraryError(error);
+      return characterProfileSchema.parse(singleComposite(data));
+    },
+    async updateProfile(profileId: string, changes: { displayName?: string; summary?: string | null; aliases?: string[]; primaryPortraitId?: string | null }, expectedVersion: number) {
       const patch: Record<string, unknown> = {};
       if (changes.displayName !== undefined) patch.display_name = changes.displayName;
       if (changes.summary !== undefined) patch.summary = changes.summary;
+      if (changes.aliases !== undefined) patch.aliases = changes.aliases;
       if (changes.primaryPortraitId !== undefined) patch.primary_portrait_id = changes.primaryPortraitId;
-      if (!Object.keys(patch).length) return this.findProfile(profileId);
-      const { data, error } = await supabase.from("character_profiles").update(patch)
-        .eq("author_id", authorId).eq("id", profileId).eq("version", expectedVersion)
-        .select("id,display_name,normalized_name,universe_id,summary,primary_portrait_id,version,updated_at").maybeSingle();
+      const { data, error } = await supabase.rpc("character_profile_save", {
+        p_author_id: authorId, p_id: profileId, p_expected_version: expectedVersion, p_changes: patch,
+      });
       checkLibraryError(error);
-      if (!data) throw new ManuscriptError("40001", 409, "This character changed since you opened it. Reload before saving again.");
-      return characterProfileSchema.parse(data);
+      return characterProfileSchema.parse(singleComposite(data));
+    },
+    async saveNote(profileId: string, input: { kind: string; body: string; bookId?: string | null }, noteId?: string, expectedVersion?: number) {
+      await this.findProfile(profileId);
+      const query = noteId
+        ? supabase.from("character_notes").update({ kind: input.kind, body: input.body }).eq("author_id", authorId).eq("profile_id", profileId).eq("id", noteId).eq("version", expectedVersion!)
+        : supabase.from("character_notes").insert({ author_id: authorId, profile_id: profileId, kind: input.kind, body: input.body, book_id: input.bookId ?? null });
+      const { data, error } = await query.select("id,kind,body,book_id,version,created_at").maybeSingle();
+      checkLibraryError(error);
+      if (!data) throw new ManuscriptError("40001", 409, "This note changed. Your draft is still here; reopen the saved note before trying again.");
+      return characterNoteSchema.parse(data);
+    },
+    async linkCharacter(profileId: string, input: { bookId: string; characterId: string; manuscriptId: string; note: string | null }) {
+      await this.findProfile(profileId);
+      const sources = await this.listSources(input.bookId);
+      if (!sources.some(source => source.character_id === input.characterId && source.manuscript_id === input.manuscriptId)) throw new ManuscriptError("P0002", 404, "This character is not in the book’s current manuscript reference.");
+      const { error } = await supabase.from("character_profile_links").insert({ author_id: authorId, profile_id: profileId, book_id: input.bookId, character_id: input.characterId, source_manuscript_id: input.manuscriptId, note: input.note });
+      checkLibraryError(error);
+    },
+    async unlinkCharacter(profileId: string, linkId: string) {
+      const { error } = await supabase.from("character_profile_links").delete().eq("author_id", authorId).eq("profile_id", profileId).eq("id", linkId);
+      checkLibraryError(error);
     },
   };
 }

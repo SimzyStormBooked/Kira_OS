@@ -6,7 +6,7 @@ import { assertSameOrigin } from "@/lib/auth/security";
 import { assertStudioPrompt, StudioPolicyError, studioRequestSchema, studioUsage } from "@/lib/ai/studio-contract";
 import { getStudioAvailability, StudioProviderError } from "@/lib/ai/studio-provider";
 import { runStudioProvider } from "@/lib/ai/provider";
-import { createStudioRepository, StudioRepositoryError } from "@/lib/db/studio-repository";
+import { createStudioRepository, readStudioHistoryCursor, studioHistoryQuerySchema, StudioRepositoryError } from "@/lib/db/studio-repository";
 
 export const maxDuration = 90;
 const headers = { "Cache-Control": "private, no-store, max-age=0" };
@@ -47,14 +47,19 @@ async function readRequest(request: Request) {
 export async function GET(request: Request) {
   try {
     const session = await requireWorkspaceSession();
-    const id = new URL(request.url).searchParams.get("id");
+    const params = new URL(request.url).searchParams;
+    const id = params.get("id");
+    const parsed = studioHistoryQuerySchema.safeParse({ query: params.get("q") ?? "", cursor: params.get("cursor") ?? undefined, limit: params.get("limit") ?? undefined });
+    if (!parsed.success) return NextResponse.json({ error: "Check the history search and page size." }, { status: 400, headers });
+    try { readStudioHistoryCursor(parsed.data.cursor, parsed.data.query); }
+    catch { return NextResponse.json({ error: "This history page has expired. Refresh your search." }, { status: 400, headers }); }
     if (id !== null && !z.uuid().safeParse(id).success) return NextResponse.json({ error: "This question link is invalid." }, { status: 400, headers });
     const repo = createStudioRepository(session.supabase, session.authorId);
-    const [role, availability, generations, generation] = await Promise.all([
-      getWorkspaceRole(session), getStudioAvailability(), repo.list(), id ? repo.find(id) : Promise.resolve(null),
+    const [role, availability, history, generation] = await Promise.all([
+      getWorkspaceRole(session), getStudioAvailability(), repo.list(parsed.data), id ? repo.find(id) : Promise.resolve(null),
     ]);
     if (id && !generation) return NextResponse.json({ error: "This question is unavailable or belongs to another workspace." }, { status: 404, headers });
-    return NextResponse.json({ role, availability, generations, generation }, { headers });
+    return NextResponse.json({ role, availability, ...history, generation }, { headers });
   } catch (error) { return failure(error); }
 }
 export async function POST(request: Request) {

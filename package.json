@@ -28,6 +28,7 @@
     "clsx": "latest",
     "cn": "^0.3.0",
     "ipaddr.js": "^2.5.0",
+    "jszip": "3.10.2",
     "lucide-react": "latest",
     "mammoth": "^1.12.3",
     "next": "16.3.5",
