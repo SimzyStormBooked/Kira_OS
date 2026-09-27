@@ -58,9 +58,9 @@ export type ResolvedCitation = { quote: string; start: number; end: number; occu
  * the citation records text rather than an offset, and a line repeated in a manuscript is
  * legitimate evidence, so a repeat is not a reason to discard a finding.
  */
-export function resolveCitationQuote(source: string, quote: string): ResolvedCitation | null {
+export function resolveCitationQuote(source: string, quote: string, contentMax = MANUSCRIPT_QUOTE_MAX): ResolvedCitation | null {
   const wanted = normalizeQuoteWhitespace(quote);
-  if (!wanted || wanted.length > MANUSCRIPT_QUOTE_MAX) return null;
+  if (!wanted || wanted.length > contentMax) return null;
   const { normalized, origin } = indexNormalized(source);
   const at = normalized.indexOf(wanted);
   if (at < 0) return null;
@@ -80,4 +80,32 @@ export function resolveCitationQuote(source: string, quote: string): ResolvedCit
 /** True when the quote is supported by the source, ignoring only whitespace runs. */
 export function citationIsSupported(source: string | undefined, quote: string): boolean {
   return source !== undefined && resolveCitationQuote(source, quote) !== null;
+}
+
+/**
+ * Divides separate sources that are joined into one reference text. The parser removes
+ * every C0 control character except tab and newline from manuscript text, so U+001E can
+ * never occur inside a passage. Because it is not whitespace, a whitespace-tolerant match
+ * cannot bridge it: any span running from one source into the next must contain it, and a
+ * quote that contains it is therefore stitched together rather than quoted.
+ */
+export const EVIDENCE_SEAM = "\u001e";
+/** Evidence built from a finding labels the passage behind it; the label is not evidence. */
+export const SUPPORTING_PASSAGE_LABEL = "Supporting passage:";
+
+/**
+ * Resolves a quote to its verbatim span inside one source of a reference text. Refuses a
+ * span that crosses into another source or into the label that introduces a passage, so a
+ * model's own finding and the author's words can never be stitched into a single "quote".
+ */
+export function resolveEvidenceQuote(source: string, quote: string, contentMax = MANUSCRIPT_QUOTE_MAX): string | null {
+  if (quote.includes(EVIDENCE_SEAM)) return null;
+  const resolved = resolveCitationQuote(source, quote, contentMax);
+  if (!resolved || resolved.quote.includes(EVIDENCE_SEAM) || resolved.quote.includes(SUPPORTING_PASSAGE_LABEL)) return null;
+  return resolved.quote;
+}
+
+/** A stored quote may carry this much content, with room for the source's own spacing. */
+export function quoteContentFits(value: string, contentMax: number) {
+  return normalizeQuoteWhitespace(value).length <= contentMax;
 }

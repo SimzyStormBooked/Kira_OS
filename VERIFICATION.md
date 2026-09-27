@@ -47,6 +47,18 @@ The most recently verified application release is `131c4ed` (Vercel `dpl_4U9qGTk
 
 Current scope and open review items are captured in [the continuation handoff](docs/continuation-handoff-2026-09-20.md). **At this historical checkpoint Character Studio was a design preview. The schema, gallery, profile view and portrait upload feature were added subsequently; see the September 21 sections.** Automatic report emails remain explicitly deferred by the owner. Meta Ads activation still requires provider configuration and consent; no live Meta account connection is claimed.
 
+## Raven's plan and context quotes — September 23, 2026
+
+Manuscript citations now keep their passage's line breaks, and those quotes become the evidence Marketing Plans and Ask Raven quote from. Both checked a quote with an exact substring test and a raw length cap, so a book read after the citation fix would have had Raven's re-spaced quotes of it rejected — a failed plan or answer on a paid call, though never bad data. Neither was exposed yet. Measured over chain-verified TLS: none of the 30 stored plan citations (longest 121 characters) or 20 Ask Raven references (longest 190) contains a line break, no plan has been activated into tasks, and `Syndicate Princess` has not finished reading.
+
+`202609230001_raven_evidence_quotes.sql` with the matching application change resolves each quote against one source ignoring whitespace runs, stores that source's own text, and bounds content (300 plans, 400 Ask Raven) instead of raw length. Every read-back path — saved plans, activated tasks, stored Ask Raven answers and ads report snapshots — accepts the stored form, while the model is still told 300 and 400.
+
+It also closes a hazard that tolerance would have widened. Ask Raven joined the question and every evidence item with newlines and checked quotes against the whole, so a quote could run from one source into the next; sources are now joined around U+001E, which the parser removes from every format and which no match can bridge. A span containing `Supporting passage:` is refused as crossing from Raven's finding into the author's words. All 20 stored Ask Raven references were verified to sit inside a single source first, and the migration refuses to apply if any stored answer would fail the `studio_context_result_valid` constraint.
+
+This corrects an earlier note that placed the joined-quotes hazard in Marketing Plans: that described code `202609190003_studio_book_context.sql` had already replaced.
+
+Automated: `npm run check` passes with **622 tests across 47 files**, including 17 unit tests and 5 database tests that run the real SQL. Each of the 5 database tests was confirmed to fail with the migration removed.
+
 ## Citation matching — September 22, 2026
 
 Manuscript citations were being rejected for their spacing. Extracted PDF passages keep the page's line breaks and padding: **601 of the 602 stored passages contain a newline** and 357 contain a double space, while a model re-quotes the same words with ordinary spacing. Both checks compared exactly, so genuine citations failed. Re-quoting spans of the real passages the way the model does, the old check accepted **636 of 2401 — 26.5%**. `Syndicate Princess` had stalled at **20 of 421 passages with 31 failed batches**, each a paid call that stored nothing: **$0.42 spent for no knowledge**.

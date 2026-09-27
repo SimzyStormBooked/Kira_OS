@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { EVIDENCE_SEAM, MANUSCRIPT_STORED_QUOTE_MAX, quoteContentFits, resolveEvidenceQuote } from "@/lib/manuscripts/citations";
 import { strategyEvidenceSchema } from "@/lib/strategy/contract";
 
 export const STUDIO_MODEL = "google/gemini-3.8-flash";
@@ -27,6 +28,23 @@ export const studioOutputSchema = z.object({
   context_used: z.array(z.string().trim().min(1).max(400)).max(4),
 }).strict();
 export type StudioOutput = z.infer<typeof studioOutputSchema>;
+export const STUDIO_CONTEXT_QUOTE_MAX = 400;
+/**
+ * What is stored: each context reference is the verbatim span of the source it came from, so
+ * its raw length has room for that source's own line breaks while its CONTENT stays within
+ * what the model was allowed. Stored answers and ads reports are read back through this form.
+ */
+export const storedStudioOutputSchema = studioOutputSchema.extend({
+  context_used: z.array(z.string().trim().min(1).max(MANUSCRIPT_STORED_QUOTE_MAX)
+    .refine(value => quoteContentFits(value, STUDIO_CONTEXT_QUOTE_MAX), { message: `A context reference may carry at most ${STUDIO_CONTEXT_QUOTE_MAX} characters of content` })).max(4),
+}).strict();
+/**
+ * The text Raven's context references are checked against: the question, then each evidence
+ * item, divided by a seam no source can contain. Mirrors private.studio_reference_text.
+ */
+export function studioReferenceText(prompt: string, evidence: string[]) {
+  return [prompt, ...evidence].join(`\n${EVIDENCE_SEAM}\n`);
+}
 export const studioFailureCodes = ["provider_unavailable", "funding_required", "timeout", "invalid_output", "policy_blocked", "interrupted"] as const;
 export type StudioFailureCode = (typeof studioFailureCodes)[number];
 export const studioFailureMessages: Record<StudioFailureCode, string> = {
@@ -42,7 +60,7 @@ export type StudioKnowledge = z.infer<typeof studioKnowledgeSchema>;
 export const studioGenerationSchema = z.object({
   id: z.uuid(), author_id: z.uuid(), created_by: z.uuid(), job: z.enum(studioJobs),
   prompt: z.string(), model: z.literal(STUDIO_MODEL),
-  status: z.enum(["pending", "complete", "failed"]), result: studioOutputSchema.nullable(),
+  status: z.enum(["pending", "complete", "failed"]), result: storedStudioOutputSchema.nullable(),
   input_tokens: z.number().int().nonnegative().nullable(), output_tokens: z.number().int().nonnegative().nullable(),
   estimated_cost_usd: z.number().nonnegative().nullable(),
   gateway_generation_id: z.string().nullable(), error_code: z.enum(studioFailureCodes).nullable(),
@@ -73,8 +91,14 @@ export function assertStudioPrompt(prompt: string) {
 export function validateStudioOutput(value: unknown, prompt: string): StudioOutput {
   const output = studioOutputSchema.parse(value);
   if ((output.kind === "boundary" && output.options.length !== 0) || (output.kind === "ideas" && output.options.length === 0)) throw new Error("Invalid response shape");
-  if (output.context_used.some((quote) => !prompt.includes(quote))) throw new Error("Unsupported context reference");
-  return output;
+  // Each reference must come from one source, ignoring only whitespace runs, and is stored as
+  // that source's own text. A reference stitched across two sources is refused.
+  const context_used = output.context_used.map(quote => {
+    const resolved = resolveEvidenceQuote(prompt, quote, STUDIO_CONTEXT_QUOTE_MAX);
+    if (resolved === null) throw new Error("Unsupported context reference");
+    return resolved;
+  });
+  return storedStudioOutputSchema.parse({ ...output, context_used });
 }
 /** List rates verified in the Gateway model catalog on 2026-09-17; estimates exclude cache discounts. */
 export function studioUsage(input: number | undefined, output: number | undefined, gatewayId?: unknown): StudioUsage {
