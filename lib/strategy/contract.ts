@@ -26,20 +26,21 @@ export const strategyInputSchema = z.object({
   }
 });
 export type StrategyInput = z.infer<typeof strategyInputSchema>;
-/** What the model may quote: the prompt promises 1–300 characters, so the model is told exactly that. */
-export const strategyCitationSchema = z.object({ evidence_id: text(160), quote: text(300) }).strict();
 /**
- * What is stored: the verbatim span of the evidence the model quoted. Raw length has room for
- * the source's own line breaks, while the CONTENT stays within the 300 characters the model was
- * given. Saved plans and activated tasks are read back through this form, so it must accept
- * every quote the validator produces.
+ * A plan citation is bounded by the CONTENT it carries (the 300 characters the prompt promises),
+ * not by its raw length: an exact quote of a passage keeps that passage's own line breaks, which
+ * can push a 300-character quote well past 300 raw characters. One schema now covers both what
+ * the model returns and what is stored — the model is still told 300 by the prompt, and the raw
+ * ceiling only bounds storage the way MANUSCRIPT_STORED_QUOTE_MAX does for manuscript citations.
  */
-export const storedStrategyCitationSchema = z.object({
+export const strategyCitationSchema = z.object({
   evidence_id: text(160),
   quote: z.string().trim().min(1).max(MANUSCRIPT_STORED_QUOTE_MAX)
     .refine(value => quoteContentFits(value, STRATEGY_QUOTE_MAX), { message: `A plan quote may carry at most ${STRATEGY_QUOTE_MAX} characters of content` }),
 }).strict();
-type CitationSchema = typeof strategyCitationSchema | typeof storedStrategyCitationSchema;
+/** Read back exactly what validateStrategyOutput stores; kept as an alias since one schema now covers both. */
+export const storedStrategyCitationSchema = strategyCitationSchema;
+type CitationSchema = typeof strategyCitationSchema;
 const taskDraft = <C extends CitationSchema>(citation: C) => z.object({
   title: text(160), instructions: text(1000), channel: text(80), day_offset: z.number().int().min(-90).max(90),
   goal_ids: z.array(z.uuid()).max(8), success_measure: text(400), citations: z.array(citation).min(1).max(4),
@@ -96,12 +97,15 @@ export const strategyResultSchema = z.object({ id: z.uuid(), author_id: z.uuid()
 export const strategyReviewSchema = z.object({ id: z.uuid(), author_id: z.uuid(), plan_id: z.uuid(), revision_id: z.uuid(),
   decision: z.enum(["approved", "changes_requested"]), feedback: z.string(), reviewed_by: z.uuid(), created_at: z.string() });
 export function validateStrategyOutput(value: unknown, snapshot: StrategySnapshot): StrategyOutput {
-  const output = strategyOutputSchema.parse(value), evidence = new Map(snapshot.evidence.map(item => [item.id, item.text]));
+  const output = strategyOutputSchema.parse(value), evidence = new Map(snapshot.evidence.map(item => [item.id, item]));
   const goalIds = new Set(snapshot.input.goals.map(goal => goal.id));
   // Each quote is resolved inside the one evidence item it names, ignoring only whitespace runs,
-  // and replaced by that item's own text. An unknown item resolves against nothing.
+  // and replaced by that item's own text. An unknown item resolves against nothing. Only a
+  // manuscript-derived item carries a "Supporting passage:" boundary to protect; the author's
+  // own request, feedback or metadata may freely contain that phrase as ordinary words.
   const resolve = (items: z.infer<typeof strategyCitationSchema>[]) => items.map(item => {
-    const quote = resolveEvidenceQuote(evidence.get(item.evidence_id) ?? "", item.quote, STRATEGY_QUOTE_MAX);
+    const source = evidence.get(item.evidence_id);
+    const quote = resolveEvidenceQuote(source?.text ?? "", item.quote, STRATEGY_QUOTE_MAX, source?.kind !== "manuscript");
     if (quote === null) throw new Error("Unsupported strategy citation");
     return { ...item, quote };
   });

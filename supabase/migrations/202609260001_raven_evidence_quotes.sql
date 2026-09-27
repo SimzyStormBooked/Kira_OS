@@ -21,6 +21,15 @@
 -- As with manuscript citations, CONTENT is capped (300 for plans, 400 for Ask Raven, after
 -- collapsing whitespace) while raw length may reach 2000, and the whitespace class is written
 -- out because PostgreSQL's \s misses U+00A0, U+1680, U+2007, U+202F and U+FEFF.
+--
+-- Reviewed and corrected before this migration first shipped: the label refusal above applies
+-- only to manuscript-derived findings, never to the member's own words (a question, a planning
+-- request, review feedback), which may say "Supporting passage:" as ordinary text. A quote that
+-- occurs more than once now tries every occurrence rather than only the first, so a wide first
+-- match crossing a boundary cannot shadow a clean later one. The plan size cap is raised from
+-- 64000 to 500000 bytes: it predates quotes stored at up to 2000 raw characters each, and a
+-- maximal plan (132 citations at that length, plus its other fields) would otherwise be rejected
+-- after the paid model call that produced it.
 
 create or replace function private.studio_reference_text(prompt text,context jsonb) returns text language sql immutable set search_path='' as $$
  select prompt||E'\n\u001e\n'||coalesce((select string_agg(e->>'text',E'\n\u001e\n') from jsonb_array_elements(context->'evidence') e),'');
@@ -45,8 +54,13 @@ begin
   for item in select * from jsonb_array_elements(value->'context_used') loop
     if jsonb_typeof(item) is distinct from 'string' or length(trim(item#>>'{}'))<1 or length(item#>>'{}')>2000
       or length(btrim(regexp_replace(item#>>'{}','[\s\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+',' ','g')))>400
-      or strpos(item#>>'{}',E'\u001e')>0 or strpos(item#>>'{}','Supporting passage:')>0
+      or strpos(item#>>'{}',E'\u001e')>0
       or strpos(prompt,item#>>'{}')=0 then return false; end if;
+    -- The label crosses from a manuscript finding into its passage. Reference text joins the
+    -- question first, so a reference containing the label is refused unless it sits wholly
+    -- inside that first segment: the member's own words, which may say anything.
+    if strpos(item#>>'{}','Supporting passage:')>0
+      and strpos(split_part(prompt,E'\n\u001e\n',1),item#>>'{}')=0 then return false; end if;
   end loop;
   for item in select * from jsonb_array_elements(value->'questions') loop
     if jsonb_typeof(item) is distinct from 'string' or length(trim(item#>>'{}')) not between 1 and 300 then return false; end if;
@@ -69,8 +83,8 @@ end;
 $$;
 
 create or replace function private.strategy_valid_output(v jsonb,s jsonb) returns boolean language plpgsql immutable set search_path='' as $$
-declare item jsonb;cit jsonb;phase jsonb;task jsonb;g jsonb;off integer;k text;cap integer;begin
- if v is null or jsonb_typeof(v) is distinct from 'object' or octet_length(v::text)>64000 or not(v ?& array['title','summary','positioning','audiences','recommendations','phases','risks','questions']) or (select count(*) from jsonb_object_keys(v))<>8 then return false;end if;
+declare item jsonb;cit jsonb;phase jsonb;task jsonb;g jsonb;src jsonb;off integer;k text;cap integer;begin
+ if v is null or jsonb_typeof(v) is distinct from 'object' or octet_length(v::text)>500000 or not(v ?& array['title','summary','positioning','audiences','recommendations','phases','risks','questions']) or (select count(*) from jsonb_object_keys(v))<>8 then return false;end if;
  if v->>'title' is null or v->>'summary' is null or v->>'positioning' is null or length(trim(v->>'title')) not between 1 and 160 or length(trim(v->>'summary')) not between 1 and 1600 or length(trim(v->>'positioning')) not between 1 and 1000 then return false;end if;
  if jsonb_typeof(v->'audiences') is distinct from 'array' or jsonb_array_length(v->'audiences') not between 1 and 7 or jsonb_typeof(v->'recommendations') is distinct from 'array' or jsonb_array_length(v->'recommendations') not between 1 and 8 or jsonb_typeof(v->'phases') is distinct from 'array' or jsonb_array_length(v->'phases')<>3 or (select count(distinct value->>'window') from jsonb_array_elements(v->'phases'))<>3 then return false;end if;
  foreach k in array array['risks','questions'] loop
@@ -109,8 +123,12 @@ declare item jsonb;cit jsonb;phase jsonb;task jsonb;g jsonb;off integer;k text;c
    if (select count(*) from jsonb_object_keys(cit))<>2 or jsonb_typeof(cit->'quote') is distinct from 'string' or jsonb_typeof(cit->'evidence_id') is distinct from 'string' then return false;end if;
    if cit->>'quote' is null or length(trim(cit->>'quote'))<1 or length(cit->>'quote')>2000
     or length(btrim(regexp_replace(cit->>'quote','[\s\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+',' ','g')))>300
-    or strpos(cit->>'quote',E'\u001e')>0 or strpos(cit->>'quote','Supporting passage:')>0
-    or not exists(select 1 from jsonb_array_elements(s->'evidence') e where e->>'id'=cit->>'evidence_id' and position(cit->>'quote' in e->>'text')>0) then return false;end if;
+    or strpos(cit->>'quote',E'\u001e')>0 then return false;end if;
+   -- The quote must be a literal substring of the ONE evidence item it names. Only a
+   -- manuscript-derived item carries a "Supporting passage:" boundary to protect; the
+   -- author's own request, feedback or metadata may freely contain that phrase.
+   select e into src from jsonb_array_elements(s->'evidence') e where e->>'id'=cit->>'evidence_id' and position(cit->>'quote' in e->>'text')>0 limit 1;
+   if src is null or (src->>'kind'='manuscript' and strpos(cit->>'quote','Supporting passage:')>0) then return false;end if;
   end loop;
   if item ? 'goal_ids' then
    if jsonb_typeof(item->'goal_ids') is distinct from 'array' or jsonb_array_length(item->'goal_ids')>8 then return false;end if;

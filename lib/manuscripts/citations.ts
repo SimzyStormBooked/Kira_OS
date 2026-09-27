@@ -58,23 +58,34 @@ export type ResolvedCitation = { quote: string; start: number; end: number; occu
  * the citation records text rather than an offset, and a line repeated in a manuscript is
  * legitimate evidence, so a repeat is not a reason to discard a finding.
  */
-export function resolveCitationQuote(source: string, quote: string, contentMax = MANUSCRIPT_QUOTE_MAX): ResolvedCitation | null {
+export function resolveCitationQuote(
+  source: string, quote: string, contentMax = MANUSCRIPT_QUOTE_MAX,
+  accept?: (verbatim: string) => boolean,
+): ResolvedCitation | null {
   const wanted = normalizeQuoteWhitespace(quote);
   if (!wanted || wanted.length > contentMax) return null;
   const { normalized, origin } = indexNormalized(source);
-  const at = normalized.indexOf(wanted);
-  if (at < 0) return null;
   let occurrences = 0;
-  for (let from = at; from >= 0; from = normalized.indexOf(wanted, from + 1)) occurrences += 1;
-  const start = origin[at];
-  const end = origin[at + wanted.length - 1] + 1;
-  const verbatim = source.slice(start, end);
-  if (verbatim.length > MANUSCRIPT_STORED_QUOTE_MAX) return null;
-  // The span must carry exactly the requested words. This re-checks the index mapping
-  // itself, so any way of landing on the wrong characters — including a span that split a
-  // surrogate pair — resolves to nothing rather than to a quote the source does not support.
-  if (normalizeQuoteWhitespace(verbatim) !== wanted) return null;
-  return { quote: verbatim, start, end, occurrences };
+  let chosen: { start: number; end: number; verbatim: string } | null = null;
+  // A quote can occur more than once; the first occurrence that actually qualifies is kept,
+  // rather than only ever trying the first occurrence in the text. A wide match that happens
+  // to cross into a boundary `accept` refuses does not shadow a clean later occurrence.
+  for (let at = normalized.indexOf(wanted); at >= 0; at = normalized.indexOf(wanted, at + 1)) {
+    occurrences += 1;
+    if (chosen) continue;
+    const start = origin[at];
+    const end = origin[at + wanted.length - 1] + 1;
+    const verbatim = source.slice(start, end);
+    if (verbatim.length > MANUSCRIPT_STORED_QUOTE_MAX) continue;
+    // The span must carry exactly the requested words. This re-checks the index mapping
+    // itself, so any way of landing on the wrong characters — including a span that split a
+    // surrogate pair — is skipped rather than accepted as a quote the source does not support.
+    if (normalizeQuoteWhitespace(verbatim) !== wanted) continue;
+    if (accept && !accept(verbatim)) continue;
+    chosen = { start, end, verbatim };
+  }
+  if (!chosen) return null;
+  return { quote: chosen.verbatim, start: chosen.start, end: chosen.end, occurrences };
 }
 
 /** True when the quote is supported by the source, ignoring only whitespace runs. */
@@ -95,14 +106,17 @@ export const SUPPORTING_PASSAGE_LABEL = "Supporting passage:";
 
 /**
  * Resolves a quote to its verbatim span inside one source of a reference text. Refuses a
- * span that crosses into another source or into the label that introduces a passage, so a
- * model's own finding and the author's words can never be stitched into a single "quote".
+ * span that crosses into another source, so a model's own finding and the author's words can
+ * never be stitched into a single "quote". A span containing the passage label is refused by
+ * default, since that crosses from a manuscript finding into the passage behind it; pass
+ * `allowLabel` for sources that are the member's own words (a question, a request, feedback),
+ * where that phrase is just something the member wrote, not a boundary to protect.
  */
-export function resolveEvidenceQuote(source: string, quote: string, contentMax = MANUSCRIPT_QUOTE_MAX): string | null {
+export function resolveEvidenceQuote(source: string, quote: string, contentMax = MANUSCRIPT_QUOTE_MAX, allowLabel = false): string | null {
   if (quote.includes(EVIDENCE_SEAM)) return null;
-  const resolved = resolveCitationQuote(source, quote, contentMax);
-  if (!resolved || resolved.quote.includes(EVIDENCE_SEAM) || resolved.quote.includes(SUPPORTING_PASSAGE_LABEL)) return null;
-  return resolved.quote;
+  const resolved = resolveCitationQuote(source, quote, contentMax,
+    verbatim => !verbatim.includes(EVIDENCE_SEAM) && (allowLabel || !verbatim.includes(SUPPORTING_PASSAGE_LABEL)));
+  return resolved?.quote ?? null;
 }
 
 /** A stored quote may carry this much content, with room for the source's own spacing. */
