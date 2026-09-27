@@ -41,7 +41,9 @@ Owner decisions (D1–D6 in `spec.md`) are unimplemented by design. Each has hon
 5. **D5 Light theme.** None exists; the palette is dark-only by choice.
 6. **D6 Per-tab drafts.** Implemented in `sessionStorage`, Zod-validated, cleared on sign-out and session end. Confirm that reading of AGENTS.md rule 12.
 
-Known judge asks not yet done, all code-fixable: plan-form fields are registered with the draft registry but the Plans page still lacks the skeleton loading treatment; the ads stylesheet keeps some literal colors because mapping them to tokens drops below 3:1; several touched files were already unformatted at HEAD and were left that way (`npm run check` does not run Prettier).
+Known judge asks not yet done, all code-fixable: the ads stylesheet keeps some literal colors because mapping them to tokens drops below 3:1; several touched files were already unformatted at HEAD and were left that way (`npm run check` does not run Prettier).
+
+The four gaps left by the interrupted fix round are now closed (see the commit after `8c0d9be`): control-boundary contrast, `color-scheme`, the 12px text floor and the contradictory demo metric. `--border` deliberately stays at `#33342c`: it paints card edges and separators, which are decorative and exempt from WCAG 1.4.11. Control boundaries use `--input` (`#6f7264`, 3.78:1 on the page and 3.55:1 on a card), which the shadcn primitives, the native selects and the custom checkbox all read.
 
 ## If you pick this up
 
