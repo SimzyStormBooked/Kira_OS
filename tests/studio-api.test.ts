@@ -31,7 +31,7 @@ describe("Ask Raven API boundaries", () => {
     vi.mocked(getWorkspaceRole).mockResolvedValue("owner");
     vi.mocked(getStudioAvailability).mockResolvedValue({ available: true, reason: "ready", message: "Ready." });
     vi.mocked(createStudioRepository).mockReturnValue(repo);
-    repo.list.mockResolvedValue([pending]); repo.find.mockResolvedValue(pending); repo.begin.mockResolvedValue({ created: true, generation: pending });
+    repo.list.mockResolvedValue({ generations: [pending], nextCursor: null }); repo.find.mockResolvedValue(pending); repo.begin.mockResolvedValue({ created: true, generation: pending });
     repo.complete.mockResolvedValue(complete); repo.fail.mockResolvedValue({ ...pending, status: "failed", error_code: "timeout" });
     vi.mocked(runStudioProvider).mockResolvedValue(reply);
   });
@@ -43,6 +43,17 @@ describe("Ask Raven API boundaries", () => {
     expect((await GET(new Request("https://kira.example/api/studio?id=invalid"))).status).toBe(400);
     repo.find.mockResolvedValueOnce(null);
     expect((await GET(new Request(`https://kira.example/api/studio?id=${id}`))).status).toBe(404);
+  });
+  it("allows viewer history reads, passes bounded search, and never generates from GET", async () => {
+    vi.mocked(getWorkspaceRole).mockResolvedValue("viewer");
+    const response = await GET(new Request("https://kira.example/api/studio?q=useful%20ideas&limit=10"));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ role: "viewer", generations: [pending], nextCursor: null });
+    expect(repo.list).toHaveBeenCalledWith({ query: "useful ideas", limit: 10 });
+    expect(runStudioProvider).not.toHaveBeenCalled(); expect(repo.begin).not.toHaveBeenCalled();
+    for (const query of ["limit=51", "limit=0", "limit=NaN", "cursor=garbage", `q=${"x".repeat(201)}`]) {
+      expect((await GET(new Request(`https://kira.example/api/studio?${query}`))).status).toBe(400);
+    }
   });
   it.each([null, "https://evil.example"])("rejects origin %s before authentication or AI work", async (origin) => {
     expect((await POST(request(input, origin))).status).toBe(403);

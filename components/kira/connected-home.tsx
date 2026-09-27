@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -8,6 +9,8 @@ import {
   CheckCheck,
   FileCheck2,
   LockKeyhole,
+  RefreshCw,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,14 +20,54 @@ import { InspirationShelf } from "./inspiration-shelf";
 import { DailyQuote } from "./daily-quote";
 import { useWorkspace } from "@/lib/db/demo-store";
 import { inspirationIdeas } from "@/lib/data/inspiration";
+import { resumeReadingLabel, workspaceResumeSchema, type WorkspaceResume } from "@/lib/workspace-resume";
+import "./daily-workspace.css";
 
 const starterIdeas = inspirationIdeas.slice(0, 2);
+const savedDate = (value: string) => new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+
+function ContinueWork() {
+  const { request } = useLibrary();
+  const [data, setData] = useState<WorkspaceResume | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [refresh, setRefresh] = useState(0);
+  useEffect(() => {
+    let active = true;
+    let controller: AbortController | null = null;
+    async function load() {
+      controller?.abort();
+      const next = new AbortController(); controller = next;
+      setLoading(true);
+      try {
+        const summary = workspaceResumeSchema.parse(await request("/api/workspace/resume", { signal: next.signal }));
+        if (active && !next.signal.aborted) { setData(summary); setError(false); }
+      } catch {
+        if (active && !next.signal.aborted) setError(true);
+      } finally { if (active && !next.signal.aborted) setLoading(false); }
+    }
+    void Promise.resolve().then(() => { if (active) void load(); });
+    const onFocus = () => { if (document.visibilityState === "visible") void load(); };
+    window.addEventListener("focus", onFocus);
+    return () => { active = false; controller?.abort(); window.removeEventListener("focus", onFocus); };
+  }, [request, refresh]);
+  return <section className="connected-resume" aria-labelledby="continue-work-title" aria-busy={loading}>
+    <div className="connected-resume-heading"><div><span className="eyebrow">PICK UP A THREAD</span><h2 id="continue-work-title">Continue your work</h2><p>Latest saved answer and recently updated books, shared by this workspace.</p></div><Button type="button" variant="ghost" size="sm" disabled={loading} onClick={() => setRefresh(value => value + 1)}><RefreshCw size={14} aria-hidden="true" />Refresh</Button></div>
+    {error && <p role="status" className="quiet-note">Saved activity could not be refreshed. {data ? "The last loaded items remain below." : "Use your books or Ask Raven to continue, or try Refresh."}</p>}
+    {!data && loading && <p role="status" className="quiet-note">Opening your saved work…</p>}
+    {data && <div className="connected-resume-items">
+      {data.answer && <Link href={`/studio/${data.answer.id}`} className="connected-resume-item"><MessageSquare size={19} aria-hidden="true" /><span><small>SAVED RAVEN ANSWER</small><strong>{data.answer.title || "Open your saved answer"}</strong><span>Saved {savedDate(data.answer.completed_at ?? data.answer.created_at)}</span><em>Revisit this answer</em></span><ArrowUpRight size={16} aria-hidden="true" /></Link>}
+      {data.books.map(book => <Link key={book.id} href={`/universe/${book.slug}${book.reading?.status === "ready" ? "?knowledge=characters#book-knowledge" : book.reading ? "#reading-status" : ""}`} className="connected-resume-item"><BookOpen size={19} aria-hidden="true" /><span><small>{resumeReadingLabel(book.reading)}</small><strong>{book.title}</strong><span>Book updated {savedDate(book.updated_at)}{book.reading && ` · ${book.reading.completed_chunks} of ${book.reading.chunk_count} passages read`}</span><em>{book.reading?.status === "ready" ? "Explore what Raven learned" : book.reading ? "Open reading status" : "Open book details"}</em></span><ArrowUpRight size={16} aria-hidden="true" /></Link>)}
+      {!data.answer && data.books.length === 0 && <p className="quiet-note">Saved answers and books will appear here as your workspace grows. <Link href="/universe" className="text-link">Start with your books</Link>.</p>}
+    </div>}
+  </section>;
+}
 
 export function ConnectedHome({ dateKey }: { dateKey?: string }) {
   const library = useLibrary();
   const books = library.data?.books ?? [];
   const series = library.data?.series ?? [];
-  const { approvals, feedback, ready, viewerEmail, canEdit } = useWorkspace();
+  const { approvals, feedback, ready, viewerEmail, canEdit, sessionEnded } = useWorkspace();
   const pending = approvals.filter((approval) => approval.status === "pending");
   const reviewed = approvals.length - pending.length;
   const counts = [
@@ -78,6 +121,7 @@ export function ConnectedHome({ dateKey }: { dateKey?: string }) {
         </span>
       </div>
 
+      {ready && !sessionEnded && <ContinueWork key={viewerEmail ?? "workspace"} />}
       <DailyQuote dateKey={dateKey} compact />
       <div className="connected-main-grid">
         <InspirationShelf dateKey={dateKey} />

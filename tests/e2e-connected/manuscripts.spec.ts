@@ -81,6 +81,7 @@ test("learned knowledge has private citations, hides spoilers, searches text, an
   await page.getByLabel(/Show manuscript excerpts/).check();await expect(page.locator(".library-search-result")).toHaveCount(0);
   await page.unroute("**/api/library/search?**");
   expect((await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa"]).analyze()).violations).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.getByText("Add another manuscript version", { exact: true }).click();
   await page.getByLabel("Manuscript file",{exact:true}).setInputFiles({name:"revision.txt",mimeType:"text/plain",buffer:Buffer.from(text+" This is a revised source record.")});await page.getByLabel(/I have permission to upload/).check();await page.getByRole("button",{name:"Save manuscript",exact:true}).click();await confirmSave(page);await expect(page.getByRole("heading",{name:"Ready to read",exact:true})).toBeVisible();await expect(page.locator("#main-content").getByText("The previous completed version remains available below until this version is ready.",{exact:true})).toBeVisible();
   await expect(page.getByRole("heading",{name:"What Raven learned",exact:true})).toBeVisible();await page.reload();await expect(page.locator("#main-content").getByText("The previous completed version remains available below until this version is ready.",{exact:true})).toBeVisible();
 });

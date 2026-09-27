@@ -15,8 +15,18 @@ async function navigate(page: Page, href: string) {
   // and it hides the rest of the page from assistive tech. Wait for it to go.
   await expect.poll(() => page.locator('[data-slot="sheet-content"]').count()).toBe(0);
   const menu = page.getByRole("button", { name: "Open navigation", exact: true });
-  if (await menu.isVisible() && await menu.getAttribute("aria-expanded") !== "true") await menu.click();
-  await page.locator(`a.nav-item[href="${href}"]:visible`).first().click();
+  const destination = page.locator(`a.nav-item[href="${href}"]:visible`).first();
+  if (await menu.isVisible() && !(await destination.isVisible())) {
+    await menu.click();
+    try {
+      await expect(destination).toBeVisible({ timeout: 2_000 });
+    } catch {
+      // The first tap can land before the newly signed-in page hydrates.
+      if (!(await destination.isVisible())) await menu.click();
+      await expect(destination).toBeVisible();
+    }
+  }
+  await destination.click();
   await expect.poll(() => new URL(page.url()).pathname).toBe(href);
 }
 const readyView = { role: "owner", availability: { available: true, reason: "ready", message: "Simulated AI availability for browser testing; no model is called." }, generations: [], generation: null };

@@ -15,6 +15,7 @@ import { manuscriptChunkSchema, manuscriptFormat, validateManuscriptExtraction, 
 import { adsSnapshotSchema } from "../../lib/ads/contract";
 import { auditSchema, discoveryInputSchema, searchSnapshotSchema, type DiscoveryView } from "../../lib/discovery/contract";
 import { fixture } from "./fixture-data";
+import { studioGenerationSchema, type StudioGeneration } from "../../lib/ai/studio-contract";
 
 const signingSecret = "local-test-fixture-signing-secret-not-for-production";
 type AuthenticationMethod = "password" | "otp";
@@ -55,7 +56,7 @@ type FixtureProfile = { id: string; author_id: string; universe_id: string | nul
 type FixtureAlias = { id: string; author_id: string; profile_id: string; alias: string; normalized_alias: string; created_by: string; created_at: string };
 type FixturePortrait = { id: string; author_id: string; profile_id: string; storage_path: string; status: "uploading" | "ready" | "failed"; mime_type: string; size_bytes: number; content_hash: string; width: number | null; height: number | null; caption: string | null; source_credit: string | null; usage_permission: "private_reference_only" | "promotional_approved"; permission_granted_by: string; location_metadata_removed: boolean; sanitized_at: string | null; error_code: string | null; created_at: string; updated_at: string; data_origin: "manual" };
 type FixtureNote = { id: string; author_id: string; profile_id: string; book_id: string | null; kind: "author_confirmed" | "visual_inspiration"; body: string; version: number; created_by: string; created_at: string; updated_at: string };
-type FixtureLink = { id: string; author_id: string; profile_id: string; book_id: string; character_id: string; note: string | null; confirmed_by: string; confirmed_at: string };
+type FixtureLink = { id: string; author_id: string; profile_id: string; book_id: string; character_id: string; note: string | null; confirmed_by: string; confirmed_at: string; source_manuscript_id?:string|null };
 type FixtureCharacter = { id: string; author_id: string; book_id: string; name: string };
 let characterProfiles: FixtureProfile[] = [];
 let characterAliases: FixtureAlias[] = [];
@@ -63,6 +64,8 @@ let characterPortraits: FixturePortrait[] = [];
 let characterNotes: FixtureNote[] = [];
 let characterLinks: FixtureLink[] = [];
 let bookCharacters: FixtureCharacter[] = [];
+let bookCharacterLinks: Array<{id:string;author_id:string;book_id:string;character_id:string;manuscript_id:string;details:{observations:ManuscriptExtraction["characters"]}}> = [];
+let generations: StudioGeneration[] = [];
 const signedPortraitTokens = new Map<string, { path: string; expiresAt: number }>();
 const normalize = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
 let adsReports: Array<{id:string;author_id:string;account_id:string;created_at:string;snapshot:unknown}> = [];
@@ -83,7 +86,7 @@ function resetLibrary() {
   librarySources = seedSources.filter(item => item.data_origin !== "demo").map(item => ({ ...item, author_id: fixture.authorId, metadata: {} }));
   manuscripts = []; manuscriptChunks = []; manuscriptBatches = []; intelligence = []; adsReports = []; adsInspiration = []; adsBookLinks = []; storedFiles.clear();
   characterProfiles = []; characterAliases = []; characterPortraits = []; characterNotes = []; characterLinks = []; bookCharacters = [];
-  signedPortraitTokens.clear();
+  signedPortraitTokens.clear(); bookCharacterLinks = []; generations = [];
   discoveryPages = []; discoveryListings = []; discoveryReports = []; discoveryActions = [];
 }
 resetLibrary();
@@ -105,6 +108,14 @@ function completeManuscript(row: FixtureManuscript, profile: ManuscriptExtractio
   const now = new Date().toISOString();
   const record: FixtureIntelligence = { id: randomUUID(), author_id: fixture.authorId, book_id: row.book_id, manuscript_id: row.id, profile, extracted_at: now, model, review_status: "unreviewed" };
   intelligence = [...intelligence.filter(item => item.manuscript_id !== row.id), record];
+  bookCharacterLinks = bookCharacterLinks.filter(link => link.manuscript_id !== row.id);
+  for (const observation of profile.characters) {
+    let character = bookCharacters.find(item => item.book_id === row.book_id && normalize(item.name) === normalize(observation.name));
+    if (!character) { character = { id: randomUUID(), author_id: fixture.authorId, book_id: row.book_id, name: observation.name }; bookCharacters.push(character); }
+    let link = bookCharacterLinks.find(item => item.manuscript_id === row.id && item.character_id === character.id);
+    if (!link) { link = {id:randomUUID(),author_id:fixture.authorId,book_id:row.book_id,character_id:character.id,manuscript_id:row.id,details:{observations:[]}}; bookCharacterLinks.push(link); }
+    link.details.observations.push(observation);
+  }
   row.status = "ready"; row.completed_chunks = row.chunk_count; row.error_code = null; row.updated_at = now;
   const book = libraryBooks.find(item => item.id === row.book_id)!;
   const active = manuscripts.find(item => item.id === book.active_manuscript_id);
@@ -116,18 +127,38 @@ function respondRows(request: IncomingMessage, response: ServerResponse, url: UR
     const value = (row as Record<string, unknown>)[key];
     if (["select", "order", "limit", "offset"].includes(key)) return true;
     if (filter.startsWith("eq.")) return String(value) === filter.slice(3);
+    if (filter.startsWith("ilike.")) {
+      const pattern = filter.slice(6); let expression = "";
+      for (let index=0; index<pattern.length; index++) {
+        let char=pattern[index];
+        if (char === "\\" && index+1<pattern.length) char=pattern[++index];
+        else if (char === "%" || char === "*") { expression += ".*"; continue; }
+        else if (char === "_") { expression += "."; continue; }
+        expression += char.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      }
+      return new RegExp(`^${expression}$`, "iu").test(String(value ?? ""));
+    }
     if (filter.startsWith("neq.")) return String(value) !== filter.slice(4);
     if (filter.startsWith("in.(")) return filter.slice(4, -1).split(",").includes(String(value));
     return false;
   }));
-  const order = url.searchParams.get("order")?.split(".");
-  if (order) filtered = [...filtered].sort((a, b) => {
-    const left = (a as Record<string, unknown>)[order[0]];
-    const right = (b as Record<string, unknown>)[order[0]];
-    const compared = typeof left === "number" && typeof right === "number" ? left - right : String(left).localeCompare(String(right));
-    return order[1] === "desc" ? -compared : compared;
+  const orders = url.searchParams.get("order")?.split(",").map(order=>order.split("."));
+  if (orders) filtered = [...filtered].sort((a,b) => {
+    for (const [key,direction] of orders) {
+      const left=(a as Record<string, unknown>)[key], right=(b as Record<string, unknown>)[key];
+      const compared = typeof left === "number" && typeof right === "number" ? left-right : String(left ?? "").localeCompare(String(right ?? ""));
+      if (compared) return direction === "desc" ? -compared : compared;
+    }
+    return 0;
   });
+  const count = filtered.length;
+  const offset = Number(url.searchParams.get("offset") ?? 0);
+  filtered = filtered.slice(offset);
   if (url.searchParams.has("limit")) filtered = filtered.slice(0, Number(url.searchParams.get("limit")));
+  if (url.searchParams.get("select")?.includes("title:result->>title")) filtered = filtered.map(row=>({...row,title:(row as StudioGeneration).result?.title ?? null}));
+  const selected = url.searchParams.get("select");
+  if (selected && /^[a-z_,]+$/.test(selected)) filtered=filtered.map(row=>Object.fromEntries(selected.split(",").map(key=>[key,(row as Record<string,unknown>)[key]])));
+  if (request.headers.prefer?.includes("count=exact")) response.setHeader("Content-Range", `${offset}-${Math.max(offset,offset+filtered.length-1)}/${count}`);
   if (request.headers.accept?.includes("application/vnd.pgrst.object+json")) {
     return filtered.length === 1 ? respond(response, 200, filtered[0]) : respond(response, 406, { code: "PGRST116", details: `The result contains ${filtered.length} rows`, message: "JSON object requested, multiple (or no) rows returned" });
   }
@@ -189,6 +220,13 @@ const server = createServer(async (request, response) => {
       passwords.set(fixture.memberEmail, fixture.password); passwords.set(fixture.outsiderEmail, fixture.password);
       resetLibrary();
       return respond(response, 200, { simulated: true, reset: true });
+    }
+    if (url.pathname === "/__test/studio" && request.method === "POST") {
+      const body = await jsonBody(request);
+      if (!Array.isArray(body.generations) || body.generations.length > 200) return respond(response,400,{message:"Invalid synthetic generations"});
+      generations = body.generations.map(row=>studioGenerationSchema.parse(row));
+      if (generations.some(row=>row.author_id!==fixture.authorId)) { generations=[]; return respond(response,400,{message:"Synthetic tenant mismatch"}); }
+      return respond(response,200,{simulated:true,count:generations.length});
     }
     if (url.pathname === "/__test/discovery-audit" && request.method === "POST") {
       const body = await jsonBody(request);
@@ -318,7 +356,7 @@ const server = createServer(async (request, response) => {
     const membership = members.find((member) => member.userId === session.user.id);
     const member = owner || Boolean(membership);
     if (url.pathname === "/rest/v1/authors") {
-      return respond(response, 200, member && url.searchParams.get("id") === `eq.${fixture.authorId}` ? [{ id: fixture.authorId, owner_user_id: fixture.memberId }] : []);
+      return respondRows(request, response, url, member ? [{ id: fixture.authorId, owner_user_id: fixture.memberId, name: "Synthetic fixture author", data_origin: "manual" }] : []);
     }
     if (!member) return respond(response, 403, { code: "42501", message: "Fixture workspace access denied" });
     if (url.pathname === "/storage/v1/object/sign/kira-character-portraits" && request.method === "POST") {
@@ -416,13 +454,41 @@ const server = createServer(async (request, response) => {
         if (target) links = links.filter((link) => link.id !== target.id);
         return respond(response, 200, target ? [{ id: target.id }] : []);
       }
-      if (request.method === "GET") return respond(response, 200, links);
+      if (request.method === "GET") return respondRows(request,response,url,links.map(link=>({...link,author_id:fixture.authorId})));
     }
     if (url.pathname.startsWith("/rest/v1/rpc/") && request.method === "POST") {
       const body = await jsonBody(request);
       if (body.p_author_id !== fixture.authorId) return respond(response, 403, { code: "42501", message: "Fixture tenant mismatch" });
       const method = url.pathname.split("/").pop();
       const now = new Date().toISOString();
+      if (method === "workspace_generation_history") {
+        const query = String(body.p_query ?? "").trim().toLocaleLowerCase();
+        const words = query.split(/\s+/).filter(Boolean);
+        const rows = generations.filter(row => (!body.p_completed_only || row.status === "complete") && words.every(word=>`${row.prompt} ${JSON.stringify(row.result ?? {})}`.toLocaleLowerCase().includes(word)) && (!body.p_before_created_at || row.created_at < String(body.p_before_created_at) || (row.created_at === body.p_before_created_at && row.id < String(body.p_before_id))));
+        rows.sort((a,b)=>b.created_at.localeCompare(a.created_at)||b.id.localeCompare(a.id));
+        return respond(response,200,rows.slice(0,Number(body.p_limit ?? 26)));
+      }
+      if (method === "character_profile_save") {
+        if (!owner && membership?.role !== "editor") return respond(response,403,{code:"42501"});
+        const changes = body.p_changes as Record<string,unknown>;
+        let row = characterProfiles.find(item=>item.id===body.p_id);
+        if (body.p_id && !row) return respond(response,404,{code:"P0002"});
+        if (row && row.version !== body.p_expected_version) return respond(response,409,{code:"40001"});
+        const aliases = changes.aliases as string[]|undefined;
+        if (aliases && new Set(aliases.map(normalize)).size !== aliases.length) return respond(response,409,{code:"23505"});
+        const portrait = changes.primary_portrait_id ? characterPortraits.find(item=>item.id===changes.primary_portrait_id && item.profile_id===row?.id && item.status==='ready') : null;
+        if (changes.primary_portrait_id && !portrait) return respond(response,409,{code:"23503"});
+        if (!row) {
+          row={id:randomUUID(),author_id:fixture.authorId,universe_id:null,display_name:String(changes.display_name),normalized_name:normalize(String(changes.display_name)),summary:null,primary_portrait_id:null,version:1,created_by:session.user.id,created_at:now,updated_at:now,data_origin:"manual"};
+          characterProfiles.push(row);
+        } else row.version++;
+        if (changes.display_name!==undefined) {row.display_name=String(changes.display_name);row.normalized_name=normalize(row.display_name);}
+        if (changes.summary!==undefined) row.summary=changes.summary===null?null:String(changes.summary);
+        if (changes.primary_portrait_id!==undefined) row.primary_portrait_id=portrait?.id ?? null;
+        row.updated_at=now;
+        if (aliases) { characterAliases=characterAliases.filter(item=>item.profile_id!==row!.id); for (const alias of aliases) characterAliases.push({id:randomUUID(),author_id:fixture.authorId,profile_id:row.id,alias,normalized_alias:normalize(alias),created_by:session.user.id,created_at:now}); }
+        return respond(response,200,row);
+      }
       if (method === "discovery_control") {
         if (body.p_key !== fixtureRecordingKey) return respond(response, 403, { code: "42501" });
         const canEdit = owner || membership?.role === "editor";
@@ -751,13 +817,26 @@ const server = createServer(async (request, response) => {
             const row: FixtureNote = { id: randomUUID(), author_id: fixture.authorId, profile_id: String(entry.profile_id), book_id: entry.book_id ? String(entry.book_id) : null, kind: kind as FixtureNote["kind"], body: String(entry.body), version: 1, created_by: session.user.id, created_at: now, updated_at: now };
             characterNotes.push(row); created.push(row);
           } else {
-            const row: FixtureLink = { id: randomUUID(), author_id: fixture.authorId, profile_id: String(entry.profile_id), book_id: String(entry.book_id), character_id: String(entry.character_id), note: entry.note ? String(entry.note) : null, confirmed_by: session.user.id, confirmed_at: now };
+            const row: FixtureLink = { id: randomUUID(), author_id: fixture.authorId, profile_id: String(entry.profile_id), book_id: String(entry.book_id), character_id: String(entry.character_id), note: entry.note ? String(entry.note) : null, source_manuscript_id:entry.source_manuscript_id?String(entry.source_manuscript_id):null, confirmed_by: session.user.id, confirmed_at: now };
             if (characterLinks.some(item => item.character_id === row.character_id)) return respond(response, 409, { code: "23505", message: "Simulated character is already linked" });
             characterLinks.push(row); created.push(row);
           }
         }
         return request.headers.accept?.includes("application/vnd.pgrst.object+json") && created.length === 1
           ? respond(response, 201, created[0]) : respond(response, 201, created);
+      }
+      if (request.method === "DELETE" && table === "character_profile_links") {
+        if (url.searchParams.get("author_id") !== `eq.${fixture.authorId}`) return respond(response,403,{code:"42501"});
+        characterLinks=characterLinks.filter(row=>!(url.searchParams.get("id")===`eq.${row.id}` && url.searchParams.get("profile_id")===`eq.${row.profile_id}`));
+        return respond(response,204);
+      }
+      if (request.method === "PATCH" && table === "character_notes") {
+        if (url.searchParams.get("author_id") !== `eq.${fixture.authorId}`) return respond(response,403,{code:"42501"});
+        const body=await jsonBody(request);
+        const row=characterNotes.find(item=>url.searchParams.get("id")===`eq.${item.id}` && url.searchParams.get("profile_id")===`eq.${item.profile_id}` && url.searchParams.get("version")===`eq.${item.version}`);
+        if (!row) return respond(response,200,[]);
+        row.kind=body.kind as FixtureNote["kind"];row.body=String(body.body);row.version++;row.updated_at=now;
+        return request.headers.accept?.includes("application/vnd.pgrst.object+json") ? respond(response,200,row) : respond(response,200,[row]);
       }
       if (request.method === "PATCH" && table === "character_profiles") {
         const body = await jsonBody(request);
@@ -787,7 +866,13 @@ const server = createServer(async (request, response) => {
     }
     if (url.pathname.startsWith("/rest/v1/")) {
       if (url.searchParams.get("author_id") !== `eq.${fixture.authorId}`) return respond(response, 403, { code: "42501", message: "Expected explicit fixture author filter" });
-      const libraryTables: Record<string, object[]> = { ads_reports: adsReports, ads_jobs: [], ads_subscriptions: [], ads_book_links: adsBookLinks, ads_deliveries: [], ads_inspiration: adsInspiration, books: libraryBooks, series: librarySeries, sources: librarySources, manuscripts, knowledge_chunks: manuscriptChunks, manuscript_batches: manuscriptBatches, book_intelligence: intelligence };
+      const libraryTables: Record<string, object[]> = { ads_reports: adsReports, ads_jobs: [], ads_subscriptions: [], ads_book_links: adsBookLinks, ads_deliveries: [], ads_inspiration: adsInspiration, books: libraryBooks, workspace_generations: generations, manuscript_reading_jobs: [], book_characters: bookCharacterLinks, series: librarySeries, sources: librarySources, manuscripts, knowledge_chunks: manuscriptChunks, manuscript_batches: manuscriptBatches, book_intelligence: intelligence,
+        discovery_pages: discoveryPages.map(row=>({id:row.id,author_id:fixture.authorId,url:row.url,label:row.label,kind:row.kind,book_id:row.bookId,audit:row.audit,updated_at:row.updatedAt})),
+        discovery_listings: discoveryListings.map(row=>({id:row.id,author_id:fixture.authorId,book_id:row.bookId,amazon_url:row.amazonUrl,asin:row.asin,edition:row.edition,description:row.description,keywords:row.keywords,categories:row.categories,status:row.status,version:row.version,updated_at:row.updatedAt})),
+        discovery_reports: discoveryReports.map(row=>({id:row.id,author_id:fixture.authorId,snapshot:row.snapshot,created_at:row.createdAt})),
+        discovery_actions: discoveryActions.map(row=>({id:row.id,author_id:fixture.authorId,page_id:row.pageId,book_id:row.bookId,title:row.title,detail:row.detail,status:row.status,created_at:row.createdAt,updated_at:row.updatedAt})),
+        approval_requests:approvals.map(row=>({...row,author_id:fixture.authorId})),human_feedback:feedback.map(row=>({...row,author_id:fixture.authorId})),
+        universes:[],relationships:[],tropes:[],themes:[],book_tropes:[],book_themes:[],products:[],content_assets:[],campaigns:[],agent_definitions:[],agent_findings:[],agent_recommendations:[],approval_events:[],tactic_memory:[],strategy_plans:[],strategy_revisions:[],strategy_reviews:[],strategy_tasks:[],strategy_results:[] };
       const table = libraryTables[url.pathname.slice("/rest/v1/".length)];
       if (table) return request.method === "GET" ? respondRows(request, response, url, table) : respond(response, 403, { code: "42501", message: "Simulated library writes require scoped RPCs" });
       if (url.pathname === "/rest/v1/approval_requests") return respond(response, 200, approvals);

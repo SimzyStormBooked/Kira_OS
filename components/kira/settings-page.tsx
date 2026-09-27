@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { WorkspaceExportCard } from "./workspace-export-card";
 import { PasswordSettings } from "./password-settings";
 import { ContextHelp } from "./context-help";
 import { SetupStatus } from "./setup-status";
@@ -120,6 +121,7 @@ export function SettingsPage({ canChoosePasswordAfterLink = false }: { canChoose
             <div className="settings-actions"><Button asChild variant="outline"><Link href="/access">{role === "owner" ? "Manage workspace access" : "View my workspace access"}</Link></Button></div>
           </Card>
           {mode === "connected" && <PasswordSettings canChoosePasswordAfterLink={canChoosePasswordAfterLink} />}
+          <WorkspaceExportCard />
           <Card className="settings-card">
             <div className="section-heading">
               <h2>

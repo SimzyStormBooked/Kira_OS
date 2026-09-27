@@ -41,3 +41,11 @@
   .character-grid { grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 16px; }
   .character-section h2 { font-size: 21px; }
 }
+
+.character-editor { margin-top: 1rem; padding: 1.2rem; border: 1px solid var(--border); border-radius: 14px; }
+.character-editor select { width: 100%; min-height: 44px; padding: .65rem .8rem; border: 1px solid var(--border); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; }
+.character-source { padding: 1rem; border-left: 3px solid var(--primary); background: var(--muted); }
+.character-notes p, .character-links p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.character-links .library-actions { margin-top: .75rem; }
+.character-fields { display: grid; gap: 1rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+.character-fields:disabled { opacity: .7; }

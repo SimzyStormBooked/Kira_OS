@@ -1,6 +1,6 @@
-# Character Studio — phase 1 schema
+# Character Studio — author profiles and manuscript links
 
-Phase 1 adds the database foundation for author-owned character identity, private portraits, and author-written notes; the server upload route that sanitizes an image before it is stored; and the Character Studio gallery and profile view that an author actually uses. The home showcase, Quiet Room, and relationship map are not built, and notes and book links are displayed but not yet editable in the interface. The migration is applied and recorded in the hosted database as of 2026-09-21; see VERIFICATION.md, including the recorded Codex integration session that applied it with verified TLS. The design preview in [design/character-studio-preview.html](design/character-studio-preview.html) remains a standalone concept.
+Phase 1 adds the database foundation for author-owned character identity, private portraits, and author-written notes; the server upload route that sanitizes an image before it is stored; and the Character Studio gallery and profile view that an author actually uses. The home showcase, Quiet Room, and relationship map are not built, and the current interface supports profile editing, author notes, and confirmed manuscript links. The migration is applied and recorded in the hosted database as of 2026-09-21; see VERIFICATION.md, including the recorded Codex integration session that applied it with verified TLS. The design preview in [design/character-studio-preview.html](design/character-studio-preview.html) remains a standalone concept.
 
 ## Why new tables were required
 
@@ -73,16 +73,28 @@ The order is deliberate: metadata is removed first, so an image that cannot be c
 | `GET /api/characters` | The gallery: every profile with its aliases, portrait and book counts, and a signed URL for its cover only |
 | `POST /api/characters` | Creates a character with optional aliases and the author's own description |
 | `GET /api/characters/[id]` | One profile with all portrait URLs, notes, and links resolved to book titles and character names |
-| `PATCH /api/characters/[id]` | Renames, edits the description, or chooses the cover portrait; requires the version the client is holding |
+| `PATCH /api/characters/[id]` | Renames, edits the description and aliases atomically, or chooses the cover portrait; requires the version the client is holding |
+| `GET /api/characters/sources` | Current manuscript characters and source sections, optionally scoped to a book |
+| `POST /api/characters/[id]/links` | Requires an explicit identity confirmation and the current source manuscript ID |
+| `DELETE /api/characters/[id]/links` | Removes only the confirmed identity link |
+| `POST /api/characters/[id]/notes` | Saves an author-confirmed reference or visual inspiration note |
+| `PATCH /api/characters/[id]/notes/[noteId]` | Updates an author note with an expected-version check |
 
 A portrait's path is never exposed as a field, and reaching the image always requires a signature that expires. A read produces a signed URL valid for five minutes, and the gallery signs only the cover so a long cast does not mint dozens of URLs per view. The signed URL does contain the object path, because that is what Storage signs — the protection is the expiring signature and the bucket's policies, not a secret path. Next's image optimizer is deliberately bypassed for these: it would proxy and cache private portraits through a shared optimizer. A cover can only be a portrait of that same profile, which the composite foreign key enforces in SQL rather than in the route.
 
 Every edit sends the version the client is holding, so a stale save is refused with a conflict instead of overwriting a change made in another tab. The trigger advances the version on the server, so a client cannot forge one.
 
+## Editing and source continuity
+
+`202609260002_character_profile_editing.sql` adds the caller-scoped `character_profile_save` RPC. Profile details and aliases save in one transaction, so an invalid alias cannot leave a partially saved profile. Viewers remain read-only.
+
+New identity links retain `source_manuscript_id` with a composite foreign key to that manuscript’s character observation. The profile can reopen the original cited passage even if a newer manuscript becomes active. Legacy links retain a null source version instead of inventing one. Manuscript observations are never rewritten as author-confirmed notes.
+
+Character creation, editing, notes, and link-form drafts are kept per account in this tab’s session storage, survive form dismissal and navigation, and join the existing sign-out/session-expiry rescue. Saving or explicit discard clears the draft. If browser storage fails, the interface explains that the entries may not survive a reload.
+
 ## Remaining in the sequence
 
-1. Writing notes and creating or removing book links from the interface; both are read-only there today.
-2. Author-selected home showcase.
-3. Optional Quiet Room.
+1. Author-selected home showcase.
+2. Optional Quiet Room.
 
 A relationship map and richer promotional tooling follow confirmed identity and permission handling.

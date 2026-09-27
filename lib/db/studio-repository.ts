@@ -7,6 +7,21 @@ export class StudioRepositoryError extends Error {
   constructor(public readonly code: string) { super("The saved AI request is unavailable."); this.name = "StudioRepositoryError"; }
 }
 const columns = "id,author_id,created_by,job,prompt,model,status,result,input_tokens,output_tokens,estimated_cost_usd,gateway_generation_id,error_code,created_at,completed_at,knowledge_context";
+const historyCursorSchema = z.object({ createdAt: z.iso.datetime({ offset: true }), id: z.uuid(), query: z.string().max(200) }).strict();
+export const studioHistoryQuerySchema = z.object({
+  query: z.string().trim().max(200).default(""),
+  cursor: z.string().min(1).max(600).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(25),
+});
+export function readStudioHistoryCursor(cursor: string | undefined, query: string) {
+  if (!cursor) return null;
+  try {
+    if (!/^[A-Za-z0-9_-]+$/.test(cursor)) throw new Error();
+    const value = historyCursorSchema.parse(JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")));
+    if (value.query !== query) throw new Error();
+    return value;
+  } catch { throw new StudioRepositoryError("invalid_cursor"); }
+}
 export function createStudioRepository(supabase: SupabaseClient, authorId: string) {
   function recordingKey() {
     const value = process.env.KIRA_AI_RECORDING_KEY;
@@ -24,10 +39,20 @@ export function createStudioRepository(supabase: SupabaseClient, authorId: strin
     return studioGenerationSchema.parse(data);
   }
   return {
-    async list() {
-      const { data, error } = await supabase.from("workspace_generations").select(columns).eq("author_id", authorId).order("created_at", { ascending: false }).limit(50);
+    async list(input: { query?: string; cursor?: string; limit?: number; completedOnly?: boolean } = {}) {
+      const { query, cursor, limit } = studioHistoryQuerySchema.parse(input);
+      const before = readStudioHistoryCursor(cursor, query);
+      const { data, error } = await supabase.rpc("workspace_generation_history", {
+        p_author_id: authorId, p_query: query, p_before_created_at: before?.createdAt ?? null,
+        p_before_id: before?.id ?? null, p_limit: limit + 1, p_completed_only: input.completedOnly ?? false,
+      }).select(columns);
       if (error) throw new StudioRepositoryError(error.code ?? "unavailable");
-      return studioGenerationSchema.array().parse(data ?? []);
+      const rows = studioGenerationSchema.array().parse(data ?? []);
+      const generations = rows.slice(0, limit);
+      const last = generations.at(-1);
+      const nextCursor = rows.length > limit && last
+        ? Buffer.from(JSON.stringify({ createdAt: last.created_at, id: last.id, query })).toString("base64url") : null;
+      return { generations, nextCursor };
     },
     async find(id: string) {
       const { data, error } = await supabase.from("workspace_generations").select(columns).eq("author_id", authorId).eq("id", id).maybeSingle();

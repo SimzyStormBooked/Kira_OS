@@ -11,6 +11,7 @@ import type { AdsSnapshot, AdsView } from "@/lib/ads/contract";
 import "./import-panel.css";
 
 const exportInstructions = "In Meta Ads Manager, select the Ads level and 14 complete days ending before today. Use the Day breakdown only. Remove Time of day, placement, age, gender and other breakdowns, and omit totals rows. Export an English CSV with Day, Ad ID, Ad name, Campaign ID, Campaign name, Amount spent (your account currency), Impressions and Link clicks. Keep IDs as text; do not round them in a spreadsheet. Confirm the ad account's time zone separately. Results or Clicks (all) cannot replace Link clicks.";
+const selectedFileSize = (bytes: number) => bytes < 1000 ? `${bytes} ${bytes === 1 ? "byte" : "bytes"}` : `${(bytes / 1000).toFixed(1)} KB`;
 const columnTemplate = "Day,Ad ID,Ad name,Campaign ID,Campaign name,Amount spent (USD),Impressions,Link clicks\r\n";
 
 function reportContent(snapshot: AdsSnapshot) {
@@ -32,6 +33,7 @@ export function AdsImportPanel({ view, busy, preview, onImport, onOpenReport }: 
   const [review, setReview] = useState<AdsSnapshot | null>(null), [duplicate, setDuplicate] = useState<string | null>(null);
   const [reading, setReading] = useState(false), [error, setError] = useState(""), [copied, setCopied] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
   const readId = useRef(0), saveLock = useRef(false), reviewHeading = useRef<HTMLHeadingElement>(null), errorRef = useRef<HTMLParagraphElement>(null);
   const disabled = busy || preview || !view.canEdit || !view.available || Boolean(view.connection?.selected);
   useEffect(() => { if (review) reviewHeading.current?.focus(); }, [review]);
@@ -92,7 +94,7 @@ export function AdsImportPanel({ view, busy, preview, onImport, onOpenReport }: 
     {!review ? <form onSubmit={reviewImport} className="ads-import-form">
       <fieldset disabled={disabled || reading}>
         <div className={`ads-import-drop${dragging ? " is-dragging" : ""}`} onDragOver={event => { event.preventDefault(); if (!disabled && !reading) setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={event => { event.preventDefault(); setDragging(false); if (!disabled && !reading) { if (event.dataTransfer.files.length !== 1) setError("Choose one CSV export at a time."); else void chooseFile(event.dataTransfer.files[0]); } }}>
-          <UploadCloud size={28} aria-hidden="true"/><label htmlFor="ads-import-file">CSV export</label><p>Drop your Ads Manager file here, or choose it below.</p><Input id="ads-import-file" type="file" accept=".csv,text/csv" onChange={event => { void chooseFile(event.currentTarget.files?.[0] ?? null); event.currentTarget.value = ""; }}/><small>{file ? `${file.name} · ${(file.size / 1000).toFixed(0)} KB` : "CSV only · up to 2 MB · 14 complete days"}</small>
+          <UploadCloud size={28} aria-hidden="true"/><label htmlFor="ads-import-file">CSV export</label><p>{file ? "Your selected export is ready below. Choose another file to replace it." : "Drop your Ads Manager file here, or choose it below."}</p><Input ref={fileInput} className="ads-import-file-input" id="ads-import-file" type="file" accept=".csv,text/csv" aria-describedby="ads-selected-file" onChange={event => { void chooseFile(event.currentTarget.files?.[0] ?? null); event.currentTarget.value = ""; }}/><Button type="button" variant="outline" onClick={() => fileInput.current?.click()}>{file ? "Replace CSV file" : "Choose CSV file"}</Button><small id="ads-selected-file" aria-live="polite">{file ? `Selected: ${file.name} · ${selectedFileSize(file.size)}` : "No file selected · CSV only · up to 2 MB · 14 complete days"}</small>
         </div>
         {reading && <p role="status">Reading your export…</p>}
         {inspection && <div className="ads-import-file-check" aria-live="polite"><strong>{inspection.issues.length ? "A small export adjustment is needed" : "Your file is ready to review"}</strong><p>{inspection.rowCount.toLocaleString()} rows · {inspection.adCount} ads · {inspection.campaignCount} campaigns · {inspection.observedDayCount} dates with rows</p>{inspection.issues.length > 0 && <ul>{inspection.issues.map(issue => <li key={issue}>{issue}</li>)}</ul>}</div>}

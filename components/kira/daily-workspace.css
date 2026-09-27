@@ -1,0 +1,40 @@
+.connected-resume { border: 1px solid #494d3b; border-radius: 10px; padding: 22px; margin: 0 0 24px; background: #1c211a; }
+.connected-resume-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
+.connected-resume-heading h2 { font-family: var(--font-serif); font-size: 29px; font-weight: 400; margin: 6px 0; }
+.connected-resume-heading p { font-size: 12px; color: #bcc2af; margin: 0; }
+.connected-resume-heading > button { flex-shrink: 0; }
+.connected-resume-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; margin-top: 20px; }
+.connected-resume-item { display: flex; gap: 12px; padding: 17px; border: 1px solid #414a38; border-radius: 7px; background: #242b20; min-width: 0; }
+.connected-resume-item:hover { border-color: #b4a072; background: #2b3224; }
+.connected-resume-item > svg { color: var(--gold); flex-shrink: 0; margin-top: 2px; }
+.connected-resume-item > svg:last-child { margin-left: auto; }
+.connected-resume-item > span { display: grid; gap: 7px; min-width: 0; }
+.connected-resume-item small { color: #c9bc9a; font-size: 10px; text-transform: uppercase; letter-spacing: .07em; }
+.connected-resume-item strong { color: #eee4cf; font-size: 15px; font-weight: 500; overflow-wrap: anywhere; }
+.connected-resume-item span > span { color: #b7c0aa; font-size: 11px; line-height: 1.6; }
+.connected-resume-item em { font-style: normal; color: #dac597; font-size: 12px; margin-top: 3px; }
+.learning-goals { display: flex; flex-wrap: wrap; gap: 9px; margin: 21px 0 0; }
+.learning-goals button { white-space: normal; height: auto; min-height: 40px; font-size: 12px; }
+.learning-guide-previews { margin-top: 20px; border-top: 1px solid #424534; padding-top: 14px; }
+.learning-guide-previews summary { color: #dbca9e; cursor: pointer; padding: 8px 0; font-size: 13px; }
+.learning-guide-previews > p { font-size: 12px; color: #bec4b1; line-height: 1.7; }
+.learning-guide-previews nav { display: grid; gap: 8px; }
+.learning-guide-previews a { position: relative; display: grid; gap: 5px; padding: 12px 32px 12px 12px; border: 1px solid #404633; border-radius: 6px; }
+.learning-guide-previews a > strong { font-size: 12px; color: #e2d5b7; }
+.learning-guide-previews a strong span { font-size: 10px; font-weight: 400; color: #bcc1ad; margin-left: 7px; }
+.learning-guide-previews a > span { font-size: 11px; color: #bec4b1; line-height: 1.7; }
+.learning-guide-previews a > svg { position: absolute; right: 12px; top: 12px; color: var(--gold); }
+.library-progress-lead, #book-knowledge { scroll-margin-top: 90px; }
+.library-progress-lead .library-actions { align-items: flex-start; }
+.library-progress-lead .library-actions a { white-space: normal; height: auto; min-height: 40px; text-align: center; }
+.library-upload-disclosure { border: 1px solid #444b38; border-radius: 9px; background: #1a2119; overflow: hidden; }
+.library-upload-disclosure > summary { padding: 20px 24px; color: #e0c99e; cursor: pointer; font-size: 14px; }
+.library-upload-disclosure > .library-panel { border: 0; border-top: 1px solid #444b38; border-radius: 0; margin: 0; }
+.connected-resume :focus-visible, .learning-guide-previews :focus-visible, .library-upload-disclosure > summary:focus-visible { outline: 2px solid #d7bf8b; outline-offset: 4px; }
+@media (max-width: 600px) {
+  .connected-resume { padding: 19px 15px; }
+  .connected-resume-heading { gap: 8px; }
+  .connected-resume-heading h2 { font-size: 27px; }
+  .connected-resume-items { grid-template-columns: 1fr; }
+  .library-upload-disclosure > summary { padding: 17px; }
+}

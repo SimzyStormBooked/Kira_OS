@@ -1,10 +1,12 @@
 "use client";
 
-import { useId, useRef, useSyncExternalStore } from "react";
+import { useId, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { ArrowUpRight, BookOpen, Check, Compass, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspace } from "@/lib/db/demo-store";
+import { useLibrary } from "./library-provider";
+import "./daily-workspace.css";
 
 const preferenceKey = "kira-os:guide-dismissed:v1";
 const preferenceEvent = "kira-os:guide-preference";
@@ -74,6 +76,8 @@ export function reopenGettingStarted() {
 
 export function GettingStarted() {
   const { mode, approvals, ready, canEdit } = useWorkspace();
+  const library = useLibrary();
+  const [goal, setGoal] = useState<"book" | "marketing" | "ads">("book");
   const headingId = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const reopenRef = useRef<HTMLButtonElement>(null);
@@ -93,7 +97,7 @@ export function GettingStarted() {
 
   const ideas = approvals.filter((item) => item.data_origin === "manual" && item.recommendation_id === null).length;
   const decisions = approvals.filter((item) => item.data_origin !== "demo" && item.status !== "pending").length;
-  const steps = [
+  const sharedSteps = [
     {
       title: "Explore your books",
       description: "Open a title and find its details and sources.",
@@ -120,6 +124,17 @@ export function GettingStarted() {
     },
   ];
 
+  const knownBook = library.data?.books.find(book => book.active_manuscript_id);
+  const bookHref = knownBook ? `/universe/${knownBook.slug}?knowledge=${goal === "marketing" ? "readers" : "characters"}#book-knowledge` : "/universe";
+  const firstStep = goal === "ads" ? {
+    title: "Understand your ads", description: "Review a saved report or bring an Ads Manager export. Choose a next experiment after checking the numbers.", href: "/ads", link: "Open Ads & Next Steps", complete: false, status: "Your ads and budgets stay under your control",
+  } : goal === "marketing" ? {
+    title: "Find a grounded marketing angle", description: knownBook ? `Explore the reader signals from ${knownBook.title}, then choose an angle to review with Raven.` : "Open a book and add source knowledge before exploring reader signals and marketing angles.", href: bookHref, link: knownBook ? "Explore this book’s marketing" : "Choose a book", complete: false, status: "Manuscript signals are ideas to test, not proof of demand",
+  } : {
+    ...sharedSteps[0], description: knownBook ? `Explore what Raven learned about ${knownBook.title}, with the passages behind each observation.` : sharedSteps[0].description, href: bookHref, link: knownBook ? "Explore book knowledge" : sharedSteps[0].link,
+  };
+  const steps = [firstStep, ...(goal === "marketing" ? [{ title: "Give the idea a plan", description: "Choose your books, set a business goal and review proposed next steps.", href: "/plans", link: "Open Marketing Plans", complete: false, status: canEdit ? "Review and save when you are ready" : "Read plans shared with this workspace" }, sharedSteps[1]] : goal === "ads" ? [{ title: "Return to a saved report", description: "Saved reports keep the export dates and source visible so you can compare the same time windows.", href: "/ads", link: "Review your reports", complete: false, status: canEdit ? "Import or refresh only when you choose" : "An owner or editor can add reports" }, sharedSteps[1]] : sharedSteps.slice(1))];
+
   if (dismissed) {
     return (
       <div className="learning-reopen">
@@ -136,11 +151,14 @@ export function GettingStarted() {
         <div>
           <span className="learning-kicker"><Compass size={15} aria-hidden="true" /> MAKE YOURSELF AT HOME</span>
           <h2 id={headingId} ref={headingRef} tabIndex={-1}>Start with one small thing.</h2>
-          <p>Explore at your own pace. Counts include starter briefs and work saved by everyone in this workspace.</p>
+          <p>Choose what would help today. Brief and decision counts include work saved by everyone in this workspace; they are not a personal completion score.</p>
         </div>
         <Button type="button" variant="ghost" size="sm" onClick={hideSteps}>
           <X size={14} aria-hidden="true" /><span>Hide for now</span>
         </Button>
+      </div>
+      <div className="learning-goals" role="group" aria-label="What would help today?">
+        {([["book", "Understand a book"], ["marketing", "Plan book marketing"], ["ads", "Review Facebook ads"]] as const).map(([value, label]) => <Button key={value} type="button" variant={goal === value ? "default" : "outline"} aria-pressed={goal === value} onClick={() => setGoal(value)}>{label}</Button>)}
       </div>
       <ol className="learning-steps">
         {steps.map((step, index) => (
