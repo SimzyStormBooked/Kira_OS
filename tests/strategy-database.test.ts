@@ -74,7 +74,7 @@ beforeAll(async () => {
     grant usage on schema storage to authenticated,anon;
     grant select,insert,update,delete on storage.objects to authenticated,anon;
     create policy unrelated_permissive_storage_policy on storage.objects for all to authenticated,anon using(true) with check(true);`);
-  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609190002_strategy_plans", "202609190003_studio_book_context"]) {
+  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609190002_strategy_plans", "202609190003_studio_book_context", "202609230001_raven_evidence_quotes"]) {
     await db.exec(readFileSync(`supabase/migrations/${name}.sql`, "utf8"));
   }
   await db.query("insert into private.workspace_generation_config(singleton,recording_key_hash) values(true,encode(sha256(convert_to($1,'UTF8')),'hex'))", [recordingKey]);
@@ -162,4 +162,79 @@ it("keeps changes-requested history and old evidence intact when a plan is revis
 it("reserves quota atomically and rejects another request while a plan is pending",async()=>{
  const first=await save();await reserve(first);await expect(reserve(first)).rejects.toMatchObject({code:"55P03"});
  for(let i=1;i<20;i++)await reserve(await save());await expect(reserve(await save())).rejects.toMatchObject({code:"54000"});
+});
+
+describe("Raven quotes that carry their source's own spacing", () => {
+  // Stored manuscript citations keep their passage's line breaks, and Raven's evidence is built
+  // from them. The database checks these quotes itself, so it must bound content, not padding,
+  // and must never let a quote run from one source or label into the next.
+  const seam = "\u001e";
+  const padded = (words: number) => Array.from({ length: words }, (_, index) => `word${index}`).join("\n   ");
+  const goal = randomUUID();
+  const snapshot = (text: string) => ({ input: { mode: "after_release", segments: ["new_readers"], goals: [{ id: goal }] },
+    evidence: [{ id: "fact-1", kind: "manuscript", label: "Book · Chapter 1", text }] });
+  const plan = (quote: string) => {
+    const citations = [{ evidence_id: "fact-1", quote }];
+    return { title: "Reach new readers", summary: "A hypothesis to test.", positioning: "Start small.",
+      audiences: [{ segment: "new_readers", why: "Chosen by the author", citations }],
+      recommendations: [{ title: "Test a hook", action: "Prepare a test", rationale: "Validate reader fit", channel: "Instagram", effort: "low", estimated_cost_usd: 0, goal_ids: [goal], citations }],
+      phases: [30, 60, 90].map(window => ({ window, label: `${window} days`, focus: "Learn", tasks: [{ title: "Check", instructions: "Record results", channel: "Newsletter", day_offset: window, goal_ids: [goal], success_measure: "Compare", citations }] })),
+      risks: [], questions: [] };
+  };
+  async function planValid(quote: string, text: string) {
+    await db.exec("reset role");
+    return (await db.query<{ ok: boolean }>("select private.strategy_valid_output($1::jsonb,$2::jsonb) as ok", [JSON.stringify(plan(quote)), JSON.stringify(snapshot(text))])).rows[0].ok;
+  }
+  const answer = (context_used: string[]) => ({ kind: "ideas", title: "A direction", summary: "Try something small.",
+    options: [{ title: "One option", idea: "Review approved material.", tradeoff: "It takes time.", first_step: "Choose a book.", verify: [] }], questions: [], context_used });
+  async function ravenValid(quote: string, prompt: string, texts: string[]) {
+    await db.exec("reset role");
+    return (await db.query<{ ok: boolean }>("select private.valid_studio_output($1::jsonb, private.studio_reference_text($2, $3::jsonb)) as ok",
+      [JSON.stringify(answer([quote])), prompt, JSON.stringify({ evidence: texts.map(text => ({ text })) })])).rows[0].ok;
+  }
+
+  it("accepts a plan quote longer than 300 raw characters when its content fits, and stays exact", async () => {
+    const text = `Unreviewed extracted observation: A refrain.\nSupporting passage: ${padded(40)}`;
+    expect(padded(40).length).toBeGreaterThan(300);
+    expect(await planValid(padded(40), text)).toBe(true);
+    // The same words in the model's own spacing are not literally present: the database stays exact.
+    expect(await planValid(padded(40).replace(/\s+/g, " "), text)).toBe(false);
+  });
+
+  it("refuses a plan quote that crosses into the passage label, runs over its content limit, or carries a seam", async () => {
+    const text = `Unreviewed extracted observation: A refrain.\nSupporting passage: ${padded(60)}`;
+    expect(await planValid("A refrain.\nSupporting passage: word0", text)).toBe(false);
+    expect(await planValid(padded(60), text)).toBe(false);
+    expect(await planValid(`word0${seam}word1`, `word0${seam}word1`)).toBe(false);
+  });
+
+  it("joins Ask Raven's sources around a seam, so a reference cannot run from one into the next", async () => {
+    const prompt = "What should I post?";
+    const texts = ["first source ends here", "second source begins"];
+    expect(await ravenValid("first source ends here", prompt, texts)).toBe(true);
+    expect(await ravenValid("second source begins", prompt, texts)).toBe(true);
+    expect(await ravenValid("What should I post?", prompt, texts)).toBe(true);
+    // Under the old newline join these both matched; now the seam sits between the sources.
+    expect(await ravenValid("ends here\nsecond source", prompt, texts)).toBe(false);
+    expect(await ravenValid("post?\nfirst source", prompt, texts)).toBe(false);
+    expect(await ravenValid(`ends here\n${seam}\nsecond`, prompt, texts)).toBe(false);
+  });
+
+  it("bounds an Ask Raven reference by content, and refuses one that crosses into a passage label", async () => {
+    expect(padded(50).length).toBeGreaterThan(400);
+    expect(await ravenValid(padded(50), "Q", [padded(50)])).toBe(true);
+    expect(await ravenValid(padded(90), "Q", [padded(90)])).toBe(false);
+    const fact = "Unreviewed extracted observation: Brick keeps ledgers.\nSupporting passage: Brick kept\nthe ledgers.";
+    expect(await ravenValid("Brick kept\nthe ledgers.", "Q", [fact])).toBe(true);
+    expect(await ravenValid("ledgers.\nSupporting passage: Brick", "Q", [fact])).toBe(false);
+  });
+
+  it("classifies the same characters as whitespace that the application does", async () => {
+    for (const code of [0x00a0, 0x1680, 0x2007, 0x202f, 0xfeff]) {
+      const space = String.fromCodePoint(code);
+      const text = Array.from({ length: 40 }, (_, index) => `word${index}`).join(`${space}${space} `);
+      expect(text.replace(/\s+/g, " ").trim().length).toBeLessThanOrEqual(300);
+      expect(await planValid(text, `Supporting passage: ${text}`), `U+${code.toString(16)}`).toBe(true);
+    }
+  });
 });

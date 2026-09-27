@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { MANUSCRIPT_STORED_QUOTE_MAX, quoteContentFits, resolveEvidenceQuote } from "../manuscripts/citations";
+
+export const STRATEGY_QUOTE_MAX = 300;
 
 export const STRATEGY_MODEL = "google/gemini-3.8-flash";
 export const STRATEGY_DAILY_LIMIT = 20;
@@ -23,22 +26,40 @@ export const strategyInputSchema = z.object({
   }
 });
 export type StrategyInput = z.infer<typeof strategyInputSchema>;
+/** What the model may quote: the prompt promises 1–300 characters, so the model is told exactly that. */
 export const strategyCitationSchema = z.object({ evidence_id: text(160), quote: text(300) }).strict();
-const citations = z.array(strategyCitationSchema).min(1).max(4);
-export const strategyTaskDraftSchema = z.object({
-  title: text(160), instructions: text(1000), channel: text(80), day_offset: z.number().int().min(-90).max(90),
-  goal_ids: z.array(z.uuid()).max(8), success_measure: text(400), citations,
+/**
+ * What is stored: the verbatim span of the evidence the model quoted. Raw length has room for
+ * the source's own line breaks, while the CONTENT stays within the 300 characters the model was
+ * given. Saved plans and activated tasks are read back through this form, so it must accept
+ * every quote the validator produces.
+ */
+export const storedStrategyCitationSchema = z.object({
+  evidence_id: text(160),
+  quote: z.string().trim().min(1).max(MANUSCRIPT_STORED_QUOTE_MAX)
+    .refine(value => quoteContentFits(value, STRATEGY_QUOTE_MAX), { message: `A plan quote may carry at most ${STRATEGY_QUOTE_MAX} characters of content` }),
 }).strict();
-export const strategyOutputSchema = z.object({
+type CitationSchema = typeof strategyCitationSchema | typeof storedStrategyCitationSchema;
+const taskDraft = <C extends CitationSchema>(citation: C) => z.object({
+  title: text(160), instructions: text(1000), channel: text(80), day_offset: z.number().int().min(-90).max(90),
+  goal_ids: z.array(z.uuid()).max(8), success_measure: text(400), citations: z.array(citation).min(1).max(4),
+}).strict();
+const planOutput = <C extends CitationSchema>(citation: C) => z.object({
   title: text(160), summary: text(1600), positioning: text(1000),
-  audiences: z.array(z.object({ segment: z.enum(readerSegments), why: text(600), citations }).strict()).min(1).max(7),
+  audiences: z.array(z.object({ segment: z.enum(readerSegments), why: text(600), citations: z.array(citation).min(1).max(4) }).strict()).min(1).max(7),
   recommendations: z.array(z.object({ title: text(160), action: text(800), rationale: text(800), channel: text(80),
     effort: z.enum(["low", "medium", "high"]), estimated_cost_usd: z.number().finite().min(0).max(1e7),
-    goal_ids: z.array(z.uuid()).max(8), citations }).strict()).min(1).max(8),
+    goal_ids: z.array(z.uuid()).max(8), citations: z.array(citation).min(1).max(4) }).strict()).min(1).max(8),
   phases: z.array(z.object({ window: z.union([z.literal(30), z.literal(60), z.literal(90)]), label: text(120), focus: text(600),
-    tasks: z.array(strategyTaskDraftSchema).min(1).max(6) }).strict()).length(3),
+    tasks: z.array(taskDraft(citation)).min(1).max(6) }).strict()).length(3),
   risks: z.array(text(500)).max(8), questions: z.array(text(300)).max(6),
 }).strict();
+export const strategyTaskDraftSchema = taskDraft(strategyCitationSchema);
+/** Given to the model, and used to parse what it returns. */
+export const strategyOutputSchema = planOutput(strategyCitationSchema);
+export const storedStrategyTaskDraftSchema = taskDraft(storedStrategyCitationSchema);
+/** Used for every plan read back from the database. */
+export const storedStrategyOutputSchema = planOutput(storedStrategyCitationSchema);
 export type StrategyOutput = z.infer<typeof strategyOutputSchema>;
 export const strategyEvidenceSchema = z.object({ id: text(160), kind: z.enum(["request", "book_metadata", "manuscript", "member_input", "review"]),
   label: z.string(), text: z.string(), book_id: z.uuid().nullable(), source_id: z.uuid().nullable(), manuscript_id: z.uuid().nullable(), chunk_id: z.uuid().nullable(),
@@ -59,13 +80,13 @@ export const strategyUsageSchema = z.object({ inputTokens: z.number().int().nonn
 export type StrategyUsage = z.infer<typeof strategyUsageSchema>;
 export const strategyRevisionSchema = z.object({
   id: z.uuid(), author_id: z.uuid(), plan_id: z.uuid(), created_by: z.uuid(), revision: z.number().int().positive(), plan_version: z.number().int(),
-  status: z.enum(["pending", "complete", "failed"]), input_snapshot: strategySnapshotSchema, output: strategyOutputSchema.nullable(),
+  status: z.enum(["pending", "complete", "failed"]), input_snapshot: strategySnapshotSchema, output: storedStrategyOutputSchema.nullable(),
   model: z.string(), usage: strategyUsageSchema.nullable(), error_code: z.string().nullable(), created_at: z.string(), completed_at: z.string().nullable(),
 });
 export type StrategyRevision = z.infer<typeof strategyRevisionSchema>;
 export const strategyTaskSchema = z.object({ id: z.uuid(), author_id: z.uuid(), plan_id: z.uuid(), revision_id: z.uuid(), campaign_id: z.uuid(),
   phase: z.union([z.literal(30), z.literal(60), z.literal(90)]), ordinal: z.number().int(), due_date: date,
-  definition: strategyTaskDraftSchema, status: z.enum(["todo", "done", "skipped"]), version: z.number().int(),
+  definition: storedStrategyTaskDraftSchema, status: z.enum(["todo", "done", "skipped"]), version: z.number().int(),
   completed_by: z.uuid().nullable(), completed_at: z.string().nullable(), created_at: z.string(), updated_at: z.string(),
 });
 export type StrategyTask = z.infer<typeof strategyTaskSchema>;
@@ -77,17 +98,21 @@ export const strategyReviewSchema = z.object({ id: z.uuid(), author_id: z.uuid()
 export function validateStrategyOutput(value: unknown, snapshot: StrategySnapshot): StrategyOutput {
   const output = strategyOutputSchema.parse(value), evidence = new Map(snapshot.evidence.map(item => [item.id, item.text]));
   const goalIds = new Set(snapshot.input.goals.map(goal => goal.id));
-  const verify = (items: z.infer<typeof strategyCitationSchema>[]) => {
-    if (items.some(item => !evidence.get(item.evidence_id)?.includes(item.quote))) throw new Error("Unsupported strategy citation");
-  };
-  for (const audience of output.audiences) { if (!snapshot.input.segments.includes(audience.segment)) throw new Error("Unknown audience"); verify(audience.citations); }
+  // Each quote is resolved inside the one evidence item it names, ignoring only whitespace runs,
+  // and replaced by that item's own text. An unknown item resolves against nothing.
+  const resolve = (items: z.infer<typeof strategyCitationSchema>[]) => items.map(item => {
+    const quote = resolveEvidenceQuote(evidence.get(item.evidence_id) ?? "", item.quote, STRATEGY_QUOTE_MAX);
+    if (quote === null) throw new Error("Unsupported strategy citation");
+    return { ...item, quote };
+  });
+  for (const audience of output.audiences) { if (!snapshot.input.segments.includes(audience.segment)) throw new Error("Unknown audience"); audience.citations = resolve(audience.citations); }
   for (const item of [...output.recommendations, ...output.phases.flatMap(phase => phase.tasks)]) {
-    verify(item.citations); if (item.goal_ids.some(id => !goalIds.has(id))) throw new Error("Unknown goal");
+    item.citations = resolve(item.citations); if (item.goal_ids.some(id => !goalIds.has(id))) throw new Error("Unknown goal");
   }
   if (new Set(output.phases.map(phase => phase.window)).size !== 3) throw new Error("All three phases are required");
   for (const phase of output.phases) for (const task of phase.tasks) {
     const offset = snapshot.input.mode === "before_release" ? -task.day_offset : task.day_offset;
     if (offset < phase.window - 29 || offset > phase.window) throw new Error("Task date is outside its phase");
   }
-  return output;
+  return storedStrategyOutputSchema.parse(output);
 }
