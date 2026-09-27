@@ -19,7 +19,7 @@ async function migrate(database: PGlite) {
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     grant usage on schema auth to authenticated;
     grant execute on function auth.uid() to authenticated;`);
-  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "202609170003_connected_workspace"])
+  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "202609170003_connected_workspace", "202609270002_idempotent_manual_review"])
     await database.exec(readFileSync(`supabase/migrations/${name}.sql`, "utf8"));
 }
 async function asUser(id: string) {
@@ -96,6 +96,22 @@ describe("authenticated atomic workspace operations", () => {
     for (const [title, draft] of [["", "brief"], ["x".repeat(201), "brief"], ["Title", " "], ["Title", "x".repeat(10001)]])
       await expect(db.query("select * from public.create_manual_review($1,$2,$3)", [author.id, title, draft])).rejects.toThrow(/must contain/);
     expect((await db.query<{ n: number }>("select count(*)::int n from public.sources")).rows[0].n).toBe(before);
+  });
+  it("returns the same brief when a save is retried with the client id it already used", async () => {
+    await asUser(editor);
+    const id = "1f1d6a3c-6f52-4a2a-9f7f-6b0c4a2d81aa";
+    const sourcesBefore = (await db.query<{ n: number }>("select count(*)::int n from public.sources")).rows[0].n;
+    const first = await db.query<{ id: string }>("select * from public.create_manual_review($1,$2,$3,$4)", [author.id, "Autumn promotion", "Check approved images before booking anything.", id]);
+    expect(first.rows[0].id).toBe(id);
+    // The response to the first call is lost, so the form invites a retry.
+    const retry = await db.query<{ id: string; draft: string }>("select * from public.create_manual_review($1,$2,$3,$4)", [author.id, "Autumn promotion", "Check approved images before booking anything.", id]);
+    expect(retry.rows[0].id).toBe(id);
+    expect((await db.query<{ n: number }>("select count(*)::int n from public.approval_requests where id=$1", [id])).rows[0].n).toBe(1);
+    // The retry must not leave an orphaned evidence source behind either.
+    expect((await db.query<{ n: number }>("select count(*)::int n from public.sources")).rows[0].n).toBe(sourcesBefore + 1);
+    // Omitting the id still mints a fresh brief, so saving the same words twice on purpose works.
+    const deliberate = await db.query<{ id: string }>("select * from public.create_manual_review($1,$2,$3)", [author.id, "Autumn promotion", "Check approved images before booking anything."]);
+    expect(deliberate.rows[0].id).not.toBe(id);
   });
   it("queues stored evidence exactly once when requests compete", async () => {
     await asUser(owner);

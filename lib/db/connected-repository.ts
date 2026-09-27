@@ -87,10 +87,12 @@ export function createConnectedRepository(client: SupabaseClient, authorId: stri
 
   return {
     loadWorkspace,
-    createManualReview(title: string, draft: string) {
+    createManualReview(title: string, draft: string, id?: string) {
       return mutate("create_manual_review", {
         p_title: z.string().trim().min(1).max(200).parse(title),
         p_draft: z.string().trim().min(1).max(10000).parse(draft),
+        // Retrying a save whose response was lost returns the saved brief.
+        ...(id ? { p_id: z.uuid().parse(id) } : {}),
       });
     },
     decideApproval(id: string, action: ApprovalAction, expectedVersion: number) {
