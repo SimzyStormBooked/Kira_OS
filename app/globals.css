@@ -23,13 +23,14 @@
   --accent-foreground: #f2eee3;
   --destructive: #b35460;
   --border: #33342c;
-  --input: #37382f;
+  --input: #6f7264;
   --ring: #c7af83;
   --radius: 0.5rem;
   --gold: #c7af83;
   --wine: #753a47;
   --subtle: #85887b;
-  --text-xs: 11px;
+  color-scheme: dark;
+  --text-xs: 12px;
   --text-sm: 12px;
   --text-base: 14px;
   --text-lg: 16px;
@@ -3403,7 +3404,7 @@ kbd {
 .connections-card .section-heading { gap: 16px; flex-wrap: wrap; }
 .connection-form, .access-form, .learn-form, .studio-form { display: grid; gap: 16px; }
 .connection-form { margin-top: 28px; padding-top: 26px; border-top: 1px solid var(--border); }
-.connection-form select, .access-role-select, .studio-form select, .plans-page select { width: 100%; min-height: 44px; padding: 10px 12px; background: var(--background); color: var(--foreground); border: 1px solid var(--border); border-radius: 6px; font: inherit; }
+.connection-form select, .access-role-select, .studio-form select, .plans-page select { width: 100%; min-height: 44px; padding: 10px 12px; background: var(--background); color: var(--foreground); border: 1px solid var(--input); border-radius: 6px; font: inherit; }
 select:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .connection-link-list { list-style: none; padding: 0; margin: 20px 0 0; }
 .connection-link-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--border); }
@@ -3599,8 +3600,8 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .studio-book-selection{border:1px solid var(--border);border-radius:10px;padding:16px;display:grid;gap:10px}.studio-book-selection label{display:flex;gap:10px;align-items:center}.studio-book-selection input{accent-color:#d8ac6b}
 
 /* Shared controls: one checkbox, one failure state, used across the workspace. */
-.library-check input[type="checkbox"], .plan-options input[type="checkbox"], .studio-book-selection input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; flex-shrink: 0; margin: 1px 0 0; border: 1.5px solid var(--input); border-radius: 5px; background: #00000030; display: grid; place-content: center; cursor: pointer; }
-.library-check input[type="checkbox"]::before, .plan-options input[type="checkbox"]::before, .studio-book-selection input[type="checkbox"]::before { content: ""; width: 11px; height: 11px; transform: scale(0); transition: transform 90ms ease-in-out; box-shadow: inset 1em 1em #1b1d17; clip-path: polygon(14% 44%, 0 65%, 40% 100%, 100% 16%, 82% 0, 37% 70%); }
+.library-check input[type="checkbox"], .plan-options input[type="checkbox"], .studio-book-selection input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 24px; height: 24px; flex-shrink: 0; margin: 1px 0 0; border: 1.5px solid var(--input); border-radius: 5px; background: #00000030; display: grid; place-content: center; cursor: pointer; }
+.library-check input[type="checkbox"]::before, .plan-options input[type="checkbox"]::before, .studio-book-selection input[type="checkbox"]::before { content: ""; width: 13px; height: 13px; transform: scale(0); transition: transform 90ms ease-in-out; box-shadow: inset 1em 1em #1b1d17; clip-path: polygon(14% 44%, 0 65%, 40% 100%, 100% 16%, 82% 0, 37% 70%); }
 .library-check input[type="checkbox"]:checked, .plan-options input[type="checkbox"]:checked, .studio-book-selection input[type="checkbox"]:checked { background: var(--gold); border-color: var(--gold); }
 .library-check input[type="checkbox"]:checked::before, .plan-options input[type="checkbox"]:checked::before, .studio-book-selection input[type="checkbox"]:checked::before { transform: scale(1); }
 .library-check input[type="checkbox"]:focus-visible, .plan-options input[type="checkbox"]:focus-visible, .studio-book-selection input[type="checkbox"]:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }

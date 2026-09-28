@@ -93,7 +93,9 @@ describe("Private workspace API boundary", () => {
     [{ action: "queue", id }, "queueRecommendation", [id]],
     [{ action: "dismiss", id }, "dismissRecommendation", [id]],
     [{ action: "restore" }, "restoreRecommendations", []],
-    [{ action: "create", title: "  Launch brief  ", draft: "  Our release plan  " }, "createManualReview", ["Launch brief", "Our release plan"]],
+    [{ action: "create", title: "  Launch brief  ", draft: "  Our release plan  " }, "createManualReview", ["Launch brief", "Our release plan", undefined]],
+    // A client-supplied id is forwarded so a retry returns the saved brief instead of a duplicate.
+    [{ action: "create", id: "8a4d0f2e-1c3b-4a56-8d90-2f6b1c7e4a11", title: "Launch brief", draft: "Our release plan" }, "createManualReview", ["Launch brief", "Our release plan", "8a4d0f2e-1c3b-4a56-8d90-2f6b1c7e4a11"]],
   ] as const)("dispatches a validated command %j inside the authorized tenant", async (command, method, args) => {
     const response = await PATCH(patch(command));
     expect(response.status).toBe(200);

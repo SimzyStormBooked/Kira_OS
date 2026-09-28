@@ -396,6 +396,16 @@ function createStore(
       update({ busy: false });
     }
   }
+  // A save whose response is lost looks exactly like a failure, and the form
+  // invites a retry. Minting the id here and reusing it while the words are
+  // unchanged makes that retry return the saved brief instead of a duplicate.
+  let briefIdentity: { signature: string; id: string } | null = null;
+  const briefIdFor = (title: string, draft: string) => {
+    const signature = JSON.stringify([title.trim(), draft.trim()]);
+    if (briefIdentity?.signature !== signature) briefIdentity = { signature, id: crypto.randomUUID() };
+    return briefIdentity.id;
+  };
+
   const actions = {
     showError,
     endSession,
@@ -575,9 +585,10 @@ function createStore(
         notice: "Local demo workspace reset.",
       });
     },
-    createManualReview: (title: string, draft: string) =>
-      perform(
-        { action: "create", title, draft },
+    createManualReview: (title: string, draft: string) => {
+      const id = briefIdFor(title, draft);
+      return perform(
+        { action: "create", id, title, draft },
         () => {
           if (
             !title.trim() ||
@@ -587,8 +598,9 @@ function createStore(
           )
             throw new Error("Add a title and a brief within the field limits.");
           const now = new Date().toISOString();
+          if (snapshot.approvals.some((existing) => existing.id === id)) return snapshot;
           const approval: ApprovalRequest = {
-            id: crypto.randomUUID(),
+            id,
             recommendation_id: null,
             type: "campaign",
             title: title.trim(),
@@ -618,7 +630,13 @@ function createStore(
         mode === "demo"
           ? "Your brief is saved in this browser at Cassandra’s Desk."
           : "Your brief is saved at Cassandra’s Desk.",
-      ),
+      ).then((saved) => {
+        // Once it is safely saved, the next brief starts its own identity, so
+        // deliberately writing the same words twice still creates two briefs.
+        if (saved) briefIdentity = null;
+        return saved;
+      });
+    },
     exportWorkspace: () =>
       downloadFile(
         JSON.stringify(workspaceSchema.parse(snapshot), null, 2),

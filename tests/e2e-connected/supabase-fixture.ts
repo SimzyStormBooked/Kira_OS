@@ -686,8 +686,13 @@ const server = createServer(async (request, response) => {
       if (method === "create_manual_review") {
         const title = String(body.p_title);
         const draft = String(body.p_draft);
+        // Mirrors the real RPC: a retry carrying the same client id returns the
+        // brief that already exists instead of writing a second one.
+        const requestedId = typeof body.p_id === "string" ? body.p_id : null;
+        const existing = requestedId ? approvals.find((item) => item.id === requestedId) : undefined;
+        if (existing) return respond(response, 200, existing);
         const approval: ApprovalRequest = {
-          id: randomUUID(), recommendation_id: null, type: "campaign", title, draft,
+          id: requestedId ?? randomUUID(), recommendation_id: null, type: "campaign", title, draft,
           description: "A member-supplied business brief for Cassandra to review. No external action is authorized.",
           status: "pending", created_at: now, updated_at: now, data_origin: "manual", version: 0,
           evidence: [{ id: randomUUID(), source_id: randomUUID(), source: "Simulated member-supplied business brief",

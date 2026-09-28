@@ -42,6 +42,7 @@ const command = z.discriminatedUnion("action", [
   z
     .object({
       action: z.literal("create"),
+      id: z.uuid().optional(),
       title: z.string().trim().min(1).max(200),
       draft: z.string().trim().min(1).max(10000),
     })
@@ -139,7 +140,7 @@ export async function PATCH(request: Request) {
           : input.action === "dismiss"
             ? repo.dismissRecommendation(input.id)
             : input.action === "create"
-              ? repo.createManualReview(input.title, input.draft)
+              ? repo.createManualReview(input.title, input.draft, input.id)
               : repo.restoreRecommendations());
     return NextResponse.json(workspace, { headers: { ...headers, "X-Kira-Workspace-Role": role } });
   } catch (error) {
