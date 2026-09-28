@@ -1,5 +1,9 @@
 # Scoping D2 as withdrawal, not deletion
 
+**Superseded by shipped code.** This was written as a scope document before this branch was merged with `main`'s separate `feat/author-control-knowledge-curation` work, which independently built and deployed a real "withdraw this manuscript version" control the same day — see `supabase/migrations/202609270003_manuscript_withdrawal.sql`, `app/api/manuscripts/[id]/withdraw/route.ts`, and the custody-list UI in `components/kira/connected-book-detail.tsx`. That implementation lands on the same conclusion (withdraw, don't delete; keep the file and the separate full-removal-request path) but goes further than this scope in places worth noting: it drives the change off `manuscripts.status` rather than a separate timestamp column, restrictive RLS policies gate every knowledge table (chunks, intelligence, characters, batches, sources, assets) rather than the two call sites this doc named, in-flight reading jobs are paused explicitly, and a withdrawn book falls back to its next-most-recent ready version automatically instead of going blank. It also makes a different call on the one open question this doc raised: it downgrades the asset to `rights_status='restricted'`, which stops new download links too, rather than leaving download working. Kept below for the reasoning trail, not as an open proposal.
+
+---
+
 Michael's question was fair: why would Cassy want to *delete* part of her own manuscript from her own workspace? She wouldn't, ordinarily. Re-reading the round-2 judge notes that produced D2, the actual complaint was never "I need the bytes gone" — it was "I can't stop people from reading a passage I regret uploading, and I can't undo a mistake." That's a visibility and control problem, not a shredding problem. This document scopes the control problem: **withdrawal**, not deletion. It is a design for review, not a diff — nothing here is implemented.
 
 ## Why withdrawal fits this schema and deletion doesn't

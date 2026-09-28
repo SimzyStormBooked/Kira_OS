@@ -19,7 +19,7 @@ async function migrate(database: PGlite) {
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     grant usage on schema auth to authenticated;
     grant execute on function auth.uid() to authenticated;`);
-  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "202609170003_connected_workspace", "202609270002_idempotent_manual_review"])
+  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "202609170003_connected_workspace", "202609280001_idempotent_manual_review"])
     await database.exec(readFileSync(`supabase/migrations/${name}.sql`, "utf8"));
 }
 async function asUser(id: string) {
