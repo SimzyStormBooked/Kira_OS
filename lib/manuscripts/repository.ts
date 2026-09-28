@@ -1,15 +1,16 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { libraryBookSchema, librarySeriesSchema, type LibraryInput } from "./library-contract";
+import { bookFactReviewSchema, libraryBookSchema, librarySeriesSchema, type LibraryInput } from "./library-contract";
 import { ManuscriptError } from "./http";
 
 const bookColumns = "id,slug,title,series_id,series_order,source_id,overview,metadata,verified_at,verification_status,data_origin,active_manuscript_id,updated_at";
 export const storedManuscriptSchema = z.object({
   id: z.uuid(), author_id: z.uuid(), book_id: z.uuid(), source_id: z.uuid(), asset_id: z.uuid(),
   filename: z.string(), mime_type: z.string(), size_bytes: z.number(), content_hash: z.string(),
-  storage_path: z.string(), version: z.number(), status: z.enum(["uploading", "queued", "processing", "ready", "failed"]),
+  storage_path: z.string(), version: z.number(), status: z.enum(["uploading", "queued", "processing", "ready", "failed", "withdrawn"]),
   chunk_count: z.number(), completed_chunks: z.number().default(0), error_code: z.string().nullable(), created_at: z.string(),
+  withdrawn_at: z.string().nullable().optional(),
 });
 export type StoredManuscript = z.infer<typeof storedManuscriptSchema>;
 export const storedChunkSchema = z.object({
@@ -37,7 +38,7 @@ function recordingKey() {
 function singleComposite(value: unknown) { return Array.isArray(value) && value.length === 1 ? value[0] : value; }
 export function manuscriptSummary(row: StoredManuscript) {
   return { id: row.id, version: row.version, filename: row.filename, size_bytes: row.size_bytes, status: row.status,
-    chunk_count: row.chunk_count, completed_chunks: row.completed_chunks, created_at: row.created_at, error_code: row.error_code };
+    chunk_count: row.chunk_count, completed_chunks: row.completed_chunks, created_at: row.created_at, error_code: row.error_code, withdrawn_at: row.withdrawn_at ?? null };
 }
 /** Every query uses a verified caller client and explicit author scope, in addition to RLS. */
 export function createManuscriptRepository(supabase: SupabaseClient, authorId: string) {
@@ -82,13 +83,15 @@ export function createManuscriptRepository(supabase: SupabaseClient, authorId: s
     },
     async detail(id: string, bySlug = false) {
       const book = await findBook(id, bySlug);
-      const [series, versions, knowledge] = await Promise.all([
+      const [series, versions, knowledge, reviews] = await Promise.all([
         listSeries(),
         supabase.from("manuscripts").select("*").eq("author_id", authorId).eq("book_id", book.id).order("version", { ascending: false }),
         book.active_manuscript_id ? supabase.from("book_intelligence").select("manuscript_id,profile,extracted_at,model").eq("author_id", authorId).eq("manuscript_id", book.active_manuscript_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+        book.active_manuscript_id ? supabase.from("book_fact_reviews").select("manuscript_id,fact_index,source_hash,judgement,author_note,reviewed_at").eq("author_id", authorId).eq("manuscript_id", book.active_manuscript_id).order("fact_index") : Promise.resolve({ data: [], error: null }),
       ]);
-      checkLibraryError(versions.error); checkLibraryError(knowledge.error);
+      checkLibraryError(versions.error); checkLibraryError(knowledge.error); checkLibraryError(reviews.error);
       return { book, series, manuscripts: storedManuscriptSchema.array().parse(versions.data ?? []).map(manuscriptSummary),
+        fact_reviews: bookFactReviewSchema.array().parse(reviews.data ?? []),
         intelligence: knowledge.data ? { manuscript_id: knowledge.data.manuscript_id, ...knowledge.data.profile,
           created_at: knowledge.data.extracted_at, model: knowledge.data.model } : null };
     },

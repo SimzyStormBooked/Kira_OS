@@ -30,9 +30,9 @@ export const libraryInputSchema = z.object({
 export const manuscriptSummarySchema = z.object({
   id: z.uuid(), version: z.number().int(), filename: z.string(),
   size_bytes: z.number().int().nonnegative(),
-  status: z.enum(["uploading", "queued", "processing", "ready", "failed"]),
+  status: z.enum(["uploading", "queued", "processing", "ready", "failed", "withdrawn"]),
   chunk_count: z.number().int().nonnegative(), completed_chunks: z.number().int().nonnegative(),
-  created_at: z.string(), error_code: z.string().nullable(),
+  created_at: z.string(), error_code: z.string().nullable(), withdrawn_at: z.string().nullable().optional(),
 });
 /** A short-lived, caller-scoped link so an author can take her own file back out. */
 export const manuscriptFileSchema = z.object({ url: z.string(), filename: z.string(), expires_in_seconds: z.number().int().positive() });
@@ -43,9 +43,15 @@ export const librarySearchSchema = z.object({
   mode: z.enum(["lexical", "hybrid"]),
 });
 export const searchResponseSchema = librarySearchSchema;
+export const bookFactReviewSchema = z.object({
+  manuscript_id: z.uuid(), fact_index: z.number().int().nonnegative(), source_hash: z.string(),
+  judgement: z.enum(["confirmed", "needs_check", "do_not_use"]), author_note: z.string(),
+  reviewed_at: z.string(),
+});
 export const bookDetailSchema = z.object({
   book: libraryBookSchema, series: z.array(librarySeriesSchema), role: libraryRoleSchema,
   manuscripts: z.array(manuscriptSummarySchema),
+  fact_reviews: z.array(bookFactReviewSchema),
   intelligence: manuscriptExtractionSchema.extend({ facts: manuscriptExtractionSchema.shape.facts.element.array().max(8000), characters: manuscriptExtractionSchema.shape.characters.element.array().max(4000), manuscript_id: z.uuid(), created_at: z.string(), model: z.string() }).nullable(),
 });
 export type LibraryBook = z.infer<typeof libraryBookSchema>;

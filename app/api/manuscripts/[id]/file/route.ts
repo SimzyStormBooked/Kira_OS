@@ -17,6 +17,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     const session = await requireWorkspaceSession();
     const id = z.uuid().parse((await context.params).id);
     const manuscript = await createManuscriptRepository(session.supabase, session.authorId).findManuscript(id);
+    if (manuscript.status === "withdrawn") throw new ManuscriptError("withdrawn", 403, "This manuscript version has been withdrawn from use.");
     const { data, error } = await session.supabase.storage
       .from("kira-manuscripts")
       .createSignedUrl(manuscript.storage_path, LINK_SECONDS, { download: manuscript.filename });

@@ -4,7 +4,7 @@ export const knowledgeKey = (value: string) => value.normalize("NFKC").trim().to
 export type CharacterGroup = { name: string; aliases: string[]; observations: ManuscriptCharacter[] };
 
 /** Presentation only: original observations and their citations are never rewritten. */
-export function groupCharacters(characters: ManuscriptCharacter[], spoilers: boolean): CharacterGroup[] {
+export function groupCharacters(characters: ManuscriptCharacter[], spoilers: boolean, confirmedLinks: Record<string,string> = {}): CharacterGroup[] {
   const visible = characters.filter(item => spoilers || !item.spoiler);
   const names = new Map<string, ManuscriptCharacter[]>();
   for (const item of visible) {
@@ -36,6 +36,16 @@ export function groupCharacters(characters: ManuscriptCharacter[], spoilers: boo
       parents.set(target, [...candidates][0]);
       changed = true;
     }
+  }
+  // A Studio identity link is an explicit author decision. It may join spellings
+  // that the extracted text alone cannot prove are the same person.
+  const linkedRoots = new Map<string,string>();
+  for (const name of names.keys()) {
+    const profile = confirmedLinks[name];
+    if (!profile) continue;
+    const prior = linkedRoots.get(profile);
+    if (prior && root(name) !== root(prior)) parents.set(root(name),root(prior));
+    else linkedRoots.set(profile,name);
   }
   const groups = new Map<string, ManuscriptCharacter[]>();
   for (const [name, items] of names) {

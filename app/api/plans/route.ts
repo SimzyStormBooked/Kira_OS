@@ -36,8 +36,16 @@ export async function GET(request: Request) {
   try {
     const session = await requireWorkspaceSession(), repo = createStrategyRepository(session.supabase, session.authorId);
     const id = new URL(request.url).searchParams.get("id"); if (id) z.uuid().parse(id);
-    const [role, data] = await Promise.all([getWorkspaceRole(session), id ? repo.detail(id) : repo.list()]);
-    return NextResponse.json({ role, ...(id ? { detail: data } : { plans: data }) }, { headers });
+    const role = await getWorkspaceRole(session);
+    if (!id) return NextResponse.json({ role, plans: await repo.list() }, { headers });
+    const detail = await repo.detail(id);
+    const revision = detail.revisions.find(item => item.id === detail.plan.latest_revision_id);
+    const canSelfReview = role === "editor" && detail.plan.created_by === session.user.id
+      && detail.plan.input.budgetUsd === 0 && revision?.status === "complete"
+      && !!revision.output?.recommendations.every(item => item.estimated_cost_usd === 0);
+    const canSelfActivate = canSelfReview && detail.reviews.some(item => item.revision_id === revision?.id
+      && item.decision === "approved" && item.reviewed_by === session.user.id);
+    return NextResponse.json({ role, detail: { ...detail, canSelfReview, canSelfActivate } }, { headers });
   } catch (error) { return failure(error, "read"); }
 }
 export async function POST(request: Request) {

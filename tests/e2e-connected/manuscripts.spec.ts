@@ -10,7 +10,7 @@ async function addBook(page: Page, title: string) {
 }
 async function confirmSave(page: Page) {
   const confirm=page.getByRole("dialog",{name:"Save this manuscript version?",exact:true});
-  await expect(confirm).toContainText("cannot be removed from inside this app");
+  await expect(confirm).toContainText("withdraw this version from KIRA use later");
   await confirm.getByRole("button",{name:"Save this version",exact:true}).click();
   await expect(confirm).not.toBeVisible();
 }
@@ -101,4 +101,24 @@ test("knowledge actions carry the selected evidence, preserve unfinished Raven w
  if(await page.getByRole("button",{name:"Open navigation",exact:true}).isVisible())await page.getByRole("button",{name:"Open navigation",exact:true}).click();
  await page.getByRole("link",{name:/^The Universe/}).first().click();await page.locator(`a[href="/universe/${book.slug}"]`).first().click();await page.getByRole("button",{name:"Explore this character with Raven",exact:true}).click();dialog=page.getByRole("dialog");await expect(dialog.getByRole("button",{name:"Open in Ask Raven",exact:true})).toBeDisabled();await expect(dialog).toContainText("will not overwrite");await page.keyboard.press("Escape");
  await page.getByRole("button",{name:"Marketing",exact:true}).click();await page.locator(".book-knowledge").screenshot({path:testInfo.outputPath("knowledge-workbench.png")});expect((await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa"]).analyze()).violations).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test("an author can flag an extracted finding while keeping its cited source visible",async({page,request})=>{
+ const book=await addBook(page,"Synthetic Review Book");
+ expect((await request.post(`${fixture.supabaseUrl}/__test/manuscripts`,{data:{bookId:book.id,text:"Synthetic approved reference. Rowan works in the archive.",extended:true}})).ok()).toBe(true);
+ await page.reload();await page.getByRole("button",{name:"Marketing",exact:true}).click();
+ await page.route("**/api/library/fact-review",async route=>{
+  const body=route.request().postDataJSON();
+  await route.fulfill({json:{review:{manuscript_id:body.manuscriptId,fact_index:body.factIndex,source_hash:"a".repeat(64),judgement:body.judgement,author_note:body.authorNote,reviewed_at:new Date().toISOString()}}});
+ });
+ await page.getByRole("button",{name:"Correct or review"}).first().click();
+ const dialog=page.getByRole("dialog",{name:"Give this finding your judgement"});
+ await expect(dialog.locator("blockquote")).not.toBeEmpty();
+ await dialog.getByLabel("My judgement").selectOption("do_not_use");
+ await dialog.getByLabel("My correction or context (optional)").fill("The author says this interpretation is inaccurate.");
+ await dialog.getByRole("button",{name:"Save my review"}).click();
+ await expect(dialog).not.toBeVisible();
+ await expect(page.locator(".knowledge-author-review").first()).toContainText("The author says this interpretation is inaccurate.");
+ await expect(page.getByRole("button",{name:"Explore this angle"}).first()).toBeDisabled();
+ await expect(page.getByRole("button",{name:"Save as marketing idea"}).first()).toBeDisabled();
 });
