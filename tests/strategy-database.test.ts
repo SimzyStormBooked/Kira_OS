@@ -74,7 +74,7 @@ beforeAll(async () => {
     grant usage on schema storage to authenticated,anon;
     grant select,insert,update,delete on storage.objects to authenticated,anon;
     create policy unrelated_permissive_storage_policy on storage.objects for all to authenticated,anon using(true) with check(true);`);
-  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609190002_strategy_plans", "202609190003_studio_book_context", "202609260003_raven_evidence_quotes"]) {
+  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609190002_strategy_plans", "202609190003_studio_book_context", "202609200001_background_reading", "202609200002_ads_dashboard", "202609260003_raven_evidence_quotes", "202609270001_author_plan_control", "202609270002_book_fact_reviews", "202609270003_manuscript_withdrawal"]) {
     await db.exec(readFileSync(`supabase/migrations/${name}.sql`, "utf8"));
   }
   await db.query("insert into private.workspace_generation_config(singleton,recording_key_hash) values(true,encode(sha256(convert_to($1,'UTF8')),'hex'))", [recordingKey]);
@@ -88,12 +88,73 @@ beforeEach(async () => {
 });
 afterAll(async () => { await db.close(); });
 
-const planInput = (bookIds: string[] = []) => ({ title: "Backlist discovery", intent: "Find new readers with a low-cost backlist campaign.", bookIds, seriesId: null, originApprovalId: null, mode: "before_release", anchorDate: "2026-12-20", budgetUsd: 0, weeklyHours: 2, segments: ["new_readers"], goals: [{ id: randomUUID(), label: "New subscribers", metric: "subscribers", unit: "count", target: 50, baseline: 2, dueDate: "2026-12-20" }] });
+it("keeps author fact corrections separate from source evidence and private to the workspace", async () => {
+  const b=await book(), m=await register(b.id), cs=chunks();await complete(m,cs);
+  const before=await scalar<{profile:{facts:unknown[]}}>("select bi as value from public.book_intelligence bi where manuscript_id=$1",[m.id]);
+  await db.exec("reset role");
+  const initialContext=await scalar<{evidence:{id:string}[]}>("select private.book_reference_context($1,array[$2]::uuid[],'found family',false) as value",[author,b.id]);
+  expect(initialContext.evidence.some(item=>item.id.startsWith("fact-"))).toBe(true);
+  await asUser(editor);
+  const reviewed=await scalar<{judgement:string;author_note:string}>("select public.book_fact_review_save($1,$2,0,'needs_check','The hierarchy is more nuanced') as value",[author,m.id]);
+  expect(reviewed.author_note).toBe("The hierarchy is more nuanced");
+  await db.exec("reset role");
+  const disputed=await scalar<{evidence:{id:string}[]}>("select private.book_reference_context($1,array[$2]::uuid[],'found family',false) as value",[author,b.id]);
+  expect(disputed.evidence.some(item=>item.id.startsWith("fact-"))).toBe(false);
+  await asUser(editor);
+  expect(JSON.stringify(await scalar<unknown[]>("select public.catalog_observations($1) as value",[author]))).not.toContain("found family");
+  expect((await db.query("select * from public.book_fact_reviews")).rows).toHaveLength(1);
+  await expect(scalar("select public.book_fact_review_save($1,$2,88,'confirmed','') as value",[author,m.id])).rejects.toMatchObject({code:"P0002"});
+  await asUser(viewer);
+  expect((await db.query("select judgement from public.book_fact_reviews")).rows).toHaveLength(1);
+  await expect(scalar("select public.book_fact_review_save($1,$2,0,'confirmed','') as value",[author,m.id])).rejects.toMatchObject({code:"42501"});
+  await asUser(outsider);
+  expect((await db.query("select * from public.book_fact_reviews")).rows).toHaveLength(0);
+  await asUser(owner);
+  const after=await scalar<{profile:{facts:unknown[]}}>("select bi as value from public.book_intelligence bi where manuscript_id=$1",[m.id]);
+  expect(after.profile).toEqual(before.profile);
+});
+it("withdraws a manuscript from active knowledge and member access without pretending to erase it", async () => {
+  const b=await book(),m=await register(b.id),cs=chunks();await complete(m,cs);
+  expect((await db.query<{active_manuscript_id:string}>("select active_manuscript_id from public.books where id=$1",[b.id])).rows[0].active_manuscript_id).toBe(m.id);
+  await asUser(viewer);
+  await expect(scalar("select public.manuscript_withdraw($1,$2,$3) as value",[author,m.id,recordingKey])).rejects.toMatchObject({code:"42501"});
+  await asUser(editor);
+  const withdrawn=await scalar<{status:string;withdrawn_at:string}>("select public.manuscript_withdraw($1,$2,$3) as value",[author,m.id,recordingKey]);
+  expect(withdrawn.status).toBe("withdrawn");expect(withdrawn.withdrawn_at).toBeTruthy();
+  expect((await db.query("select * from public.book_intelligence where manuscript_id=$1",[m.id])).rows).toHaveLength(0);
+  expect((await db.query("select * from public.knowledge_chunks where manuscript_id=$1",[m.id])).rows).toHaveLength(0);
+  expect((await db.query("select * from public.content_assets where id=$1",[m.asset_id])).rows).toHaveLength(0);
+  expect((await db.query("select * from public.sources where id=$1",[m.source_id])).rows).toHaveLength(0);
+  expect((await db.query<{active_manuscript_id:string|null}>("select active_manuscript_id from public.books where id=$1",[b.id])).rows[0].active_manuscript_id).toBeNull();
+  await expect(begin(m)).rejects.toMatchObject({code:"42501"});
+  await db.exec("reset role");
+  expect((await db.query("select * from public.knowledge_chunks where manuscript_id=$1",[m.id])).rows).toHaveLength(1);
+  expect((await db.query("select rights_status from public.content_assets where id=$1",[m.asset_id])).rows[0]).toEqual({rights_status:"restricted"});
+});
+
+const planInput = (bookIds: string[] = []) => ({ title: "Backlist discovery", intent: "Find new readers with a low-cost backlist campaign.", bookIds, seriesId: null, originApprovalId: null, mode: "before_release", anchorDate: "2026-12-20", budgetUsd: 0 as number | null, weeklyHours: 2, segments: ["new_readers"], goals: [{ id: randomUUID(), label: "New subscribers", metric: "subscribers", unit: "count", target: 50, baseline: 2, dueDate: "2026-12-20" }] });
 async function save(input = planInput(), id: string = randomUUID(), expected: number | null = null) { return scalar<{ id: string; version: number; status: string }>("select public.strategy_save_plan($1,$2,$3,$4) as value", [author,id,expected,JSON.stringify(input)]); }
 async function reserve(p: { id: string; version: number }, id: string = randomUUID()) { return scalar<{ created: boolean; revision: { id: string; input_snapshot: { evidence: { id: string; text: string }[]; input: ReturnType<typeof planInput> } } }>("select public.strategy_begin_revision($1,$2,$3,$4,$5) as value", [author,p.id,id,p.version,recordingKey]); }
 function output(s: Awaited<ReturnType<typeof reserve>>["revision"]["input_snapshot"]) { const citations = [{ evidence_id: "request", quote: s.evidence[0].text.slice(0,30) }]; return { title: "Reach new readers", summary: "A hypothesis to test, not measured performance.", positioning: "Start with a small test.", audiences: [{ segment: "new_readers", why: "Chosen by the author", citations }], recommendations: [{ title: "Test a hook", action: "Prepare a test", rationale: "Validate reader fit", channel: "Instagram", effort: "low", estimated_cost_usd: 0, goal_ids: [s.input.goals[0].id], citations }], phases: [30,60,90].map(window => ({ window,label: `${window} days`,focus: "Learn from manual results",tasks: [{title:"Check results",instructions:"Record actual subscribers",channel:"Newsletter",day_offset:-window,goal_ids:[s.input.goals[0].id],success_measure:"Compare to baseline",citations}]})), risks:[],questions:[] }; }
 async function finishPlan(r: Awaited<ReturnType<typeof reserve>>, value: unknown = output(r.revision.input_snapshot)) { return scalar("select public.strategy_finish_revision($1,$2,$3,null,$4,$5) as value", [author,r.revision.id,JSON.stringify(value),JSON.stringify({inputTokens:10,outputTokens:10,estimatedCostUsd:null,gatewayGenerationId:null}),recordingKey]); }
 describe("persistent strategies", () => {
+ it("lets an editor approve and activate only their own zero-spend plan", async () => {
+   await asUser(editor);
+   const own=await save(), r=await reserve(own); await finishPlan(r);
+   await scalar("select public.strategy_review_plan($1,$2,1,'approved','Author reviewed') as value",[author,own.id]);
+   expect((await scalar<{status:string}>("select public.strategy_activate_plan($1,$2,2) as value",[author,own.id])).status).toBe("active");
+   const paid=await save({...planInput(),budgetUsd:25}), paidRevision=await reserve(paid); await finishPlan(paidRevision);
+   await expect(scalar("select public.strategy_review_plan($1,$2,1,'approved','') as value",[author,paid.id])).rejects.toMatchObject({code:"42501"});
+   const unknown=await save({...planInput(),budgetUsd:null}), unknownRevision=await reserve(unknown); await finishPlan(unknownRevision);
+   await expect(scalar("select public.strategy_review_plan($1,$2,1,'approved','') as value",[author,unknown.id])).rejects.toMatchObject({code:"42501"});
+   const cost=await save(), costRevision=await reserve(cost);const proposal=output(costRevision.revision.input_snapshot);proposal.recommendations[0].estimated_cost_usd=10;await finishPlan(costRevision,proposal);
+   await expect(scalar("select public.strategy_review_plan($1,$2,1,'approved','') as value",[author,cost.id])).rejects.toMatchObject({code:"42501"});
+   await expect(scalar("select public.strategy_review_plan($1,$2,1,'changes_requested','Change it') as value",[author,cost.id])).rejects.toMatchObject({code:"42501"});
+   await asUser(owner);
+   const ownerPlan=await save(), ownerRevision=await reserve(ownerPlan); await finishPlan(ownerRevision);
+   await asUser(editor);
+   await expect(scalar("select public.strategy_review_plan($1,$2,1,'approved','') as value",[author,ownerPlan.id])).rejects.toMatchObject({code:"42501"});
+ });
  it("creates immutable evidence, owner-reviewed dated tasks and manual results without duplicates", async () => {
    const b = await book(), m = await register(b.id), cs = chunks(); await complete(m,cs);
    const p = await save(planInput([b.id])), r = await reserve(p);

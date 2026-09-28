@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, BookmarkPlus, Feather, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,10 @@ import { useWorkspace } from "@/lib/db/demo-store";
 import { studioRequestSignature } from "@/lib/ai/studio-contract";
 import type { ManuscriptCharacter, ManuscriptFact } from "@/lib/manuscripts/contract";
 import type { BookDetailResponse } from "@/lib/manuscripts/library-contract";
-import { factLabels, groupCharacters, groupFacts, searchCharacters } from "@/lib/manuscripts/knowledge-groups";
+import { bookFactReviewSchema } from "@/lib/manuscripts/library-contract";
+import { factLabels, groupCharacters, groupFacts, knowledgeKey, searchCharacters } from "@/lib/manuscripts/knowledge-groups";
+import { characterSourcesSchema } from "@/lib/characters/contract";
+import { useLibrary } from "./library-provider";
 
 type View = "characters" | "story" | "readers";
 type Evidence = ManuscriptCharacter | ManuscriptFact;
@@ -38,8 +41,9 @@ const readerNext: Partial<Record<ManuscriptFact["category"], string>> = {
 };
 const shorten = (text: string, max = 115) => text.length > max ? `${text.slice(0, max).trim()}…` : text;
 
-export function BookKnowledge({ knowledge, citations, book }: {
+export function BookKnowledge({ knowledge, reviews: initialReviews, citations, book }: {
   knowledge: NonNullable<BookDetailResponse["intelligence"]>;
+  reviews: BookDetailResponse["fact_reviews"];
   citations: (item: Evidence) => ReactNode;
   book: { id: string; title: string; slug: string };
 }) {
@@ -49,11 +53,18 @@ export function BookKnowledge({ knowledge, citations, book }: {
   const [spoilers, setSpoilers] = useState(false), [query, setQuery] = useState("");
   const [indexLimit, setIndexLimit] = useState(8), [selected, setSelected] = useState(""), [facet, setFacet] = useState<keyof typeof facets>("portrait"), [limit, setLimit] = useState(5);
   const [copyStatus, setCopyStatus] = useState(""), [draft, setDraft] = useState(""), [draftOpen, setDraftOpen] = useState(false), [notice, setNotice] = useState(""), [saving, setSaving] = useState(false), [error, setError] = useState("");
+  const [reviews, setReviews] = useState(initialReviews), [reviewIndex, setReviewIndex] = useState<number | null>(null), [reviewJudgement, setReviewJudgement] = useState<"confirmed" | "needs_check" | "do_not_use">("needs_check"), [reviewNote, setReviewNote] = useState(""), [reviewSaving, setReviewSaving] = useState(false);
+  const [confirmedLinks, setConfirmedLinks] = useState<Record<string,string>>({});
   const indexRef = useRef<HTMLElement>(null);
   const detailHeading = useRef<HTMLHeadingElement>(null), saveLock = useRef(false);
   const router = useRouter();
+  const { request } = useLibrary();
   const { canEdit, ready, createManualReview, studioScratchpad, updateStudioScratchpad } = useWorkspace();
-  const characters = useMemo(() => groupCharacters(knowledge.characters, spoilers), [knowledge.characters, spoilers]);
+  useEffect(() => {let live=true;void request(`/api/characters/sources?book=${book.id}`).then(data=>{
+    if(!live)return;const sources=characterSourcesSchema.parse(data).sources;
+    setConfirmedLinks(Object.fromEntries(sources.filter(source=>source.linked_profile_id).map(source=>[knowledgeKey(source.name),source.linked_profile_id!])))
+  }).catch(()=>{});return()=>{live=false;};},[book.id,request]);
+  const characters = useMemo(() => groupCharacters(knowledge.characters, spoilers, confirmedLinks), [knowledge.characters, spoilers, confirmedLinks]);
   const found = searchCharacters(characters, query);
   const groups = useMemo(() => groupFacts(knowledge.facts, spoilers, view === "readers" ? "readers" : "story"), [knowledge.facts, spoilers, view]);
   const facts = groups.filter(g => !query.trim() || g.facts.some(f => f.statement.toLowerCase().includes(query.trim().toLowerCase())));
@@ -61,14 +72,14 @@ export function BookKnowledge({ knowledge, citations, book }: {
   const currentId = entries.some(e => e.id === selected) ? selected : entries[0]?.id;
   const character = found.find(g => g.name === currentId), group = facts.find(g => g.id === currentId);
   const visibleFacts = (group?.facts ?? []).filter(f => !query.trim() || f.statement.toLowerCase().includes(query.trim().toLowerCase())).slice().sort((a,b) => view === "story" ? Number(b.category === "plot") - Number(a.category === "plot") : 0);
-  const selectedItems: Evidence[] = view === "characters" ? (character?.observations ?? []).filter(item => facets[facet].fields.some(([field]) => item[field])) : visibleFacts;
+  const selectedItems: Evidence[] = view === "characters" ? (character?.observations ?? []).filter(item => facets[facet].fields.some(([field]) => item[field])) : visibleFacts.filter(fact => reviewFor(fact)?.judgement !== "do_not_use");
   const currentTitle = entries.find(e => e.id === currentId)?.title ?? "Choose a starting point";
   const info = { ...guidance[view], next: view === "readers" && group ? readerNext[group.facts[0].category] ?? guidance.readers.next : guidance[view].next };
   const unfinished = Boolean(studioScratchpad.pendingRequestId || (studioScratchpad.prompt.trim() && studioScratchpad.savedSignature !== studioRequestSignature(studioScratchpad)));
   function choose(id: string) { setSelected(id); setLimit(5); setNotice(""); requestAnimationFrame(() => detailHeading.current?.focus()); }
   function changeView(next: View) { const url = new URL(window.location.href); url.searchParams.set("knowledge", next); window.history.replaceState(null, "", `${url.pathname}${url.search}#book-knowledge`); setIndexLimit(8); setSelected(""); setQuery(""); setFacet("portrait"); setLimit(5); setNotice(""); }
   function context(items: Evidence[]) {
-    const description = (item: Evidence) => "statement" in item ? `${item.category} · ${item.kind} · ${item.statement}` : `${item.name} · ${facets[facet].label}\n${facets[facet].fields.filter(([field]) => item[field]).map(([field,label]) => `${label}: ${item[field]}`).join("\n")}`;
+    const description = (item: Evidence) => "statement" in item ? `${item.category} · ${item.kind} · ${item.statement}${reviewFor(item) ? `\nAuthor review: ${reviewFor(item)!.judgement}. Author note (not manuscript evidence): ${reviewFor(item)!.author_note}` : ""}` : `${item.name} · ${facets[facet].label}\n${facets[facet].fields.filter(([field]) => item[field]).map(([field,label]) => `${label}: ${item[field]}`).join("\n")}`;
     return `Book: ${book.title}\nSaved manuscript reference: ${knowledge.manuscript_id}\nSelected context (up to 3 observations; unreviewed):\n${items.slice(0, 3).map(item => `${shorten(description(item), 1200)}\nSource passage IDs: ${item.citations.map(c => c.chunk_id).join(", ")}`).join("\n\n")}`;
   }
   function prepare(items = selectedItems) { setCopyStatus(""); setDraft(`${view === "readers" && group?.id === "content" ? "Help me prepare accurate reader-care notes from these content observations. Identify uncertainty, context to verify, and suitable places for an author to share content information. Keep sensitive details out of promotional hooks." : info.question}\n\n${context(items)}\n\nAnalyze existing reference material only. Mark interpretation and missing information clearly.`.slice(0, 6000)); setDraftOpen(true); }
@@ -85,7 +96,36 @@ export function BookKnowledge({ knowledge, citations, book }: {
     } catch { setError("Your next step could not be saved. Your manuscript is unchanged; please try again."); }
     finally { saveLock.current = false; setSaving(false); }
   }
+  async function saveMarketingIdea(fact: ManuscriptFact) {
+    if (saving || reviewFor(fact)?.judgement === "do_not_use") return;
+    setSaving(true);setError("");setNotice("");
+    try {
+      const saved=await createManualReview(`Marketing idea · ${book.title} · ${factLabels[fact.category]}`.slice(0,200),[
+        "MARKETING IDEA · DRAFT FOR AUTHOR REVIEW",
+        `Book: ${book.title}\nFinding: ${fact.statement}\nSource passage IDs: ${fact.citations.map(c=>c.chunk_id).join(", ")}`,
+        `Finding type: ${fact.kind === "inference" ? "interpretation to verify" : "manuscript-supported but unreviewed"}. Spoiler flag: ${fact.spoiler ? "yes" : "no"}.`,
+        reviewFor(fact)?.author_note ? `Author context: ${reviewFor(fact)!.author_note}` : "",
+        "Reader to explore: [choose a reader group]\nSpoiler-safe introduction to test: [write in your own words]\nSmall first test and result to record: [decide here]",
+        `Return to source: /universe/${book.slug}\nThis is an idea for review, not approved copy, ad performance, or a prediction of sales.`,
+      ].filter(Boolean).join("\n\n"));
+      if (!saved) throw new Error("save");setNotice("Marketing idea saved to Cassandra’s Desk with its source reference.");
+    } catch {setError("This marketing idea could not be saved. The original finding is unchanged; try again.");}
+    finally {setSaving(false);}
+  }
   function evidence(item: Evidence) { return <div className="knowledge-evidence">{citations(item)}</div>; }
+  function reviewFor(fact: ManuscriptFact) { return reviews.find(row => row.fact_index === knowledge.facts.indexOf(fact)); }
+  function openReview(fact: ManuscriptFact) { const index=knowledge.facts.indexOf(fact);if(index<0)return;const saved=reviewFor(fact);setReviewIndex(index);setReviewJudgement(saved?.judgement??"needs_check");setReviewNote(saved?.author_note??"");setError(""); }
+  async function saveReview() {
+    if (reviewIndex === null || reviewSaving) return;
+    setReviewSaving(true);setError("");
+    try {
+      const response=await request("/api/library/fact-review",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({manuscriptId:knowledge.manuscript_id,factIndex:reviewIndex,judgement:reviewJudgement,authorNote:reviewNote})});
+      const saved=bookFactReviewSchema.parse((response as {review:unknown}).review);
+      setReviews(current=>[...current.filter(row=>row.fact_index!==saved.fact_index),saved]);
+      setReviewIndex(null);setNotice("Your review is saved beside the original finding and its source.");
+    } catch(e) {setError(e instanceof Error?e.message:"Your review could not be saved. Try again.");}
+    finally {setReviewSaving(false);}
+  }
   return <div className={`book-knowledge knowledge-workbench knowledge-${view}`}>
     <div className="knowledge-view-nav" role="group" aria-label="Explore book knowledge">{([["characters", "Character Organization", Users], ["story", "Story Arc", Feather], ["readers", "Marketing", Sparkles]] as const).map(([key, label, Icon]) => <button key={key} aria-pressed={view === key} onClick={() => changeView(key)}><Icon size={19}/>{label}<ArrowRight size={15}/></button>)}</div>
     <header className="knowledge-intro"><span className="eyebrow">{info.kicker}</span><h3>{info.title}</h3><p>{info.help}</p></header>
@@ -102,9 +142,10 @@ export function BookKnowledge({ knowledge, citations, book }: {
         const unique = [...byText.values()];
         if (!unique.length) return null;
         return <section className="knowledge-profile-section" key={field}><h4>{label}</h4>{unique.slice(0, limit).map((item, i) => <div className="knowledge-observation" key={i}><p>{item[field]}</p>{evidence(item)}</div>)}{unique.length > limit && <Button variant="link" onClick={() => setLimit(limit + 5)}>Show five more {label.toLowerCase()} observations</Button>}</section>;
-      })}{!character.observations.some(item => facets[facet].fields.some(([field]) => item[field])) && <p className="knowledge-empty">No separate {facets[facet].label.toLowerCase()} observations were recorded. Check the source or another section; missing details are not invented.</p>}<p><Link className="text-link" href={`/characters?book=${book.id}&name=${encodeURIComponent(character.name)}`}>Organize this character in Character Studio</Link></p><p className="quiet-note">Choose or create a Studio character, then explicitly confirm the identity link. Manuscript observations stay here with their sources.</p><p className="quiet-note">Saved, unreviewed observations. Differing accounts remain visible for you to resolve; this is not an approved character bible.</p></> : group && <><p className="knowledge-detail-caption">{view === "story" ? "Recorded events and surrounding context" : "Signals to consider, with evidence"}{query.trim() && ` · ${visibleFacts.length} matching observations`}</p>{visibleFacts.slice(0, limit).map((fact, index) => <article className="knowledge-signal" key={`${group.id}-${index}`}><div><span className="eyebrow">{factLabels[fact.category]}</span><span className="knowledge-proof">{fact.kind === "supported" ? "Manuscript-supported · unreviewed" : "Interpretation · verify with source"}</span></div><p>{fact.statement}</p><div className="knowledge-signal-actions">{evidence(fact)}<Button variant="ghost" disabled={!ready || !canEdit} onClick={() => prepare([fact])}>{view === "readers" ? "Explore this angle" : "Explore this observation"}<ArrowRight size={14}/></Button></div></article>)}{visibleFacts.length > limit && <Button variant="outline" onClick={() => setLimit(limit + 5)}>Show next {Math.min(5, visibleFacts.length - limit)} observations · {visibleFacts.length - limit} remaining</Button>}</>}
+      })}{!character.observations.some(item => facets[facet].fields.some(([field]) => item[field])) && <p className="knowledge-empty">No separate {facets[facet].label.toLowerCase()} observations were recorded. Check the source or another section; missing details are not invented.</p>}<p><Link className="text-link" href={`/characters?book=${book.id}&name=${encodeURIComponent(character.name)}`}>Organize this character in Character Studio</Link></p><p className="quiet-note">Choose or create a Studio character, then explicitly confirm the identity link. Manuscript observations stay here with their sources.</p><p className="quiet-note">Saved, unreviewed observations. Differing accounts remain visible for you to resolve; this is not an approved character bible.</p></> : group && <><p className="knowledge-detail-caption">{view === "story" ? "Recorded events and surrounding context" : "Signals to consider, with evidence"}{query.trim() && ` · ${visibleFacts.length} matching observations`}</p>{visibleFacts.slice(0, limit).map((fact, index) => <article className="knowledge-signal" key={`${group.id}-${index}`}><div><span className="eyebrow">{factLabels[fact.category]}</span><span className="knowledge-proof">{fact.kind === "supported" ? "Manuscript-supported · unreviewed" : "Interpretation · verify with source"}</span></div><p>{fact.statement}</p>{reviewFor(fact) && <div className="knowledge-author-review"><strong>{reviewFor(fact)!.judgement === "confirmed" ? "Confirmed by the author" : reviewFor(fact)!.judgement === "do_not_use" ? "Flagged: do not use as an idea" : "Author says: check this"}</strong>{reviewFor(fact)!.author_note && <p>{reviewFor(fact)!.author_note}</p>}</div>}<div className="knowledge-signal-actions">{evidence(fact)}<Button variant="ghost" disabled={!ready || !canEdit || reviewFor(fact)?.judgement === "do_not_use"} onClick={() => prepare([fact])}>{view === "readers" ? "Explore this angle" : "Explore this observation"}<ArrowRight size={14}/></Button>{canEdit && <Button variant="outline" onClick={() => openReview(fact)}>{reviewFor(fact) ? "Edit my review" : "Correct or review"}</Button>}{canEdit && <Button variant="ghost" disabled={!ready || saving || reviewFor(fact)?.judgement === "do_not_use"} onClick={() => void saveMarketingIdea(fact)}><BookmarkPlus size={14}/>Save as marketing idea</Button>}</div></article>)}{visibleFacts.length > limit && <Button variant="outline" onClick={() => setLimit(limit + 5)}>Show next {Math.min(5, visibleFacts.length - limit)} observations · {visibleFacts.length - limit} remaining</Button>}</>}
     </section>}</div>
     {notice && <p className="library-success" role="status">{notice} <Link href="/desk">Open my Desk →</Link></p>}{error && <p role="alert" className="library-error">{error}</p>}
+    <Dialog open={reviewIndex !== null} onOpenChange={open => {if(!open&&!reviewSaving)setReviewIndex(null);}}><DialogContent className="library-dialog"><DialogHeader><DialogTitle>Give this finding your judgement</DialogTitle><DialogDescription>The original extracted wording and cited passage stay intact. Your note appears beside them and tells KIRA how to treat this finding in future ideas.</DialogDescription></DialogHeader>{reviewIndex !== null && <blockquote className="knowledge-review-original">{knowledge.facts[reviewIndex]?.statement}</blockquote>}<label className="knowledge-question">My judgement<select value={reviewJudgement} onChange={e => setReviewJudgement(e.target.value as typeof reviewJudgement)}><option value="confirmed">Accurate as written</option><option value="needs_check">Needs a correction or closer look</option><option value="do_not_use">Incorrect — do not use for ideas</option></select></label><label className="knowledge-question">My correction or context (optional)<Textarea value={reviewNote} onChange={e => setReviewNote(e.target.value)} maxLength={1200} rows={5} placeholder="What would you want a collaborator to know?"/></label><div className="library-actions"><Button disabled={reviewSaving} onClick={() => void saveReview()}>{reviewSaving ? "Saving…" : "Save my review"}</Button><Button variant="outline" disabled={reviewSaving} onClick={() => setReviewIndex(null)}>Cancel</Button></div></DialogContent></Dialog>
     <Dialog open={draftOpen} onOpenChange={setDraftOpen}><DialogContent className="library-dialog"><DialogHeader><DialogTitle>Your question, ready to edit.</DialogTitle><DialogDescription>{book.title} will be selected in Ask Raven. Review this question, then choose when to submit it. Opening Raven does not use AI credits.</DialogDescription></DialogHeader><label className="knowledge-question">Question to explore<Textarea value={draft} onChange={e => setDraft(e.target.value)} maxLength={6000} rows={9}/></label>{unfinished && <p className="knowledge-empty">You already have an unfinished or running Raven question. <Link href="/studio">Open it first</Link>; this action will not overwrite it. You can copy this question to keep it.</p>}<div className="library-actions"><Button disabled={unfinished || !canEdit || draft.trim().length < 10} onClick={openRaven}>Open in Ask Raven<ArrowRight size={15}/></Button><Button variant="outline" onClick={async () => {try {await navigator.clipboard.writeText(draft);setCopyStatus("Question copied. Nothing was submitted.");} catch {setCopyStatus("Select the question and copy it using your device.");}}}>Copy question</Button></div><p role="status" aria-live="polite">{copyStatus}</p></DialogContent></Dialog>
   </div>;
 }

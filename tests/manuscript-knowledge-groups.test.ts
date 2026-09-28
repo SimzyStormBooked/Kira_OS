@@ -23,6 +23,14 @@ describe("manuscript knowledge presentation", () => {
     expect(groupCharacters([character("Glen"), character("Glenn")], false)).toHaveLength(2);
     expect(groupCharacters([character("A", { aliases: ["Captain"] }), character("B", { aliases: ["Captain"] }), character("Captain")], false)).toHaveLength(3);
   });
+  it("joins two spellings only after the author links both to one Studio identity", () => {
+    const items=[character("Rayla"),character("Sayla")];
+    expect(groupCharacters(items,false)).toHaveLength(2);
+    const groups=groupCharacters(items,false,{rayla:"confirmed-profile",sayla:"confirmed-profile"});
+    expect(groups).toHaveLength(1);
+    expect(groups[0].observations).toEqual(items);
+    expect(searchCharacters(groups,"Sayla")).toHaveLength(1);
+  });
   it("filters spoilers before identity grouping, aliases and search", () => {
     const items = [character("A"), character("B"), character("A", { aliases: ["B", "Secret identity"], spoiler: true })];
     const hidden = groupCharacters(items, false);
