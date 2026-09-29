@@ -17,6 +17,7 @@ const records: Record<string, unknown> = {
   workspace_generations: { id: answerId, title: "An answer", completed_at: date, created_at: date, prompt: "PRIVATE QUESTION", result: { summary: "PRIVATE ANSWER" } },
   manuscripts: { id: manuscriptId, version: 2, status: "processing", completed_chunks: 3, chunk_count: 8, reference_text: "PRIVATE MANUSCRIPT" },
   manuscript_reading_jobs: { state: "paused" },
+  character_profiles: [],
 };
 type Call = { table: string; operation: string; args: unknown[] };
 let calls: Call[] = [];
@@ -26,7 +27,7 @@ const from = vi.fn((table: string) => {
   const builder: Record<string, unknown> = {
     then: (resolve: (value: typeof result) => unknown) => Promise.resolve(result).then(resolve),
   };
-  for (const operation of ["select", "eq", "neq", "order", "limit", "maybeSingle"]) builder[operation] = (...args: unknown[]) => { calls.push({ table, operation, args }); return builder; };
+  for (const operation of ["select", "eq", "neq", "not", "order", "limit", "maybeSingle"]) builder[operation] = (...args: unknown[]) => { calls.push({ table, operation, args }); return builder; };
   return builder;
 });
 const session = { mode: "connected" as const, configured: true as const, authorization: "authorized" as const, authorId, user: { id: authorId, email: "owner@example.test" }, supabase: { from } as unknown as Awaited<ReturnType<typeof requireWorkspaceSession>>["supabase"] };
@@ -45,6 +46,7 @@ describe("private home resume summary", () => {
     const body = await response.json();
     expect(body.books[0].reading).toEqual({ id: manuscriptId, version: 2, status: "processing", completed_chunks: 3, chunk_count: 8, job_state: "paused" });
     expect(body.answer).toEqual({ id: answerId, title: "An answer", completed_at: date, created_at: date });
+    expect(body.showcase).toEqual([]);
     expect(JSON.stringify(body)).not.toContain("PRIVATE");
     expect(getWorkspaceRole).toHaveBeenCalledWith(session);
     for (const table of Object.keys(records)) expect(calls).toContainEqual({ table, operation: "eq", args: ["author_id", authorId] });

@@ -31,10 +31,20 @@
 .library-upload-disclosure > summary { padding: 20px 24px; color: #e0c99e; cursor: pointer; font-size: 14px; }
 .library-upload-disclosure > .library-panel { border: 0; border-top: 1px solid #444b38; border-radius: 0; margin: 0; }
 .connected-resume :focus-visible, .learning-guide-previews :focus-visible, .library-upload-disclosure > summary:focus-visible { outline: 2px solid #d7bf8b; outline-offset: 4px; }
+.home-showcase { display: grid; gap: 16px; }
+.home-showcase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr)); gap: 16px; }
+.home-showcase-item { display: grid; gap: 8px; text-align: center; text-decoration: none; color: inherit; border-radius: 12px; padding: 6px; justify-items: center; }
+.home-showcase-item:focus-visible { outline: 2px solid #d7bf8b; outline-offset: 3px; }
+.home-showcase-item img, .home-showcase-empty { width: 100px; height: 100px; border-radius: 999px; object-fit: cover; border: 1px solid #414a38; background: #242b20; }
+.home-showcase-empty { display: grid; place-items: center; font-family: var(--font-display, serif); font-size: 30px; color: #b7c0aa; }
+.home-showcase-item span { font-size: 13px; color: #eee4cf; overflow-wrap: anywhere; }
+.home-showcase-item:hover span { color: #f2e9dc; }
 @media (max-width: 600px) {
   .connected-resume { padding: 19px 15px; }
   .connected-resume-heading { gap: 8px; }
   .connected-resume-heading h2 { font-size: 27px; }
   .connected-resume-items { grid-template-columns: 1fr; }
   .library-upload-disclosure > summary { padding: 17px; }
+  .home-showcase-grid { grid-template-columns: repeat(auto-fill, minmax(min(96px, 100%), 1fr)); gap: 12px; }
+  .home-showcase-item img, .home-showcase-empty { width: 76px; height: 76px; }
 }

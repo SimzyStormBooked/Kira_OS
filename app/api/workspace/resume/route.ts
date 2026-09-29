@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireWorkspaceSession, WorkspaceAccessError } from "@/lib/auth/session";
 import { getWorkspaceRole } from "@/lib/auth/workspace-role";
 import { resumeAnswerSchema, resumeBookSchema, workspaceResumeSchema } from "@/lib/workspace-resume";
+import { createCharacterRepository } from "@/lib/characters/repository";
 
 const headers = { "Cache-Control": "private, no-store, max-age=0", "Referrer-Policy": "no-referrer" };
 const manuscriptSchema = z.object({ id: z.uuid(), version: z.number().int().positive(), status: z.enum(["uploading", "queued", "processing", "ready", "failed"]), completed_chunks: z.number().int().nonnegative(), chunk_count: z.number().int().nonnegative() });
@@ -15,9 +16,10 @@ export async function GET() {
     const session = await requireWorkspaceSession();
     await getWorkspaceRole(session);
     const { supabase, authorId } = session;
-    const [bookRows, answerRow] = await Promise.all([
+    const [bookRows, answerRow, showcase] = await Promise.all([
       supabase.from("books").select("id,slug,title,updated_at,active_manuscript_id").eq("author_id", authorId).neq("data_origin", "demo").order("updated_at", { ascending: false }).order("id").limit(2),
       supabase.from("workspace_generations").select("id,title:result->>title,created_at,completed_at").eq("author_id", authorId).eq("status", "complete").order("completed_at", { ascending: false }).order("id").limit(1).maybeSingle(),
+      createCharacterRepository(supabase, authorId).listShowcase(),
     ]);
     check(bookRows.error); check(answerRow.error);
     const books = await Promise.all(resumeBookSchema.array().parse(bookRows.data ?? []).map(async book => {
@@ -29,7 +31,7 @@ export async function GET() {
       check(job.error);
       return { ...book, reading: { ...reading, job_state: jobSchema.nullable().parse(job.data)?.state ?? null } };
     }));
-    return NextResponse.json(workspaceResumeSchema.parse({ books, answer: resumeAnswerSchema.nullable().parse(answerRow.data) }), { headers });
+    return NextResponse.json(workspaceResumeSchema.parse({ books, answer: resumeAnswerSchema.nullable().parse(answerRow.data), showcase }), { headers });
   } catch (error) {
     if (error instanceof WorkspaceAccessError) return NextResponse.json({ error: error.message }, { status: error.status, headers });
     return NextResponse.json({ error: "Your saved work could not be loaded. Please try again." }, { status: 503, headers });

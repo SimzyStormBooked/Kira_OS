@@ -19,7 +19,7 @@ import { POST as linkCharacter, DELETE as unlinkCharacter } from "@/app/api/char
 const authorId = randomUUID(), userId = randomUUID(), profileId = randomUUID(), portraitId = randomUUID(), bookId = randomUUID(), manuscriptId = randomUUID(), characterId = randomUUID();
 const origin = "https://kira.test";
 const cover = { id: portraitId, caption: "Reference board", source_credit: null, usage_permission: "private_reference_only" as const, width: 800, height: 1000, created_at: new Date().toISOString(), url: "https://storage.test/signed?token=short-lived" };
-const profile = { id: profileId, display_name: "Celine", summary: null, universe_id: null, primary_portrait_id: portraitId, version: 2, updated_at: new Date().toISOString(), aliases: ["The Lark"], portrait_count: 1, book_count: 1, cover };
+const profile = { id: profileId, display_name: "Celine", summary: null, universe_id: null, primary_portrait_id: portraitId, home_showcase_pinned_at: null, version: 2, updated_at: new Date().toISOString(), aliases: ["The Lark"], portrait_count: 1, book_count: 1, cover };
 const detail = {
   profile, portraits: [cover],
   notes: [{ id: randomUUID(), kind: "author_confirmed" as const, body: "She never lies about the harbour.", book_id: bookId, version: 1, created_at: new Date().toISOString() }],
@@ -41,7 +41,7 @@ beforeEach(() => {
   vi.mocked(getWorkspaceRole).mockResolvedValue("editor");
   vi.mocked(createCharacterRepository).mockReturnValue(repo as unknown as ReturnType<typeof createCharacterRepository>);
   repo.listProfiles.mockResolvedValue([profile]); repo.profileDetail.mockResolvedValue(detail);
-  repo.createProfile.mockResolvedValue({ id: profileId, display_name: "Celine", normalized_name: "celine", universe_id: null, summary: null, primary_portrait_id: null, version: 1, updated_at: new Date().toISOString() });
+  repo.createProfile.mockResolvedValue({ id: profileId, display_name: "Celine", normalized_name: "celine", universe_id: null, summary: null, primary_portrait_id: null, home_showcase_pinned_at: null, version: 1, updated_at: new Date().toISOString() });
   repo.updateProfile.mockResolvedValue({ ...profile, version: 3 });
   repo.saveNote.mockResolvedValue(detail.notes[0]); repo.listSources.mockResolvedValue([]);
 });

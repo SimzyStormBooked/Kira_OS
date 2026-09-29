@@ -92,9 +92,16 @@ New identity links retain `source_manuscript_id` with a composite foreign key to
 
 Character creation, editing, notes, and link-form drafts are kept per account in this tab’s session storage, survive form dismissal and navigation, and join the existing sign-out/session-expiry rescue. Saving or explicit discard clears the draft. If browser storage fails, the interface explains that the entries may not survive a reload.
 
-## Remaining in the sequence
+## Home showcase
 
-1. Author-selected home showcase.
-2. Optional Quiet Room.
+`202609290001_home_showcase.sql` extends `character_profile_save` with one more key, `home_showcase_pinned`, rather than adding a parallel RPC. Pinning sets `home_showcase_pinned_at` to the current time; unpinning clears it; re-pinning an already-pinned character advances the timestamp, moving her to the end of the order. The showcase is capped at 6 — a celebration of a few chosen characters, not the whole cast — checked only when actually pinning, so unpinning always succeeds even while full. The cap violation carries its own error code (`23514`, distinct from the generic `22023` validation failures) so the interface can show its exact, actionable text instead of a generic message.
+
+`GET /api/workspace/resume`, the same small summary the home page already loads, now also returns `showcase`: up to 6 pinned characters ordered oldest-pin-first, each with just a display name and a signed cover URL — no counts, no portrait metadata beyond what a warm home-page tile needs. An author pins or unpins from her own profile page (`Show on your home page` / `Shown on your home page`, beside `Edit character`). The home page renders nothing at all when nothing is pinned: an empty showcase is not a nudge to fill it.
+
+## Quiet Room
+
+A small, optional, calm view at `/quiet-room`, reachable from a `Quiet Room` link in the topbar next to Guide and Search. It stays inside the normal workspace shell — the return path is the same persistent nav that is always there, plus an explicit "Return to Mission Control" link — rather than a bespoke chrome-less page to design and maintain separately. Content is deliberately restrained: a literary quote (a different one from the home page's daily quote, and a different one each day from the Quiet Room's own rotation), one pinned character named warmly if the workspace has any, and nothing else. No form, counter, timer, or productivity target appears there; a browser test asserts as much directly. Demo mode shows the quote and the calm framing without a character, since there is no real cast to name.
+
+## Remaining in the sequence
 
 A relationship map and richer promotional tooling follow confirmed identity and permission handling.

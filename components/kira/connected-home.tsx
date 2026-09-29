@@ -26,7 +26,9 @@ import "./daily-workspace.css";
 const starterIdeas = inspirationIdeas.slice(0, 2);
 const savedDate = (value: string) => new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 
-function ContinueWork() {
+/** Shared by ContinueWork and HomeShowcase, so pinning a character and reloading the
+ * home page needs one fetch, not two. */
+function useWorkspaceResume(viewerEmail: string | null | undefined) {
   const { request } = useLibrary();
   const [data, setData] = useState<WorkspaceResume | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,9 +52,15 @@ function ContinueWork() {
     const onFocus = () => { if (document.visibilityState === "visible") void load(); };
     window.addEventListener("focus", onFocus);
     return () => { active = false; controller?.abort(); window.removeEventListener("focus", onFocus); };
-  }, [request, refresh]);
+    // A different signed-in viewer owns none of the previous data; refetch, same as the
+    // remount-by-key this replaced.
+  }, [request, refresh, viewerEmail]);
+  return { data, loading, error, refresh: () => setRefresh(value => value + 1) };
+}
+
+function ContinueWork({ data, loading, error, onRefresh }: { data: WorkspaceResume | null; loading: boolean; error: boolean; onRefresh: () => void }) {
   return <section className="connected-resume" aria-labelledby="continue-work-title" aria-busy={loading}>
-    <div className="connected-resume-heading"><div><span className="eyebrow">PICK UP A THREAD</span><h2 id="continue-work-title">Continue your work</h2><p>Latest saved answer and recently updated books, shared by this workspace.</p></div><Button type="button" variant="ghost" size="sm" disabled={loading} onClick={() => setRefresh(value => value + 1)}><RefreshCw size={14} aria-hidden="true" />Refresh</Button></div>
+    <div className="connected-resume-heading"><div><span className="eyebrow">PICK UP A THREAD</span><h2 id="continue-work-title">Continue your work</h2><p>Latest saved answer and recently updated books, shared by this workspace.</p></div><Button type="button" variant="ghost" size="sm" disabled={loading} onClick={onRefresh}><RefreshCw size={14} aria-hidden="true" />Refresh</Button></div>
     {error && <p role="status" className="quiet-note">Saved activity could not be refreshed. {data ? "The last loaded items remain below." : "Use your books or Ask Raven to continue, or try Refresh."}</p>}
     {!data && loading && <p role="status" className="quiet-note">Opening your saved work…</p>}
     {data && <div className="connected-resume-items">
@@ -63,11 +71,31 @@ function ContinueWork() {
   </section>;
 }
 
+/** Celebrates the author's own choices: no counts, no scores, nothing to keep up. Renders
+ * nothing at all when she hasn't pinned anyone — an empty showcase is not a nudge to fill it. */
+function HomeShowcase({ showcase }: { showcase: WorkspaceResume["showcase"] | undefined }) {
+  if (!showcase?.length) return null;
+  return <section className="home-showcase" aria-labelledby="home-showcase-title">
+    <div className="section-heading"><h2 id="home-showcase-title">Your cast</h2>
+      <Link href="/characters" className="text-link">Character Studio <ArrowUpRight size={14} /></Link></div>
+    <div className="home-showcase-grid">
+      {showcase.map(character => <Link key={character.id} href={`/characters/${character.id}`} className="home-showcase-item">
+        {character.cover_url
+          // eslint-disable-next-line @next/next/no-img-element -- private signed URL; see character-studio.tsx
+          ? <img src={character.cover_url} alt="" loading="lazy" />
+          : <span className="home-showcase-empty" aria-hidden="true">{character.display_name.slice(0, 1).toLocaleUpperCase()}</span>}
+        <span>{character.display_name}</span>
+      </Link>)}
+    </div>
+  </section>;
+}
+
 export function ConnectedHome({ dateKey }: { dateKey?: string }) {
   const library = useLibrary();
   const books = library.data?.books ?? [];
   const series = library.data?.series ?? [];
   const { approvals, feedback, ready, viewerEmail, canEdit, sessionEnded } = useWorkspace();
+  const resume = useWorkspaceResume(viewerEmail);
   const pending = approvals.filter((approval) => approval.status === "pending");
   const reviewed = approvals.length - pending.length;
   const counts = [
@@ -121,8 +149,9 @@ export function ConnectedHome({ dateKey }: { dateKey?: string }) {
         </span>
       </div>
 
-      {ready && !sessionEnded && <ContinueWork key={viewerEmail ?? "workspace"} />}
+      {ready && !sessionEnded && <ContinueWork data={resume.data} loading={resume.loading} error={resume.error} onRefresh={resume.refresh} />}
       <DailyQuote dateKey={dateKey} compact />
+      <HomeShowcase showcase={resume.data?.showcase} />
       <div className="connected-main-grid">
         <InspirationShelf dateKey={dateKey} />
 

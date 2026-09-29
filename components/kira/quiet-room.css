@@ -1,0 +1,30 @@
+.quiet-room { display: grid; gap: 28px; min-width: 0; }
+.quiet-room-return { justify-self: start; }
+.quiet-room-stage {
+  display: grid; justify-items: center; text-align: center; gap: 22px;
+  max-width: 62ch; margin: 4vh auto 6vh; padding: 48px 24px;
+}
+.quiet-room-stage h1 { font-size: 34px; max-width: 20ch; overflow-wrap: anywhere; }
+.quiet-room-note { color: #b7c0aa; font-size: 15px; margin: 0; }
+.quiet-room-quote { display: grid; gap: 14px; margin: 12px 0; max-width: 52ch; }
+.quiet-room-quote blockquote { margin: 0; }
+.quiet-room-quote p { font-family: var(--font-display, serif); font-style: italic; font-size: 24px; line-height: 1.6; color: #eee4cf; }
+.quiet-room-quote figcaption { color: #b7c0aa; font-size: 13px; }
+.quiet-room-quote cite { font-style: normal; }
+.quiet-room-character {
+  display: grid; justify-items: center; gap: 10px; text-decoration: none; color: #eee4cf;
+  font-size: 14px; border-radius: 12px; padding: 8px;
+}
+.quiet-room-character:hover { color: #f2e9dc; }
+.quiet-room-character:focus-visible { outline: 2px solid #d7bf8b; outline-offset: 3px; }
+.quiet-room-character img, .quiet-room-character-empty {
+  width: 88px; height: 88px; border-radius: 999px; object-fit: cover;
+  border: 1px solid #414a38; background: #242b20;
+}
+.quiet-room-character-empty { display: grid; place-items: center; font-family: var(--font-display, serif); font-size: 26px; color: #b7c0aa; }
+.quiet-room-source { font-size: 13px; margin-top: 4px; }
+@media (max-width: 600px) {
+  .quiet-room-stage { padding: 32px 16px; margin: 2vh auto 4vh; }
+  .quiet-room-stage h1 { font-size: 27px; }
+  .quiet-room-quote p { font-size: 20px; }
+}

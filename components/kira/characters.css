@@ -1,6 +1,7 @@
 .character-page { display: grid; gap: 28px; min-width: 0; }
 .character-page .page-heading { margin-bottom: 4px; }
 .character-page .page-heading h1 { overflow-wrap: anywhere; }
+.character-heading-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; }
 .character-intro { padding: 26px; display: flex; align-items: flex-start; gap: 20px; }
 .character-intro > svg { flex-shrink: 0; color: #b9a68b; margin-top: 6px; }
 .character-intro h2 { font-size: 27px; margin: 5px 0 12px; }

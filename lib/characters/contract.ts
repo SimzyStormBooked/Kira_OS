@@ -28,7 +28,9 @@ export const characterProfileInputSchema = z.object({
 export const characterProfileEditSchema = characterProfileInputSchema.partial().extend({
   expectedVersion: z.number().int().positive(),
   primaryPortraitId: z.uuid().nullish(),
+  homeShowcasePinned: z.boolean().optional(),
 });
+export const HOME_SHOWCASE_MAX = 6;
 export type CharacterProfileInput = z.infer<typeof characterProfileInputSchema>;
 
 export const galleryPortraitSchema = z.object({
@@ -40,7 +42,7 @@ export const galleryProfileSchema = z.object({
   id: z.uuid(), display_name: z.string(), summary: z.string().nullable(), universe_id: z.uuid().nullable(),
   primary_portrait_id: z.uuid().nullable(), version: z.number(), updated_at: z.string(),
   aliases: z.array(z.string()), portrait_count: z.number(), book_count: z.number(),
-  cover: galleryPortraitSchema.nullable(),
+  cover: galleryPortraitSchema.nullable(), home_showcase_pinned_at: z.string().nullable(),
 });
 export const characterGallerySchema = z.object({
   role: z.enum(["owner", "editor", "viewer"]),

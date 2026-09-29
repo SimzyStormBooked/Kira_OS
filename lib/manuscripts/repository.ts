@@ -26,6 +26,7 @@ export function checkLibraryError(error: { code?: string; message?: string } | n
     "54000": [429, "The workspace has reached its reading limit for today. Resume tomorrow; completed work is saved."],
     "22023": [400, "These book or manuscript details could not be saved. Check the fields and try again."],
     "23505": [409, "A matching record already exists. Reload before trying again."],
+    "23514": [400, "Up to 6 characters can be shown on your home page. Unpin one first."],
   };
   const [status, message] = messages[error.code ?? ""] ?? [503, "Your private library connection is unavailable. Please try again."];
   throw new ManuscriptError(error.code ?? "unavailable", status, message);

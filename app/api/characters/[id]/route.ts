@@ -23,9 +23,9 @@ export async function PATCH(request: Request, context: Context) {
   try {
     const session = await requireLibraryEditor(request);
     const id = z.uuid().parse((await context.params).id);
-    const { expectedVersion, displayName, summary, aliases, primaryPortraitId } = characterProfileEditSchema.parse(await libraryJson(request));
+    const { expectedVersion, displayName, summary, aliases, primaryPortraitId, homeShowcasePinned } = characterProfileEditSchema.parse(await libraryJson(request));
     const repo = createCharacterRepository(session.supabase, session.authorId);
-    const profile = await repo.updateProfile(id, { displayName, summary, aliases, primaryPortraitId }, expectedVersion);
+    const profile = await repo.updateProfile(id, { displayName, summary, aliases, primaryPortraitId, homeShowcasePinned }, expectedVersion);
     return NextResponse.json({ profile }, { headers: privateHeaders });
   } catch (error) { return libraryFailure(error); }
 }
