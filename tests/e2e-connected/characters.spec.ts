@@ -292,3 +292,61 @@ test("a closed new-character draft survives navigation and is rescued when the s
   await expect(ended.getByLabel("Your new character", { exact: true })).toHaveValue(/Unfinished private character marker/);
   await expect(ended.getByLabel("Your new character", { exact: true })).toHaveValue(/Keep these words when the session ends/);
 });
+
+test("pinning a character adds her to the home showcase, and unpinning removes her", async ({ page }) => {
+  await addCharacter(page, "Celine Dubois");
+  await expect(page.getByRole("button", { name: "Show on your home page", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Show on your home page", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Shown on your home page", exact: true })).toBeVisible();
+
+  await page.goto("/");
+  const showcase = page.locator(".home-showcase-item");
+  await expect(showcase).toHaveCount(1);
+  await expect(showcase).toContainText("Celine Dubois");
+  await showcase.click();
+  await expect(page.getByRole("heading", { name: "Celine Dubois", exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Shown on your home page", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Show on your home page", exact: true })).toBeVisible();
+  await page.goto("/");
+  await expect(page.locator(".home-showcase-item")).toHaveCount(0);
+});
+
+test("the showcase stops at six and always allows unpinning the seventh attempt away", async ({ page }) => {
+  const ids: string[] = [];
+  for (let index = 0; index < 6; index += 1) {
+    const id = await addCharacter(page, `Character ${index}`);
+    ids.push(id!);
+    await page.getByRole("button", { name: "Show on your home page", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Shown on your home page", exact: true })).toBeVisible();
+  }
+  await addCharacter(page, "Character 6");
+  await page.getByRole("button", { name: "Show on your home page", exact: true }).click();
+  await expect(page.locator(".library-error[role=alert]")).toContainText("Up to 6 characters");
+  await expect(page.getByRole("button", { name: "Show on your home page", exact: true })).toBeVisible();
+
+  await page.goto(`/characters/${ids[0]}`);
+  await page.getByRole("button", { name: "Shown on your home page", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Show on your home page", exact: true })).toBeVisible();
+});
+
+test("the Quiet Room stays calm, names one of the pinned cast, and returns home cleanly", async ({ page }) => {
+  await addCharacter(page, "Celine Dubois");
+  await page.getByRole("button", { name: "Show on your home page", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Shown on your home page", exact: true })).toBeVisible();
+
+  await page.goto("/");
+  await page.getByRole("link", { name: /Open the Quiet Room/ }).click();
+  await expect(page).toHaveURL(/\/quiet-room$/);
+  await expect(page.getByRole("heading", { name: "Nothing here needs a decision.", exact: true })).toBeVisible();
+  await expect(page.locator(".quiet-room-character")).toContainText("Celine Dubois");
+  // Nothing here is a form, a counter, or a decision to make.
+  await expect(page.locator("progress, [role=progressbar], input, textarea, select")).toHaveCount(0);
+
+  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
+  expect(results.violations).toEqual([]);
+
+  await page.getByRole("link", { name: "Return to Mission Control", exact: true }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("heading", { name: /Welcome home/ })).toBeVisible();
+});

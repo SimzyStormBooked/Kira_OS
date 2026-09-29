@@ -17,7 +17,9 @@ export type StoredPortrait = z.infer<typeof storedPortraitSchema>;
 export const characterProfileSchema = z.object({
   id: z.uuid(), display_name: z.string(), normalized_name: z.string(), universe_id: z.uuid().nullable(),
   summary: z.string().nullable(), primary_portrait_id: z.uuid().nullable(), version: z.number(), updated_at: z.string(),
+  home_showcase_pinned_at: z.string().nullable(),
 });
+const PROFILE_COLUMNS = "id,display_name,normalized_name,universe_id,summary,primary_portrait_id,version,updated_at,home_showcase_pinned_at";
 
 /** A portrait's stored path is private; members receive a signed URL instead. */
 export function portraitSummary(row: StoredPortrait) {
@@ -74,7 +76,7 @@ export function createCharacterRepository(supabase: SupabaseClient, authorId: st
   return {
     async findProfile(profileId: string) {
       const { data, error } = await supabase.from("character_profiles")
-        .select("id,display_name,normalized_name,universe_id,summary,primary_portrait_id,version,updated_at")
+        .select(PROFILE_COLUMNS)
         .eq("author_id", authorId).eq("id", profileId).maybeSingle();
       checkLibraryError(error);
       if (!data) throw new ManuscriptError("P0002", 404, "This character is unavailable in your workspace.");
@@ -101,7 +103,7 @@ export function createCharacterRepository(supabase: SupabaseClient, authorId: st
     },
     async listProfiles() {
       const { data, error } = await supabase.from("character_profiles")
-        .select("id,display_name,normalized_name,universe_id,summary,primary_portrait_id,version,updated_at")
+        .select(PROFILE_COLUMNS)
         .eq("author_id", authorId).order("normalized_name").limit(500);
       checkLibraryError(error);
       const profiles = (data ?? []).map(row => characterProfileSchema.parse(row));
@@ -205,12 +207,13 @@ export function createCharacterRepository(supabase: SupabaseClient, authorId: st
       checkLibraryError(error);
       return characterProfileSchema.parse(singleComposite(data));
     },
-    async updateProfile(profileId: string, changes: { displayName?: string; summary?: string | null; aliases?: string[]; primaryPortraitId?: string | null }, expectedVersion: number) {
+    async updateProfile(profileId: string, changes: { displayName?: string; summary?: string | null; aliases?: string[]; primaryPortraitId?: string | null; homeShowcasePinned?: boolean }, expectedVersion: number) {
       const patch: Record<string, unknown> = {};
       if (changes.displayName !== undefined) patch.display_name = changes.displayName;
       if (changes.summary !== undefined) patch.summary = changes.summary;
       if (changes.aliases !== undefined) patch.aliases = changes.aliases;
       if (changes.primaryPortraitId !== undefined) patch.primary_portrait_id = changes.primaryPortraitId;
+      if (changes.homeShowcasePinned !== undefined) patch.home_showcase_pinned = changes.homeShowcasePinned;
       const { data, error } = await supabase.rpc("character_profile_save", {
         p_author_id: authorId, p_id: profileId, p_expected_version: expectedVersion, p_changes: patch,
       });
@@ -237,6 +240,32 @@ export function createCharacterRepository(supabase: SupabaseClient, authorId: st
     async unlinkCharacter(profileId: string, linkId: string) {
       const { error } = await supabase.from("character_profile_links").delete().eq("author_id", authorId).eq("profile_id", profileId).eq("id", linkId);
       checkLibraryError(error);
+    },
+    /**
+     * The home page's pinned cast: a handful of chosen characters, oldest pin first, so
+     * pinning order reads as the order the author chose them in. Queried and signed
+     * separately from the full gallery, since a showcase is always small.
+     */
+    async listShowcase() {
+      const { data, error } = await supabase.from("character_profiles")
+        .select("id,display_name,primary_portrait_id")
+        .eq("author_id", authorId).not("home_showcase_pinned_at", "is", null)
+        .order("home_showcase_pinned_at", { ascending: true }).limit(6);
+      checkLibraryError(error);
+      const profiles = data ?? [];
+      if (!profiles.length) return [];
+      const portraits = await readyPortraits(profiles.map(profile => String(profile.id)));
+      const covers = profiles.flatMap(profile => {
+        const owned = portraits.filter(portrait => portrait.profile_id === profile.id);
+        const cover = owned.find(portrait => portrait.id === profile.primary_portrait_id) ?? owned[0];
+        return cover ? [cover] : [];
+      });
+      const urls = await signedUrls(covers);
+      return profiles.map(profile => {
+        const owned = portraits.filter(portrait => portrait.profile_id === profile.id);
+        const cover = owned.find(portrait => portrait.id === profile.primary_portrait_id) ?? owned[0];
+        return { id: String(profile.id), display_name: String(profile.display_name), cover_url: cover ? urls.get(cover.id) ?? null : null };
+      });
     },
   };
 }

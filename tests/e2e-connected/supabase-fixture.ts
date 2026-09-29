@@ -52,7 +52,7 @@ let manuscriptBatches: FixtureBatch[] = [];
 let intelligence: FixtureIntelligence[] = [];
 // Character Studio rows. Identity, portraits and notes are author-owned; characters[] stands
 // in for the extraction-owned table a confirmed link points at.
-type FixtureProfile = { id: string; author_id: string; universe_id: string | null; display_name: string; normalized_name: string; summary: string | null; primary_portrait_id: string | null; version: number; created_by: string; created_at: string; updated_at: string; data_origin: "manual" };
+type FixtureProfile = { id: string; author_id: string; universe_id: string | null; display_name: string; normalized_name: string; summary: string | null; primary_portrait_id: string | null; home_showcase_pinned_at: string | null; version: number; created_by: string; created_at: string; updated_at: string; data_origin: "manual" };
 type FixtureAlias = { id: string; author_id: string; profile_id: string; alias: string; normalized_alias: string; created_by: string; created_at: string };
 type FixturePortrait = { id: string; author_id: string; profile_id: string; storage_path: string; status: "uploading" | "ready" | "failed"; mime_type: string; size_bytes: number; content_hash: string; width: number | null; height: number | null; caption: string | null; source_credit: string | null; usage_permission: "private_reference_only" | "promotional_approved"; permission_granted_by: string; location_metadata_removed: boolean; sanitized_at: string | null; error_code: string | null; created_at: string; updated_at: string; data_origin: "manual" };
 type FixtureNote = { id: string; author_id: string; profile_id: string; book_id: string | null; kind: "author_confirmed" | "visual_inspiration"; body: string; version: number; created_by: string; created_at: string; updated_at: string };
@@ -140,6 +140,7 @@ function respondRows(request: IncomingMessage, response: ServerResponse, url: UR
     }
     if (filter.startsWith("neq.")) return String(value) !== filter.slice(4);
     if (filter.startsWith("in.(")) return filter.slice(4, -1).split(",").includes(String(value));
+    if (filter === "not.is.null") return value !== null && value !== undefined;
     return false;
   }));
   const orders = url.searchParams.get("order")?.split(",").map(order=>order.split("."));
@@ -479,12 +480,18 @@ const server = createServer(async (request, response) => {
         const portrait = changes.primary_portrait_id ? characterPortraits.find(item=>item.id===changes.primary_portrait_id && item.profile_id===row?.id && item.status==='ready') : null;
         if (changes.primary_portrait_id && !portrait) return respond(response,409,{code:"23503"});
         if (!row) {
-          row={id:randomUUID(),author_id:fixture.authorId,universe_id:null,display_name:String(changes.display_name),normalized_name:normalize(String(changes.display_name)),summary:null,primary_portrait_id:null,version:1,created_by:session.user.id,created_at:now,updated_at:now,data_origin:"manual"};
+          row={id:randomUUID(),author_id:fixture.authorId,universe_id:null,display_name:String(changes.display_name),normalized_name:normalize(String(changes.display_name)),summary:null,primary_portrait_id:null,home_showcase_pinned_at:null,version:1,created_by:session.user.id,created_at:now,updated_at:now,data_origin:"manual"};
           characterProfiles.push(row);
         } else row.version++;
+        if (changes.home_showcase_pinned!==undefined && typeof changes.home_showcase_pinned !== "boolean") return respond(response,400,{code:"22023"});
+        if (changes.home_showcase_pinned===true && row.home_showcase_pinned_at===null
+          && characterProfiles.filter(item=>item.author_id===fixture.authorId && item.home_showcase_pinned_at!==null).length>=6) {
+          return respond(response,400,{code:"23514",message:"Up to 6 characters can be shown on your home page. Unpin one first."});
+        }
         if (changes.display_name!==undefined) {row.display_name=String(changes.display_name);row.normalized_name=normalize(row.display_name);}
         if (changes.summary!==undefined) row.summary=changes.summary===null?null:String(changes.summary);
         if (changes.primary_portrait_id!==undefined) row.primary_portrait_id=portrait?.id ?? null;
+        if (changes.home_showcase_pinned!==undefined) row.home_showcase_pinned_at=changes.home_showcase_pinned?now:null;
         row.updated_at=now;
         if (aliases) { characterAliases=characterAliases.filter(item=>item.profile_id!==row!.id); for (const alias of aliases) characterAliases.push({id:randomUUID(),author_id:fixture.authorId,profile_id:row.id,alias,normalized_alias:normalize(alias),created_by:session.user.id,created_at:now}); }
         return respond(response,200,row);
@@ -802,7 +809,7 @@ const server = createServer(async (request, response) => {
             const row: FixtureProfile = {
               id: randomUUID(), author_id: fixture.authorId, universe_id: null, display_name: displayName,
               normalized_name: normalize(displayName), summary: entry.summary === null || entry.summary === undefined ? null : String(entry.summary),
-              primary_portrait_id: null, version: 1, created_by: session.user.id, created_at: now, updated_at: now, data_origin: "manual",
+              primary_portrait_id: null, home_showcase_pinned_at: null, version: 1, created_by: session.user.id, created_at: now, updated_at: now, data_origin: "manual",
             };
             characterProfiles.push(row); created.push(row);
           } else if (table === "character_profile_aliases") {

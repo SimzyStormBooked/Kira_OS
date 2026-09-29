@@ -19,6 +19,7 @@ import {
   GraduationCap,
   Menu,
   Megaphone,
+  Moon,
   Radio,
   Search,
   Settings,
@@ -454,6 +455,12 @@ export function AppShell({
             <span>{title}</span>
           </div>
           <div className="topbar-actions">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/quiet-room" aria-label="Open the Quiet Room, a calm view away from the day's list">
+                <Moon size={16} aria-hidden="true" />
+                <span className="search-label">Quiet Room</span>
+              </Link>
+            </Button>
             <InspirationDialogTrigger dateKey={dateKey} />
             <WorkspaceGuide />
             <Button

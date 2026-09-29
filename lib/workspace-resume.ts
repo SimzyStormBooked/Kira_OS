@@ -10,9 +10,11 @@ export const resumeBookSchema = z.object({
   id: z.uuid(), slug: z.string(), title: z.string(), updated_at: z.string(), active_manuscript_id: z.uuid().nullable(),
 });
 export const resumeAnswerSchema = z.object({ id: z.uuid(), title: z.string().nullable(), completed_at: z.string().nullable(), created_at: z.string() });
+export const resumeShowcaseSchema = z.object({ id: z.uuid(), display_name: z.string(), cover_url: z.string().nullable() });
 export const workspaceResumeSchema = z.object({
   books: resumeBookSchema.extend({ reading: readingSchema.nullable() }).array().max(2),
   answer: resumeAnswerSchema.nullable(),
+  showcase: resumeShowcaseSchema.array().max(6),
 });
 export type WorkspaceResume = z.infer<typeof workspaceResumeSchema>;
 

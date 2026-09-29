@@ -72,7 +72,7 @@ beforeAll(async () => {
     grant usage on schema storage to authenticated,anon;
     grant select,insert,update,delete on storage.objects to authenticated,anon;
     create policy unrelated_permissive_storage_policy on storage.objects for all to authenticated,anon using(true) with check(true);`);
-  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609200001_background_reading", "202609200003_character_organization", "202609210001_character_studio", "202609260002_character_profile_editing"]) {
+  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609200001_background_reading", "202609200003_character_organization", "202609210001_character_studio", "202609260002_character_profile_editing", "202609290001_home_showcase"]) {
     await db.exec(readFileSync(`supabase/migrations/${name}.sql`, "utf8"));
   }
   await db.query("insert into private.workspace_generation_config(singleton,recording_key_hash) values(true,encode(sha256(convert_to($1,'UTF8')),'hex'))", [recordingKey]);
@@ -279,6 +279,48 @@ describe("atomic profile details and aliases", () => {
     await expect(save(created.id, 1, { display_name: "Other workspace" })).rejects.toThrow(/Only an owner or editor/);
     await asUser(owner);
     await expect(save(null, null, { display_name: "Other workspace" }, otherAuthor)).rejects.toThrow(/Only an owner or editor/);
+  });
+});
+
+describe("home showcase", () => {
+  const save = (id: string, version: number, changes: unknown, tenant = author) => scalar<Profile & { home_showcase_pinned_at: string | null }>("select public.character_profile_save($1,$2,$3,$4) as value", [tenant, id, version, JSON.stringify(changes)]);
+  it("pins and unpins, and re-pinning moves a character to the end of the order", async () => {
+    const celine = await profile("Celine");
+    const pinned = await save(celine.id, 1, { home_showcase_pinned: true });
+    expect(pinned.version).toBe(2);
+    expect(pinned.home_showcase_pinned_at).not.toBeNull();
+    const unpinned = await save(celine.id, 2, { home_showcase_pinned: false });
+    expect(unpinned.home_showcase_pinned_at).toBeNull();
+    const rePinned = await save(celine.id, 3, { home_showcase_pinned: true });
+    expect(new Date(rePinned.home_showcase_pinned_at!).getTime()).toBeGreaterThan(new Date(pinned.home_showcase_pinned_at!).getTime());
+  });
+
+  it("leaves the pin untouched when a save does not mention it", async () => {
+    const celine = await profile("Celine");
+    const pinned = await save(celine.id, 1, { home_showcase_pinned: true });
+    const renamed = await save(celine.id, 2, { display_name: "Celine Dubois" });
+    expect(renamed.home_showcase_pinned_at).toBe(pinned.home_showcase_pinned_at);
+  });
+
+  it("caps the showcase at 6 pinned characters but always allows unpinning", async () => {
+    const profiles = await Promise.all(Array.from({ length: 6 }, (_, index) => profile(`Character ${index}`)));
+    for (const target of profiles) await save(target.id, 1, { home_showcase_pinned: true });
+    const seventh = await profile("Character 6");
+    await expect(save(seventh.id, 1, { home_showcase_pinned: true })).rejects.toThrow(/Up to 6 characters/);
+    // Unpinning always succeeds, even while the showcase is full, and the freed slot can be reused.
+    await save(profiles[0].id, 2, { home_showcase_pinned: false });
+    await expect(save(seventh.id, 1, { home_showcase_pinned: true })).resolves.toMatchObject({ id: seventh.id });
+  });
+
+  it("denies a viewer and keeps the pin private to its own workspace", async () => {
+    const celine = await profile("Celine");
+    await asUser(viewer);
+    await expect(save(celine.id, 1, { home_showcase_pinned: true })).rejects.toThrow(/Only an owner or editor/);
+    await asUser(outsider);
+    const brick = await profile("Brick", otherAuthor);
+    await expect(save(brick.id, 1, { home_showcase_pinned: true }, otherAuthor)).resolves.toMatchObject({ id: brick.id });
+    await asUser(owner);
+    await expect(save(brick.id, 1, { home_showcase_pinned: true }, otherAuthor)).rejects.toThrow(/Only an owner or editor/);
   });
 });
 

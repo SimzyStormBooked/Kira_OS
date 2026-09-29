@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowLeft, BookOpen, Check, Image as ImageIcon, ShieldCheck, Sparkles, Upload } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, Home, Image as ImageIcon, ShieldCheck, Sparkles, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWorkspace } from "@/lib/db/demo-store";
@@ -108,6 +108,16 @@ function ConnectedCharacterProfile({ id }: { id: string }) {
     } catch (failure) { setError(failure instanceof LibraryRequestError ? failure.message : "That change was not saved."); }
     finally { setSaving(""); }
   }
+  async function toggleShowcase() {
+    if (!data || saving) return;
+    setSaving("showcase");
+    try {
+      await request(`/api/characters/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ homeShowcasePinned: !data.profile.home_showcase_pinned_at, expectedVersion: data.profile.version }) });
+      await load();
+    } catch (failure) { setError(failure instanceof LibraryRequestError ? failure.message : "That change was not saved."); }
+    finally { setSaving(""); }
+  }
   async function unlink(linkId: string) {
     if (saving) return; setSaving(linkId);
     try { await request(`/api/characters/${id}/links`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ linkId }) }); setUnlinking(null); await load(); }
@@ -125,7 +135,12 @@ function ConnectedCharacterProfile({ id }: { id: string }) {
         <h1>{profile.display_name}</h1>
         {profile.aliases.length > 0 && <p className="character-aliases">Also known as {profile.aliases.join(", ")}</p>}
         {profile.summary && <p>{profile.summary}</p>}
-      </div>{canEdit && <Button variant="outline" onClick={() => setEditing(true)}>{formDrafts[`character:${id}:edit`] ? "Resume character edits" : "Edit character"}</Button>}</div>
+      </div>{canEdit && <div className="character-heading-actions">
+        <Button variant={profile.home_showcase_pinned_at ? "secondary" : "outline"} disabled={saving === "showcase"} onClick={() => void toggleShowcase()}>
+          <Home size={15} /> {profile.home_showcase_pinned_at ? "Shown on your home page" : "Show on your home page"}
+        </Button>
+        <Button variant="outline" onClick={() => setEditing(true)}>{formDrafts[`character:${id}:edit`] ? "Resume character edits" : "Edit character"}</Button>
+      </div>}</div>
 
       <section aria-labelledby="portraits-heading" className="character-section">
         <h2 id="portraits-heading"><ImageIcon size={18} /> Portraits</h2>
