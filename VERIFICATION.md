@@ -1,5 +1,13 @@
 # KIRA OS verification
 
+## Character relationships — September 29, 2026
+
+Character Studio now has author-written relationships between characters (`202609290002_character_relationships.sql`, documented in [docs/character-studio.md](docs/character-studio.md)). Each is a directed sentence ("Celine is the mother of Brick"); no inverse is ever generated, and manuscript-extracted relationship text is neither read nor rewritten. It is a list, not a node graph.
+
+`npm run check` passed TypeScript, ESLint, **867 unit/API/database tests across 59 files**, and the production build. New PGlite tests cover sentence reading in either direction, self and cross-workspace refusal, version advance and stale-save detection, viewer denial and forgery prevention, and cascade on profile deletion. The full connected browser suite passed **180 of 180**, including both characters' pages showing the identical sentence with no invented reverse, editing and removing, draft recovery, and a zero-violation accessibility sweep on desktop and mobile. The demo suite passed 18 of 20 with only the known `/discoverability` failure below.
+
+Not verified: the hosted database. The migration has not been applied there, and the simulated browser boundary is a transport double, not a database.
+
 ## Home showcase and Quiet Room — September 29, 2026
 
 Character Studio's deferred sequence — an author-selected home showcase and an optional Quiet Room — is implemented. `202609290001_home_showcase.sql` extends the existing `character_profile_save` RPC with one more key (`home_showcase_pinned`) rather than adding a parallel one, capped at 6 pinned characters and checked only when actually pinning, so unpinning always succeeds even while full. The cap violation carries its own error code (`23514`) so the interface shows its exact, actionable text instead of the generic validation message every other `22023` failure shares — this was caught by a connected browser test expecting that exact text, which surfaced a real gap: the shared error mapper was silently substituting a generic message for every specific one.

@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowLeft, BookOpen, Check, Home, Image as ImageIcon, ShieldCheck, Sparkles, Upload } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, Heart, Home, Image as ImageIcon, ShieldCheck, Sparkles, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWorkspace } from "@/lib/db/demo-store";
 import { PORTRAIT_MAX_BYTES, characterProfileDetailSchema, portraitFormat, type CharacterProfileDetail, type GalleryPortrait } from "@/lib/characters/contract";
 import { LibraryRequestError, useLibrary } from "./library-provider";
-import { CharacterDetailsForm, CharacterNoteForm, CharacterSourceLinker, CharacterSourcePassage, useCharacterDraft } from "./character-forms";
+import { CharacterDetailsForm, CharacterNoteForm, CharacterRelationshipForm, CharacterSourceLinker, CharacterSourcePassage, useCharacterDraft } from "./character-forms";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import "./characters.css";
 
@@ -82,6 +82,8 @@ function ConnectedCharacterProfile({ id }: { id: string }) {
   const [editing, setEditing] = useState(false), [noteId, setNoteId] = useState<string | null>(null);
   const [unlinking, setUnlinking] = useState<string | null>(null);
   const [showLinker, setShowLinker] = useState(false);
+  const [relationshipId, setRelationshipId] = useState<string | null>(null);
+  const [removingRelationship, setRemovingRelationship] = useState<string | null>(null);
   const [data, setData] = useState<CharacterProfileDetail | null>(null);
   const [loading, setLoading] = useState(true); const [error, setError] = useState(""); const [saving, setSaving] = useState("");
   const mounted = useRef(true);
@@ -122,6 +124,11 @@ function ConnectedCharacterProfile({ id }: { id: string }) {
     if (saving) return; setSaving(linkId);
     try { await request(`/api/characters/${id}/links`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ linkId }) }); setUnlinking(null); await load(); }
     catch (failure) { setError(failure instanceof LibraryRequestError ? failure.message : "The link could not be removed."); } finally { setSaving(""); }
+  }
+  async function removeRelationship(targetId: string) {
+    if (saving) return; setSaving(targetId);
+    try { await request(`/api/characters/relationships/${targetId}`, { method: "DELETE" }); setRemovingRelationship(null); await load(); }
+    catch (failure) { setError(failure instanceof LibraryRequestError ? failure.message : "The relationship could not be removed."); } finally { setSaving(""); }
   }
   const profile = data?.profile;
   const canEdit = data?.role !== "viewer";
@@ -173,8 +180,26 @@ function ConnectedCharacterProfile({ id }: { id: string }) {
           : <p className="quiet-note">Not linked to a book yet. A shared name is not proof of the same person, so each link is a decision you confirm and can undo.</p>}
         {canEdit && <><Button variant="outline" aria-expanded={showLinker} aria-controls="character-link-form" onClick={() => setShowLinker(value => !value)}>{showLinker ? "Close link form" : "Link a manuscript character"}</Button>{showLinker && <div id="character-link-form"><Suspense fallback={<p>Opening source choices…</p>}><CharacterSourceLinker profileId={id} onSaved={() => void load()} /></Suspense></div>}</>}
       </section>
+
+      <section aria-labelledby="relationships-heading" className="character-section">
+        <h2 id="relationships-heading"><Heart size={18} /> Relationships</h2>
+        {data.relationships.length > 0
+          ? <ul className="character-relationships">{data.relationships.map(rel => <li key={rel.id}>
+              <p><strong>{rel.profile_name}</strong> {rel.label} <strong>{rel.related_profile_name}</strong></p>
+              {rel.note && <p>{rel.note}</p>}
+              {rel.book_title && <p className="quiet-note">Noted in {rel.book_title}</p>}
+              {canEdit && <div className="library-actions">
+                <Button variant="ghost" onClick={() => setRelationshipId(rel.id)}>{formDrafts[`character:${id}:relationship:${rel.id}`] ? "Resume relationship edits" : "Edit"}</Button>
+                {removingRelationship === rel.id
+                  ? <><span>Remove this relationship?</span><Button variant="outline" disabled={Boolean(saving)} onClick={() => void removeRelationship(rel.id)}>Confirm remove</Button><Button variant="ghost" onClick={() => setRemovingRelationship(null)}>Keep it</Button></>
+                  : <Button variant="ghost" onClick={() => setRemovingRelationship(rel.id)}>Remove</Button>}
+              </div>}</li>)}</ul>
+          : <p className="quiet-note">No relationships yet. A relationship is a sentence you write yourself, naming how one character connects to another.</p>}
+        {canEdit && <Button variant="outline" onClick={() => setRelationshipId("new")}>{formDrafts[`character:${id}:relationship:new`] ? "Resume relationship" : "Add relationship"}</Button>}
+      </section>
       <Dialog open={editing} onOpenChange={setEditing}><DialogContent className="library-dialog" aria-labelledby="edit-character-title"><DialogHeader><DialogTitle id="edit-character-title">Edit character</DialogTitle><DialogDescription>Your own names and description. Closing keeps your unfinished edits in this tab.</DialogDescription></DialogHeader><CharacterDetailsForm profile={profile} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); void load(); }} /></DialogContent></Dialog>
       <Dialog open={noteId !== null} onOpenChange={open => { if (!open) setNoteId(null); }}><DialogContent className="library-dialog" aria-labelledby="character-note-title"><DialogHeader><DialogTitle id="character-note-title">{noteId === "new" ? "Add character note" : "Edit character note"}</DialogTitle><DialogDescription>Author-confirmed reference and visual inspiration stay distinct.</DialogDescription></DialogHeader>{noteId && <CharacterNoteForm key={noteId} profileId={id} note={data.notes.find(note => note.id === noteId)} onClose={() => setNoteId(null)} onSaved={() => { setNoteId(null); void load(); }} />}</DialogContent></Dialog>
+      <Dialog open={relationshipId !== null} onOpenChange={open => { if (!open) setRelationshipId(null); }}><DialogContent className="library-dialog" aria-labelledby="character-relationship-title"><DialogHeader><DialogTitle id="character-relationship-title">{relationshipId === "new" ? "Add relationship" : "Edit relationship"}</DialogTitle><DialogDescription>Your own words, connecting two of your characters. No reverse relationship is created.</DialogDescription></DialogHeader>{relationshipId && <CharacterRelationshipForm key={relationshipId} profileId={id} relationship={data.relationships.find(rel => rel.id === relationshipId)} onClose={() => setRelationshipId(null)} onSaved={() => { setRelationshipId(null); void load(); }} />}</DialogContent></Dialog>
     </>}
   </div>;
 }

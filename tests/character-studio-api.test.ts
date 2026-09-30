@@ -15,8 +15,10 @@ import { GET as listSources } from "@/app/api/characters/sources/route";
 import { POST as addNote } from "@/app/api/characters/[id]/notes/route";
 import { PATCH as editNote } from "@/app/api/characters/[id]/notes/[noteId]/route";
 import { POST as linkCharacter, DELETE as unlinkCharacter } from "@/app/api/characters/[id]/links/route";
+import { GET as listRelationships, POST as createRelationship } from "@/app/api/characters/relationships/route";
+import { PATCH as editRelationship, DELETE as deleteRelationship } from "@/app/api/characters/relationships/[relationshipId]/route";
 
-const authorId = randomUUID(), userId = randomUUID(), profileId = randomUUID(), portraitId = randomUUID(), bookId = randomUUID(), manuscriptId = randomUUID(), characterId = randomUUID();
+const authorId = randomUUID(), userId = randomUUID(), profileId = randomUUID(), portraitId = randomUUID(), bookId = randomUUID(), manuscriptId = randomUUID(), characterId = randomUUID(), relatedProfileId = randomUUID(), relationshipId = randomUUID();
 const origin = "https://kira.test";
 const cover = { id: portraitId, caption: "Reference board", source_credit: null, usage_permission: "private_reference_only" as const, width: 800, height: 1000, created_at: new Date().toISOString(), url: "https://storage.test/signed?token=short-lived" };
 const profile = { id: profileId, display_name: "Celine", summary: null, universe_id: null, primary_portrait_id: portraitId, home_showcase_pinned_at: null, version: 2, updated_at: new Date().toISOString(), aliases: ["The Lark"], portrait_count: 1, book_count: 1, cover };
@@ -24,8 +26,10 @@ const detail = {
   profile, portraits: [cover],
   notes: [{ id: randomUUID(), kind: "author_confirmed" as const, body: "She never lies about the harbour.", book_id: bookId, version: 1, created_at: new Date().toISOString() }],
   links: [{ id: randomUUID(), book_id: bookId, character_id: characterId, note: null, confirmed_at: new Date().toISOString(), book_title: "The Quiet Library", character_name: "Celine" }],
+  relationships: [],
 };
-const repo = { listSources: vi.fn(), saveNote: vi.fn(), linkCharacter: vi.fn(), unlinkCharacter: vi.fn(), listProfiles: vi.fn(), profileDetail: vi.fn(), createProfile: vi.fn(), updateProfile: vi.fn(), findProfile: vi.fn() };
+const relationship = { id: relationshipId, profile_id: profileId, related_profile_id: relatedProfileId, label: "is the mother of", note: null, book_id: null, version: 1, updated_at: new Date().toISOString(), profile_name: "Celine", related_profile_name: "Brick", book_title: null };
+const repo = { listSources: vi.fn(), saveNote: vi.fn(), linkCharacter: vi.fn(), unlinkCharacter: vi.fn(), listProfiles: vi.fn(), profileDetail: vi.fn(), createProfile: vi.fn(), updateProfile: vi.fn(), findProfile: vi.fn(), listAllRelationships: vi.fn(), createRelationship: vi.fn(), updateRelationship: vi.fn(), deleteRelationship: vi.fn() };
 const supabase = { storage: { from: vi.fn() } };
 const context = { params: Promise.resolve({ id: profileId }) };
 function get(path: string, site: string | null = origin) {
@@ -44,6 +48,7 @@ beforeEach(() => {
   repo.createProfile.mockResolvedValue({ id: profileId, display_name: "Celine", normalized_name: "celine", universe_id: null, summary: null, primary_portrait_id: null, home_showcase_pinned_at: null, version: 1, updated_at: new Date().toISOString() });
   repo.updateProfile.mockResolvedValue({ ...profile, version: 3 });
   repo.saveNote.mockResolvedValue(detail.notes[0]); repo.listSources.mockResolvedValue([]);
+  repo.listAllRelationships.mockResolvedValue([relationship]); repo.createRelationship.mockResolvedValue(relationship); repo.updateRelationship.mockResolvedValue({ ...relationship, version: 2 });
 });
 afterEach(() => vi.unstubAllEnvs());
 
@@ -155,5 +160,47 @@ describe("character notes and source identity API boundaries", () => {
     vi.mocked(requireWorkspaceSession).mockRejectedValue(new WorkspaceAccessError(401, "unauthenticated", "Sign in again."));
     expect((await addNote(send(`/api/characters/${profileId}/notes`, { kind: "author_confirmed", body: "No" }), context)).status).toBe(401);
     expect(repo.saveNote).not.toHaveBeenCalled(); expect(repo.linkCharacter).not.toHaveBeenCalled(); expect(repo.unlinkCharacter).not.toHaveBeenCalled();
+  });
+});
+
+describe("character relationships API boundaries", () => {
+  const relationshipContext = { params: Promise.resolve({ relationshipId }) };
+  it("reads the workspace-level list without an Origin header", async () => {
+    const response = await listRelationships();
+    expect(response.status).toBe(200);
+    const payload = await response.json() as { relationships: unknown[] };
+    expect(payload.relationships).toEqual([relationship]);
+  });
+
+  it("creates a relationship naming both profiles and refuses a relationship to oneself", async () => {
+    const created = await createRelationship(send("/api/characters/relationships", { profileId, relatedProfileId, label: "is the mother of" }));
+    expect(created.status).toBe(201);
+    expect(repo.createRelationship).toHaveBeenCalledWith(profileId, expect.objectContaining({ relatedProfileId, label: "is the mother of" }));
+    expect((await createRelationship(send("/api/characters/relationships", { profileId, relatedProfileId: profileId, label: "confides in herself" }))).status).toBe(400);
+    expect((await createRelationship(send("/api/characters/relationships", { profileId, relatedProfileId, label: "   " }))).status).toBe(400);
+    expect(repo.createRelationship).toHaveBeenCalledOnce();
+  });
+
+  it("passes the held version through on edit so a stale save is refused rather than overwriting", async () => {
+    const response = await editRelationship(send(`/api/characters/relationships/${relationshipId}`, { label: "raised", expectedVersion: 1 }, "PATCH"), relationshipContext);
+    expect(response.status).toBe(200);
+    expect(repo.updateRelationship).toHaveBeenCalledWith(relationshipId, expect.objectContaining({ label: "raised" }), 1);
+    expect((await editRelationship(send(`/api/characters/relationships/${relationshipId}`, { label: "raised" }, "PATCH"), relationshipContext)).status).toBe(400);
+    expect(repo.updateRelationship).toHaveBeenCalledOnce();
+  });
+
+  it("removes a relationship", async () => {
+    expect((await deleteRelationship(send(`/api/characters/relationships/${relationshipId}`, {}, "DELETE"), relationshipContext)).status).toBe(200);
+    expect(repo.deleteRelationship).toHaveBeenCalledWith(relationshipId);
+  });
+
+  it("denies a viewer and a cross-origin write before touching relationship storage", async () => {
+    vi.mocked(getWorkspaceRole).mockResolvedValue("viewer");
+    expect((await createRelationship(send("/api/characters/relationships", { profileId, relatedProfileId, label: "confides in" }))).status).toBe(403);
+    expect((await editRelationship(send(`/api/characters/relationships/${relationshipId}`, { label: "raised", expectedVersion: 1 }, "PATCH"), relationshipContext)).status).toBe(403);
+    expect((await deleteRelationship(send(`/api/characters/relationships/${relationshipId}`, {}, "DELETE"), relationshipContext)).status).toBe(403);
+    vi.mocked(getWorkspaceRole).mockResolvedValue("editor");
+    expect((await createRelationship(send("/api/characters/relationships", { profileId, relatedProfileId, label: "confides in" }, "POST", "https://elsewhere.test"))).status).toBe(403);
+    expect(repo.createRelationship).not.toHaveBeenCalled(); expect(repo.updateRelationship).not.toHaveBeenCalled(); expect(repo.deleteRelationship).not.toHaveBeenCalled();
   });
 });

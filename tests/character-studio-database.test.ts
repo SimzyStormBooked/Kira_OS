@@ -72,7 +72,7 @@ beforeAll(async () => {
     grant usage on schema storage to authenticated,anon;
     grant select,insert,update,delete on storage.objects to authenticated,anon;
     create policy unrelated_permissive_storage_policy on storage.objects for all to authenticated,anon using(true) with check(true);`);
-  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609200001_background_reading", "202609200003_character_organization", "202609210001_character_studio", "202609260002_character_profile_editing", "202609290001_home_showcase"]) {
+  for (const name of ["202609170001_foundation", "202609170002_knowledge_vectors", "20260918003251_workspace_generations", "202609190001_manuscript_intelligence", "202609200001_background_reading", "202609200003_character_organization", "202609210001_character_studio", "202609260002_character_profile_editing", "202609290001_home_showcase", "202609290002_character_relationships"]) {
     await db.exec(readFileSync(`supabase/migrations/${name}.sql`, "utf8"));
   }
   await db.query("insert into private.workspace_generation_config(singleton,recording_key_hash) values(true,encode(sha256(convert_to($1,'UTF8')),'hex'))", [recordingKey]);
@@ -334,5 +334,66 @@ describe("confirmed link source provenance", () => {
     const newer = await readManuscript(targetBook);
     expect(newer.manuscript.id).not.toBe(source.manuscript.id);
     expect((await db.query<{ source_manuscript_id: string }>("select source_manuscript_id from public.character_profile_links where profile_id=$1", [target.id])).rows[0].source_manuscript_id).toBe(source.manuscript.id);
+  });
+});
+
+type Relationship = { id: string; author_id: string; profile_id: string; related_profile_id: string; label: string; note: string | null; book_id: string | null; version: number; updated_at: string };
+describe("character relationships", () => {
+  const relate = (subject: Profile, object: Profile, label: string, note: string | null = null, bookId: string | null = null, tenant = author) =>
+    written<Relationship>("insert into public.character_relationships as r(author_id,profile_id,related_profile_id,label,note,book_id) values($1,$2,$3,$4,$5,$6) returning to_jsonb(r) as value",
+      [tenant, subject.id, object.id, label, note, bookId]);
+
+  it("reads back as a sentence naming both profiles, and lists a profile's relationships in either direction", async () => {
+    const celine = await profile("Celine"), brick = await profile("Brick");
+    const asMother = await relate(celine, brick, "is the mother of", "Confirmed in book two.");
+    expect(asMother).toMatchObject({ profile_id: celine.id, related_profile_id: brick.id, label: "is the mother of", version: 1 });
+    const subjectSide = await db.query("select id from public.character_relationships where author_id=$1 and profile_id=$2", [author, brick.id]);
+    expect(subjectSide.rows).toHaveLength(0); // Brick is the object here, not the subject.
+    const objectSide = await db.query("select id from public.character_relationships where author_id=$1 and related_profile_id=$2", [author, brick.id]);
+    expect(objectSide.rows).toHaveLength(1);
+    // No reverse label is invented: a second, independent relationship states Brick's own side.
+    await relate(brick, celine, "is the son of");
+    expect((await db.query("select id from public.character_relationships where author_id=$1", [author])).rows).toHaveLength(2);
+  });
+
+  it("refuses a relationship to oneself or to another workspace's profile", async () => {
+    const celine = await profile("Celine");
+    await expect(relate(celine, celine, "confides in herself")).rejects.toThrow(/check constraint/);
+    await asUser(outsider);
+    const outsiderProfile = await written<Profile>("insert into public.character_profiles as p(author_id,display_name) values($1,'Foreign') returning to_jsonb(p) as value", [otherAuthor]);
+    await asUser(owner);
+    await expect(db.query("insert into public.character_relationships(author_id,profile_id,related_profile_id,label) values($1,$2,$3,'knows')", [author, celine.id, outsiderProfile.id])).rejects.toThrow(/foreign key/);
+  });
+
+  it("advances version on edit, rejects a stale save, and lets the owner remove it", async () => {
+    const celine = await profile("Celine"), brick = await profile("Brick");
+    const created = await relate(celine, brick, "is the mother of");
+    const edited = await written<Relationship>("update public.character_relationships as r set label=$3 where id=$1 and version=$2 returning to_jsonb(r) as value", [created.id, 1, "raised"]);
+    expect(edited).toMatchObject({ label: "raised", version: 2 });
+    expect(new Date(edited.updated_at).getTime()).toBeGreaterThanOrEqual(new Date(created.updated_at).getTime());
+    const stale = await db.query("update public.character_relationships set note='Too late' where id=$1 and version=$2", [created.id, 1]);
+    expect(stale.affectedRows).toBe(0);
+    expect((await db.query("delete from public.character_relationships where id=$1", [created.id])).affectedRows).toBe(1);
+  });
+
+  it("denies a viewer and cannot be forged through the server-owned version", async () => {
+    const celine = await profile("Celine"), brick = await profile("Brick");
+    await asUser(viewer);
+    await expect(relate(celine, brick, "confides in")).rejects.toThrow(/violates row-level security/);
+    await asUser(owner);
+    const created = await relate(celine, brick, "confides in");
+    await expect(db.query("update public.character_relationships set version=99 where id=$1", [created.id])).rejects.toThrow(/permission denied/);
+    await expect(db.query("update public.character_relationships set author_id=$1 where id=$2", [otherAuthor, created.id])).rejects.toThrow(/permission denied/);
+    await asUser(editor);
+    await expect(relate(celine, brick, "editors may add too")).resolves.toMatchObject({ author_id: author });
+  });
+
+  it("cascades away with either profile it names, and can record which book confirmed it", async () => {
+    const celine = await profile("Celine"), brick = await profile("Brick");
+    const targetBook = await book("Their book");
+    const withBook = await relate(celine, brick, "meets", null, targetBook.id);
+    expect(withBook.book_id).toBe(targetBook.id);
+    await db.query("delete from public.character_profiles where id=$1", [brick.id]);
+    expect((await db.query("select id from public.character_relationships where id=$1", [withBook.id])).rows).toHaveLength(0);
   });
 });

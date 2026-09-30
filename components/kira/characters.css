@@ -33,9 +33,9 @@
 .portrait-figure figcaption button { justify-self: start; padding-inline: 0; height: auto; font-size: 13px; }
 .portrait-form { max-width: 70ch; border-top: 1px dashed #393630; padding-top: 20px; }
 .portrait-cleaned { display: flex; align-items: center; gap: 8px; color: #c7d6b1; font-size: 14px; }
-.character-notes, .character-links { display: grid; gap: 16px; list-style: none; padding: 0; margin: 0; }
-.character-notes li, .character-links li { display: grid; gap: 6px; border-left: 2px solid #46423a; padding-left: 16px; }
-.character-notes p, .character-links p { color: #bcb5ad; line-height: 1.7; margin: 0; overflow-wrap: anywhere; }
+.character-notes, .character-links, .character-relationships { display: grid; gap: 16px; list-style: none; padding: 0; margin: 0; }
+.character-notes li, .character-links li, .character-relationships li { display: grid; gap: 6px; border-left: 2px solid #46423a; padding-left: 16px; }
+.character-notes p, .character-links p, .character-relationships p { color: #bcb5ad; line-height: 1.7; margin: 0; overflow-wrap: anywhere; }
 .back-link { display: inline-flex; align-items: center; gap: 7px; color: #bcb5ad; font-size: 14px; text-decoration: none; }
 .back-link:hover { color: #ede7df; }
 @media (max-width: 640px) {
@@ -46,7 +46,7 @@
 .character-editor { margin-top: 1rem; padding: 1.2rem; border: 1px solid var(--border); border-radius: 14px; }
 .character-editor select { width: 100%; min-height: 44px; padding: .65rem .8rem; border: 1px solid var(--border); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; }
 .character-source { padding: 1rem; border-left: 3px solid var(--primary); background: var(--muted); }
-.character-notes p, .character-links p { white-space: pre-wrap; overflow-wrap: anywhere; }
-.character-links .library-actions { margin-top: .75rem; }
+.character-notes p, .character-links p, .character-relationships p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.character-links .library-actions, .character-relationships .library-actions { margin-top: .75rem; }
 .character-fields { display: grid; gap: 1rem; min-width: 0; margin: 0; padding: 0; border: 0; }
 .character-fields:disabled { opacity: .7; }
