@@ -58,6 +58,8 @@ type FixturePortrait = { id: string; author_id: string; profile_id: string; stor
 type FixtureNote = { id: string; author_id: string; profile_id: string; book_id: string | null; kind: "author_confirmed" | "visual_inspiration"; body: string; version: number; created_by: string; created_at: string; updated_at: string };
 type FixtureLink = { id: string; author_id: string; profile_id: string; book_id: string; character_id: string; note: string | null; confirmed_by: string; confirmed_at: string; source_manuscript_id?:string|null };
 type FixtureCharacter = { id: string; author_id: string; book_id: string; name: string };
+type FixtureRelationship = { id: string; author_id: string; profile_id: string; related_profile_id: string; label: string; note: string | null; book_id: string | null; version: number; created_by: string; created_at: string; updated_at: string; data_origin: "manual" };
+let characterRelationships: FixtureRelationship[] = [];
 let characterProfiles: FixtureProfile[] = [];
 let characterAliases: FixtureAlias[] = [];
 let characterPortraits: FixturePortrait[] = [];
@@ -85,7 +87,7 @@ function resetLibrary() {
   librarySeries = seedSeries.map(item => ({ ...item, author_id: fixture.authorId }));
   librarySources = seedSources.filter(item => item.data_origin !== "demo").map(item => ({ ...item, author_id: fixture.authorId, metadata: {} }));
   manuscripts = []; manuscriptChunks = []; manuscriptBatches = []; intelligence = []; adsReports = []; adsInspiration = []; adsBookLinks = []; storedFiles.clear();
-  characterProfiles = []; characterAliases = []; characterPortraits = []; characterNotes = []; characterLinks = []; bookCharacters = [];
+  characterProfiles = []; characterAliases = []; characterPortraits = []; characterNotes = []; characterLinks = []; characterRelationships = []; bookCharacters = [];
   signedPortraitTokens.clear(); bookCharacterLinks = []; generations = [];
   discoveryPages = []; discoveryListings = []; discoveryReports = []; discoveryActions = [];
 }
@@ -126,6 +128,7 @@ function respondRows(request: IncomingMessage, response: ServerResponse, url: UR
   let filtered = rows.filter(row => [...url.searchParams].every(([key, filter]) => {
     const value = (row as Record<string, unknown>)[key];
     if (["select", "order", "limit", "offset"].includes(key)) return true;
+    if (key === "or") return filter.slice(1, -1).split(",").some(part => { const [column, operator, ...rest] = part.split("."); return operator === "eq" && String((row as Record<string, unknown>)[column]) === rest.join("."); });
     if (filter.startsWith("eq.")) return String(value) === filter.slice(3);
     if (filter.startsWith("ilike.")) {
       const pattern = filter.slice(6); let expression = "";
@@ -789,7 +792,7 @@ const server = createServer(async (request, response) => {
       const table = url.pathname.slice("/rest/v1/".length);
       const now = new Date().toISOString();
       const writable = owner || membership?.role === "editor";
-      const rows: Record<string, object[]> = { character_profiles: characterProfiles, character_profile_aliases: characterAliases, character_portraits: characterPortraits, character_notes: characterNotes, character_profile_links: characterLinks };
+      const rows: Record<string, object[]> = { character_profiles: characterProfiles, character_profile_aliases: characterAliases, character_portraits: characterPortraits, character_notes: characterNotes, character_profile_links: characterLinks, character_relationships: characterRelationships };
       if (!rows[table]) return respond(response, 404, { code: "42P01", message: "Unsupported simulated table" });
       if (request.method === "GET") {
         if (url.searchParams.get("author_id") !== `eq.${fixture.authorId}`) return respond(response, 403, { code: "42501", message: "Expected explicit fixture author filter" });
@@ -828,6 +831,13 @@ const server = createServer(async (request, response) => {
             }
             const row: FixtureNote = { id: randomUUID(), author_id: fixture.authorId, profile_id: String(entry.profile_id), book_id: entry.book_id ? String(entry.book_id) : null, kind: kind as FixtureNote["kind"], body: String(entry.body), version: 1, created_by: session.user.id, created_at: now, updated_at: now };
             characterNotes.push(row); created.push(row);
+          } else if (table === "character_relationships") {
+            const label = String(entry.label ?? "");
+            if (!label.trim() || label.length > 120) return respond(response, 400, { code: "23514", message: "Invalid simulated relationship label" });
+            if (entry.profile_id === entry.related_profile_id) return respond(response, 400, { code: "23514", message: "Simulated self relationship" });
+            if (![entry.profile_id, entry.related_profile_id].every(id => characterProfiles.some(profile => profile.id === id))) return respond(response, 409, { code: "23503", message: "Simulated relationship names an unknown character" });
+            const row: FixtureRelationship = { id: randomUUID(), author_id: fixture.authorId, profile_id: String(entry.profile_id), related_profile_id: String(entry.related_profile_id), label, note: entry.note ? String(entry.note) : null, book_id: entry.book_id ? String(entry.book_id) : null, version: 1, created_by: session.user.id, created_at: now, updated_at: now, data_origin: "manual" };
+            characterRelationships.push(row); created.push(row);
           } else {
             const row: FixtureLink = { id: randomUUID(), author_id: fixture.authorId, profile_id: String(entry.profile_id), book_id: String(entry.book_id), character_id: String(entry.character_id), note: entry.note ? String(entry.note) : null, source_manuscript_id:entry.source_manuscript_id?String(entry.source_manuscript_id):null, confirmed_by: session.user.id, confirmed_at: now };
             if (characterLinks.some(item => item.character_id === row.character_id)) return respond(response, 409, { code: "23505", message: "Simulated character is already linked" });
@@ -841,6 +851,22 @@ const server = createServer(async (request, response) => {
         if (url.searchParams.get("author_id") !== `eq.${fixture.authorId}`) return respond(response,403,{code:"42501"});
         characterLinks=characterLinks.filter(row=>!(url.searchParams.get("id")===`eq.${row.id}` && url.searchParams.get("profile_id")===`eq.${row.profile_id}`));
         return respond(response,204);
+      }
+      if (request.method === "DELETE" && table === "character_relationships") {
+        if (url.searchParams.get("author_id") !== `eq.${fixture.authorId}`) return respond(response, 403, { code: "42501" });
+        characterRelationships = characterRelationships.filter(row => url.searchParams.get("id") !== `eq.${row.id}`);
+        return respond(response, 204);
+      }
+      if (request.method === "PATCH" && table === "character_relationships") {
+        if (url.searchParams.get("author_id") !== `eq.${fixture.authorId}`) return respond(response, 403, { code: "42501" });
+        const body = await jsonBody(request);
+        const row = characterRelationships.find(item => url.searchParams.get("id") === `eq.${item.id}` && url.searchParams.get("version") === `eq.${item.version}`);
+        if (!row) return respond(response, 200, []);
+        if (body.label !== undefined) { if (!String(body.label).trim()) return respond(response, 400, { code: "23514", message: "Invalid simulated relationship label" }); row.label = String(body.label); }
+        if (body.note !== undefined) row.note = body.note === null ? null : String(body.note);
+        if (body.book_id !== undefined) row.book_id = body.book_id === null ? null : String(body.book_id);
+        row.version++; row.updated_at = now;
+        return request.headers.accept?.includes("application/vnd.pgrst.object+json") ? respond(response, 200, row) : respond(response, 200, [row]);
       }
       if (request.method === "PATCH" && table === "character_notes") {
         if (url.searchParams.get("author_id") !== `eq.${fixture.authorId}`) return respond(response,403,{code:"42501"});

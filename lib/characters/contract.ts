@@ -57,12 +57,20 @@ export const characterLinkSchema = z.object({
   source_manuscript_id: z.uuid().nullable().optional(), source_chunk_ids: z.array(z.uuid()).default([]),
   confirmed_at: z.string(), book_title: z.string().nullable(), character_name: z.string().nullable(), book_slug: z.string().nullable().optional(),
 });
+export const characterRelationshipSchema = z.object({
+  id: z.uuid(), profile_id: z.uuid(), related_profile_id: z.uuid(),
+  label: z.string(), note: z.string().nullable(), book_id: z.uuid().nullable(),
+  version: z.number(), updated_at: z.string(),
+  profile_name: z.string(), related_profile_name: z.string(), book_title: z.string().nullable(),
+});
+export type CharacterRelationship = z.infer<typeof characterRelationshipSchema>;
 export const characterProfileDetailSchema = z.object({
   role: z.enum(["owner", "editor", "viewer"]),
   profile: galleryProfileSchema,
   portraits: z.array(galleryPortraitSchema),
   notes: z.array(characterNoteSchema),
   links: z.array(characterLinkSchema),
+  relationships: z.array(characterRelationshipSchema),
 });
 export type CharacterGallery = z.infer<typeof characterGallerySchema>;
 export type GalleryProfile = z.infer<typeof galleryProfileSchema>;
@@ -86,3 +94,23 @@ export const characterSourceSchema = z.object({
 });
 export const characterSourcesSchema = z.object({ sources: z.array(characterSourceSchema) });
 export type CharacterSource = z.infer<typeof characterSourceSchema>;
+
+export const CHARACTER_RELATIONSHIP_LABEL_MAX = 120;
+const characterRelationshipFields = z.object({
+  profileId: z.uuid(),
+  relatedProfileId: z.uuid(),
+  label: z.string().trim().min(1).max(CHARACTER_RELATIONSHIP_LABEL_MAX),
+  note: z.string().trim().max(600).nullish().transform(value => value?.length ? value : null),
+  bookId: z.uuid().nullish(),
+});
+/** Read as a sentence: "<the profile> <label> <the related profile>". No inverse is generated. */
+export const characterRelationshipInputSchema = characterRelationshipFields
+  .refine(value => value.profileId !== value.relatedProfileId, { message: "A character cannot have a relationship with themselves.", path: ["relatedProfileId"] });
+export const characterRelationshipEditSchema = characterRelationshipFields.omit({ profileId: true, relatedProfileId: true }).partial().extend({
+  expectedVersion: z.number().int().positive(),
+});
+export type CharacterRelationshipInput = z.infer<typeof characterRelationshipInputSchema>;
+export const characterRelationshipsSchema = z.object({
+  role: z.enum(["owner", "editor", "viewer"]),
+  relationships: z.array(characterRelationshipSchema),
+});

@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { sourceResponseSchema } from "@/lib/manuscripts/library-contract";
 import { useWorkspace } from "@/lib/db/demo-store";
-import { characterProfileInputSchema, characterSourcesSchema, type CharacterSource, type GalleryProfile, type CharacterProfileDetail } from "@/lib/characters/contract";
+import { characterGallerySchema, characterProfileInputSchema, characterSourcesSchema, type CharacterSource, type GalleryProfile, type CharacterProfileDetail } from "@/lib/characters/contract";
 import { LibraryRequestError, useLibrary } from "./library-provider";
 
 const failureText = (failure: unknown) => failure instanceof LibraryRequestError ? (failure.status === 409 ? `${failure.message} Your draft is kept. Copy any words you need before discarding the draft and reopening the latest saved version.` : failure.message) : "This change could not be saved. Your draft is still here.";
@@ -67,6 +67,45 @@ export function CharacterNoteForm({ profileId, note, onSaved, onClose }: { profi
     {changed && <p className="quiet-note">{storageFailed ? "Your browser could not keep a recovery copy. Copy these words before refreshing or closing the tab." : "Unfinished entries stay in this tab when you close the form or visit another page."}</p>}
     {error && <p role="alert" className="library-error">{error}</p>}
     <div className="library-actions"><Button disabled={busy || !values.body.trim()}>{busy ? "Saving…" : "Save note"}</Button><Button type="button" variant="ghost" disabled={busy} onClick={onClose}>{changed ? "Keep draft and close" : "Cancel"}</Button>{changed && <Button type="button" variant="ghost" disabled={busy} onClick={() => { clear(); onClose(); }}>Discard draft</Button>}</div>
+  </fieldset></form>;
+}
+
+export function CharacterRelationshipForm({ profileId, relationship, onSaved, onClose }: { profileId: string; relationship?: CharacterProfileDetail["relationships"][number]; onSaved: () => void; onClose: () => void }) {
+  const { request } = useLibrary();
+  const [profiles, setProfiles] = useState<GalleryProfile[] | null>(null);
+  const [loadError, setLoadError] = useState("");
+  const { values, changed, change, clear, storageFailed } = useCharacterDraft(`character:${profileId}:relationship:${relationship?.id ?? "new"}`, "Your character relationship", {
+    relatedProfileId: relationship?.related_profile_id ?? "", label: relationship?.label ?? "", note: relationship?.note ?? "", expectedVersion: String(relationship?.version ?? ""),
+  });
+  const [busy, setBusy] = useState(false), [error, setError] = useState("");
+  useEffect(() => {
+    if (relationship) return;
+    let active = true;
+    request("/api/characters").then(result => { if (active) setProfiles(characterGallerySchema.parse(result).profiles); }).catch(() => { if (active) setLoadError("Other characters could not be opened."); });
+    return () => { active = false; };
+  }, [relationship, request]);
+  const options = profiles?.filter(candidate => candidate.id !== profileId) ?? [];
+  async function submit(event: FormEvent) {
+    event.preventDefault(); if (busy) return; setBusy(true); setError("");
+    try {
+      if (relationship) await request(`/api/characters/relationships/${relationship.id}`, json({ label: values.label, note: values.note, expectedVersion: Number(values.expectedVersion) }, "PATCH"));
+      else await request("/api/characters/relationships", json({ profileId, relatedProfileId: values.relatedProfileId, label: values.label, note: values.note }));
+      clear(); onSaved();
+    } catch (failure) { setError(failureText(failure)); } finally { setBusy(false); }
+  }
+  return <form className="library-form character-editor" onSubmit={submit} aria-busy={busy}><fieldset className="character-fields" disabled={busy}>
+    {relationship
+      ? <p className="quiet-note">Currently reads “{relationship.profile_name} {relationship.label} {relationship.related_profile_name}.” To change who it names, remove it and add a new one.</p>
+      : <>
+        {!profiles && !loadError && <p role="status">Opening your cast…</p>}
+        <label>Related character<select value={values.relatedProfileId} onChange={event => change("relatedProfileId", event.target.value)} required><option value="">Choose a character</option>{options.map(candidate => <option key={candidate.id} value={candidate.id}>{candidate.display_name}</option>)}</select></label>
+      </>}
+    <label>How they are connected <span className="quiet-note">A short sentence, read as written</span><Input value={values.label} onChange={event => change("label", event.target.value)} maxLength={120} required placeholder="is the mother of" /></label>
+    <label>More about it <span className="quiet-note">Optional</span><Textarea rows={3} maxLength={600} value={values.note} onChange={event => change("note", event.target.value)} /></label>
+    <p className="quiet-note">No reverse relationship is created. If both sides should say something, add a second relationship for the other character.</p>
+    {changed && <p className="quiet-note">{storageFailed ? "Your browser could not keep a recovery copy. Copy these words before refreshing or closing the tab." : "Unfinished entries stay in this tab when you close the form or visit another page."}</p>}
+    {(error || loadError) && <p role="alert" className="library-error">{error || loadError}</p>}
+    <div className="library-actions"><Button disabled={busy || !values.label.trim() || (!relationship && !values.relatedProfileId)}>{busy ? "Saving…" : relationship ? "Save relationship" : "Add relationship"}</Button><Button type="button" variant="ghost" disabled={busy} onClick={onClose}>{changed ? "Keep draft and close" : "Cancel"}</Button>{changed && <Button type="button" variant="ghost" disabled={busy} onClick={() => { clear(); onClose(); }}>Discard draft</Button>}</div>
   </fieldset></form>;
 }
 

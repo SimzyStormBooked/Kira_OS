@@ -350,3 +350,66 @@ test("the Quiet Room stays calm, names one of the pinned cast, and returns home 
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { name: /Welcome home/ })).toBeVisible();
 });
+
+test("a relationship reads as the author wrote it on both characters' pages and never invents a reverse", async ({ page }) => {
+  await addCharacter(page, "Brick Alder");
+  await addCharacter(page, "Celine Dubois");
+  await expect(page.getByText("No relationships yet.", { exact: false })).toBeVisible();
+  await page.getByRole("button", { name: "Add relationship", exact: true }).click();
+  let dialog = page.getByRole("dialog", { name: "Add relationship", exact: true });
+  // A character cannot be related to herself, so she is not offered.
+  await expect(dialog.getByRole("option", { name: "Celine Dubois", exact: true })).toHaveCount(0);
+  await dialog.getByLabel(/Related character/).selectOption({ label: "Brick Alder" });
+  await dialog.getByLabel(/How they are connected/).fill("is the mother of");
+  await dialog.getByLabel(/More about it/).fill("Confirmed in book two.");
+  await dialog.getByRole("button", { name: "Add relationship", exact: true }).click();
+  const relationships = page.locator(".character-relationships");
+  await expect(relationships).toContainText("Celine Dubois is the mother of Brick Alder");
+  await expect(relationships).toContainText("Confirmed in book two.");
+
+  // The other character's page shows the identical sentence, not a guessed inverse.
+  await page.getByRole("link", { name: "Character Studio", exact: true }).click();
+  await page.locator("a.character-card", { hasText: "Brick Alder" }).click();
+  await expect(page.locator(".character-relationships")).toContainText("Celine Dubois is the mother of Brick Alder");
+  await expect(page.locator(".character-relationships li")).toHaveCount(1);
+  await expect(page.locator(".character-relationships")).not.toContainText(/child of|son of|daughter of/i);
+
+  // The label and note stay editable; who it names does not.
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  dialog = page.getByRole("dialog", { name: "Edit relationship", exact: true });
+  await expect(dialog).toContainText("Currently reads “Celine Dubois is the mother of Brick Alder.”");
+  await expect(dialog.getByLabel(/Related character/)).toHaveCount(0);
+  await dialog.getByLabel(/How they are connected/).fill("raised");
+  await dialog.getByRole("button", { name: "Save relationship", exact: true }).click();
+  await expect(page.locator(".character-relationships")).toContainText("Celine Dubois raised Brick Alder");
+
+  await page.reload();
+  await expect(page.locator(".character-relationships")).toContainText("Celine Dubois raised Brick Alder");
+  await page.getByRole("button", { name: "Remove", exact: true }).click();
+  await expect(page.getByText("Remove this relationship?", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Keep it", exact: true }).click();
+  await expect(page.locator(".character-relationships li")).toHaveCount(1);
+  await page.getByRole("button", { name: "Remove", exact: true }).click();
+  await page.getByRole("button", { name: "Confirm remove", exact: true }).click();
+  await expect(page.locator(".character-relationships")).toHaveCount(0);
+  await expect(page.getByText("No relationships yet.", { exact: false })).toBeVisible();
+});
+
+test("an unfinished relationship is kept as a draft, and the profile page has no accessibility violations with one", async ({ page }) => {
+  await addCharacter(page, "Brick Alder");
+  await addCharacter(page, "Celine Dubois");
+  await page.getByRole("button", { name: "Add relationship", exact: true }).click();
+  let dialog = page.getByRole("dialog", { name: "Add relationship", exact: true });
+  await dialog.getByLabel(/Related character/).selectOption({ label: "Brick Alder" });
+  await dialog.getByLabel(/How they are connected/).fill("confides in");
+  await dialog.getByRole("button", { name: "Keep draft and close", exact: true }).click();
+  await page.getByRole("link", { name: "Character Studio", exact: true }).click();
+  await page.locator("a.character-card", { hasText: "Celine Dubois" }).click();
+  await page.getByRole("button", { name: "Resume relationship", exact: true }).click();
+  dialog = page.getByRole("dialog", { name: "Add relationship", exact: true });
+  await expect(dialog.getByLabel(/How they are connected/)).toHaveValue("confides in");
+  await dialog.getByRole("button", { name: "Add relationship", exact: true }).click();
+  await expect(page.locator(".character-relationships")).toContainText("Celine Dubois confides in Brick Alder");
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});

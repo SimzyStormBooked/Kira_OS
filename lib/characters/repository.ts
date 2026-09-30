@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { ManuscriptError } from "@/lib/manuscripts/http";
 import { checkLibraryError } from "@/lib/manuscripts/repository";
-import { PORTRAIT_URL_TTL_SECONDS, PORTRAIT_USAGE_PERMISSIONS, type CharacterProfileInput, characterNoteSchema } from "./contract";
+import { PORTRAIT_URL_TTL_SECONDS, PORTRAIT_USAGE_PERMISSIONS, type CharacterProfileInput, characterNoteSchema, characterRelationshipSchema } from "./contract";
 
 export const storedPortraitSchema = z.object({
   id: z.uuid(), author_id: z.uuid(), profile_id: z.uuid(), storage_path: z.string(),
@@ -73,6 +73,27 @@ export function createCharacterRepository(supabase: SupabaseClient, authorId: st
       width: row.width, height: row.height, created_at: row.created_at, url: urls.get(row.id) ?? null,
     }));
   }
+  type RelationshipRow = { id: string; profile_id: string; related_profile_id: string; label: string; note: string | null; book_id: string | null; version: number; updated_at: string };
+  /** Resolves the two profiles' names and an optional book's title so the sentence renders without a second round trip. */
+  async function resolveRelationships(rows: RelationshipRow[]) {
+    if (!rows.length) return [];
+    const profileIds = [...new Set(rows.flatMap(row => [row.profile_id, row.related_profile_id]))];
+    const bookIds = [...new Set(rows.flatMap(row => row.book_id ? [row.book_id] : []))];
+    const [profiles, books] = await Promise.all([
+      supabase.from("character_profiles").select("id,display_name").eq("author_id", authorId).in("id", profileIds),
+      bookIds.length ? supabase.from("books").select("id,title").eq("author_id", authorId).in("id", bookIds) : Promise.resolve({ data: [] as { id: string; title: string }[], error: null }),
+    ]);
+    checkLibraryError(profiles.error); checkLibraryError(books.error);
+    const names = new Map((profiles.data ?? []).map(row => [String(row.id), String(row.display_name)]));
+    const titles = new Map((books.data ?? []).map(row => [String(row.id), String(row.title)]));
+    return rows.map(row => characterRelationshipSchema.parse({
+      ...row,
+      profile_name: names.get(row.profile_id) ?? "Unknown character",
+      related_profile_name: names.get(row.related_profile_id) ?? "Unknown character",
+      book_title: row.book_id ? titles.get(row.book_id) ?? null : null,
+    }));
+  }
+  const RELATIONSHIP_COLUMNS = "id,profile_id,related_profile_id,label,note,book_id,version,updated_at";
   return {
     async findProfile(profileId: string) {
       const { data, error } = await supabase.from("character_profiles")
@@ -136,13 +157,15 @@ export function createCharacterRepository(supabase: SupabaseClient, authorId: st
     },
     async profileDetail(profileId: string) {
       const profile = await this.findProfile(profileId);
-      const [aliases, portraits, notes, links] = await Promise.all([
+      const [aliases, portraits, notes, links, relationshipRows] = await Promise.all([
         supabase.from("character_profile_aliases").select("alias").eq("author_id", authorId).eq("profile_id", profileId).order("normalized_alias"),
         readyPortraits([profileId]),
         supabase.from("character_notes").select("id,kind,body,book_id,version,created_at").eq("author_id", authorId).eq("profile_id", profileId).order("created_at", { ascending: false }).limit(200),
         supabase.from("character_profile_links").select("id,book_id,character_id,source_manuscript_id,note,confirmed_at").eq("author_id", authorId).eq("profile_id", profileId),
+        supabase.from("character_relationships").select(RELATIONSHIP_COLUMNS).eq("author_id", authorId).or(`profile_id.eq.${profileId},related_profile_id.eq.${profileId}`).order("created_at", { ascending: false }).limit(200),
       ]);
-      for (const result of [aliases, notes, links]) checkLibraryError(result.error);
+      for (const result of [aliases, notes, links, relationshipRows]) checkLibraryError(result.error);
+      const relationships = await resolveRelationships(relationshipRows.data ?? []);
       const linkRows = links.data ?? [];
       // Composite tenant keys are not embeddable, so titles and names are fetched by ID.
       const sourceIds = linkRows.flatMap(row => row.source_manuscript_id ? [String(row.source_manuscript_id)] : []);
@@ -167,6 +190,7 @@ export function createCharacterRepository(supabase: SupabaseClient, authorId: st
         portraits: presented,
         notes: notes.data ?? [],
         links: linkRows.map(row => ({ ...row, source_chunk_ids: sourceChunks.get(`${row.source_manuscript_id}:${row.character_id}`) ?? [], book_title: titles.get(String(row.book_id)) ?? null, book_slug: slugs.get(String(row.book_id)) ?? null, character_name: names.get(String(row.character_id)) ?? null })),
+        relationships,
       };
     },
     async listSources(bookId?: string) {
@@ -239,6 +263,40 @@ export function createCharacterRepository(supabase: SupabaseClient, authorId: st
     },
     async unlinkCharacter(profileId: string, linkId: string) {
       const { error } = await supabase.from("character_profile_links").delete().eq("author_id", authorId).eq("profile_id", profileId).eq("id", linkId);
+      checkLibraryError(error);
+    },
+    /** A relationship connects two of the author's own profiles, so it is not scoped under either one's path. */
+    async listAllRelationships() {
+      const { data, error } = await supabase.from("character_relationships").select(RELATIONSHIP_COLUMNS).eq("author_id", authorId).order("updated_at", { ascending: false }).limit(500);
+      checkLibraryError(error);
+      return resolveRelationships(data ?? []);
+    },
+    async createRelationship(profileId: string, input: { relatedProfileId: string; label: string; note: string | null; bookId?: string | null }) {
+      await this.findProfile(profileId);
+      await this.findProfile(input.relatedProfileId);
+      const { data, error } = await supabase.from("character_relationships")
+        .insert({ author_id: authorId, profile_id: profileId, related_profile_id: input.relatedProfileId, label: input.label, note: input.note, book_id: input.bookId ?? null })
+        .select(RELATIONSHIP_COLUMNS).maybeSingle();
+      checkLibraryError(error);
+      if (!data) throw new ManuscriptError("P0002", 404, "This relationship could not be saved.");
+      const [resolved] = await resolveRelationships([data]);
+      return resolved;
+    },
+    async updateRelationship(relationshipId: string, changes: { label?: string; note?: string | null; bookId?: string | null }, expectedVersion: number) {
+      const patch: Record<string, unknown> = {};
+      if (changes.label !== undefined) patch.label = changes.label;
+      if (changes.note !== undefined) patch.note = changes.note;
+      if (changes.bookId !== undefined) patch.book_id = changes.bookId;
+      const { data, error } = await supabase.from("character_relationships").update(patch)
+        .eq("author_id", authorId).eq("id", relationshipId).eq("version", expectedVersion)
+        .select(RELATIONSHIP_COLUMNS).maybeSingle();
+      checkLibraryError(error);
+      if (!data) throw new ManuscriptError("40001", 409, "This relationship changed. Reopen it before trying again.");
+      const [resolved] = await resolveRelationships([data]);
+      return resolved;
+    },
+    async deleteRelationship(relationshipId: string) {
+      const { error } = await supabase.from("character_relationships").delete().eq("author_id", authorId).eq("id", relationshipId);
       checkLibraryError(error);
     },
     /**
