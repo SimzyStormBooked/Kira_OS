@@ -1,12 +1,24 @@
 # KIRA OS verification
 
+## Creative workspace refresh — October 3, 2026
+
+The connected home now opens with a dismissible October welcome note and a full character-art carousel. Six credited photographs from Kira's own published shop are enabled only for her verified author workspace; pinned private portraits replace that lineup. Home has direct book-marketing paths, a saved-work jump link, saved work before general exploration, and larger pinned portrait cards. Shared navigation, the bookshelf and Character Studio use the refreshed literary palette. Public art remains separate from private profiles, manuscript evidence and promotional permissions.
+
+Two independent simulated user reviews (female author and male collaborator lenses) identified four concrete fixes now included: saved work was too far down the home page; private character profiles/search were buried beneath public artwork; a withdrawn latest manuscript rejected the entire home summary; and note dismissal ignored its memory fallback when browser storage writes failed. Private profiles now appear first once any exist, the public collection is collapsed beneath them, and search/count/empty-state labels explicitly name private profiles. Withdrawn summaries stay available and point to book details. Dismiss/reopen works in the current tab even after a quota error.
+
+`npm run check` passed TypeScript, ESLint, **869 unit/API/database tests across 59 files**, and the production build. **52 selected connected desktop/mobile browser tests passed**, including actual image decoding, manual/timed rotation, reduced motion, failure fallback, dismiss/reopen/reload and quota failure, explicit profile creation, preservation of an existing draft when another portrait is chosen, private-profile search, withdrawn summaries, pinned portraits, relationships, manuscript knowledge paths, CSV selection, saved work, sign-in/out and accessibility. New home/gallery accessibility sweeps reported zero violations and no horizontal overflow. Screenshots were visually inspected. These use synthetic accounts and a simulated Supabase boundary; they do not constitute Cassy's live usability assessment or activate Meta/email delivery.
+
+## Hosted migration catch-up — October 3, 2026
+
+Applied and recorded `202609280001_idempotent_manual_review`, `202609290001_home_showcase`, and `202609290002_character_relationships` in a transaction using the existing operator Postgres connection over verified TLS. A subsequent read confirmed all three migration-history rows and no repository migrations pending. The visual refresh itself adds no migration or paid provider. This updates the hosted limitation recorded in the September 29 checkpoints below.
+
 ## Character relationships — September 29, 2026
 
 Character Studio now has author-written relationships between characters (`202609290002_character_relationships.sql`, documented in [docs/character-studio.md](docs/character-studio.md)). Each is a directed sentence ("Celine is the mother of Brick"); no inverse is ever generated, and manuscript-extracted relationship text is neither read nor rewritten. It is a list, not a node graph.
 
 `npm run check` passed TypeScript, ESLint, **867 unit/API/database tests across 59 files**, and the production build. New PGlite tests cover sentence reading in either direction, self and cross-workspace refusal, version advance and stale-save detection, viewer denial and forgery prevention, and cascade on profile deletion. The full connected browser suite passed **180 of 180**, including both characters' pages showing the identical sentence with no invented reverse, editing and removing, draft recovery, and a zero-violation accessibility sweep on desktop and mobile. The demo suite passed 18 of 20 with only the known `/discoverability` failure below.
 
-Not verified: the hosted database. The migration has not been applied there, and the simulated browser boundary is a transport double, not a database.
+At this September 29 checkpoint the hosted migration was not yet applied. The October 3 catch-up above now records its application. The simulated browser boundary remains a transport double, not a database.
 
 ## Home showcase and Quiet Room — September 29, 2026
 

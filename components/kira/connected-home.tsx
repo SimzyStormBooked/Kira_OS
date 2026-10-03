@@ -20,8 +20,11 @@ import { InspirationShelf } from "./inspiration-shelf";
 import { DailyQuote } from "./daily-quote";
 import { useWorkspace } from "@/lib/db/demo-store";
 import { inspirationIdeas } from "@/lib/data/inspiration";
-import { resumeReadingLabel, workspaceResumeSchema, type WorkspaceResume } from "@/lib/workspace-resume";
+import { resumeBookHref, resumeReadingLabel, workspaceResumeSchema, type WorkspaceResume } from "@/lib/workspace-resume";
 import "./daily-workspace.css";
+import { CreativeWelcome, NextMoves } from "./creative-welcome";
+import { WelcomeNote } from "./welcome-note";
+import "./creative-home.css";
 
 const starterIdeas = inspirationIdeas.slice(0, 2);
 const savedDate = (value: string) => new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -51,7 +54,10 @@ function useWorkspaceResume(viewerEmail: string | null | undefined) {
     void Promise.resolve().then(() => { if (active) void load(); });
     const onFocus = () => { if (document.visibilityState === "visible") void load(); };
     window.addEventListener("focus", onFocus);
-    return () => { active = false; controller?.abort(); window.removeEventListener("focus", onFocus); };
+    // Private portrait signatures expire after five minutes. Keep a visible home
+    // current without saving those links or their contents in browser storage.
+    const timer = window.setInterval(onFocus, 240000);
+    return () => { active = false; controller?.abort(); window.removeEventListener("focus", onFocus); window.clearInterval(timer); };
     // A different signed-in viewer owns none of the previous data; refetch, same as the
     // remount-by-key this replaced.
   }, [request, refresh, viewerEmail]);
@@ -59,14 +65,19 @@ function useWorkspaceResume(viewerEmail: string | null | undefined) {
 }
 
 function ContinueWork({ data, loading, error, onRefresh }: { data: WorkspaceResume | null; loading: boolean; error: boolean; onRefresh: () => void }) {
-  return <section className="connected-resume" aria-labelledby="continue-work-title" aria-busy={loading}>
+  return <section id="continue-work" className="connected-resume" aria-labelledby="continue-work-title" aria-busy={loading}>
     <div className="connected-resume-heading"><div><span className="eyebrow">PICK UP A THREAD</span><h2 id="continue-work-title">Continue your work</h2><p>Latest saved answer and recently updated books, shared by this workspace.</p></div><Button type="button" variant="ghost" size="sm" disabled={loading} onClick={onRefresh}><RefreshCw size={14} aria-hidden="true" />Refresh</Button></div>
     {error && <p role="status" className="quiet-note">Saved activity could not be refreshed. {data ? "The last loaded items remain below." : "Use your books or Ask Raven to continue, or try Refresh."}</p>}
     {!data && loading && <p role="status" className="quiet-note">Opening your saved work…</p>}
     {data && <div className="connected-resume-items">
       {data.answer && <Link href={`/studio/${data.answer.id}`} className="connected-resume-item"><MessageSquare size={19} aria-hidden="true" /><span><small>SAVED RAVEN ANSWER</small><strong>{data.answer.title || "Open your saved answer"}</strong><span>Saved {savedDate(data.answer.completed_at ?? data.answer.created_at)}</span><em>Revisit this answer</em></span><ArrowUpRight size={16} aria-hidden="true" /></Link>}
-      {data.books.map(book => <Link key={book.id} href={`/universe/${book.slug}${book.reading?.status === "ready" ? "?knowledge=characters#book-knowledge" : book.reading ? "#reading-status" : ""}`} className="connected-resume-item"><BookOpen size={19} aria-hidden="true" /><span><small>{resumeReadingLabel(book.reading)}</small><strong>{book.title}</strong><span>Book updated {savedDate(book.updated_at)}{book.reading && ` · ${book.reading.completed_chunks} of ${book.reading.chunk_count} passages read`}</span><em>{book.reading?.status === "ready" ? "Explore what Raven learned" : book.reading ? "Open reading status" : "Open book details"}</em></span><ArrowUpRight size={16} aria-hidden="true" /></Link>)}
+      {data.books.map(book => <Link key={book.id} href={resumeBookHref(book)} className="connected-resume-item"><BookOpen size={19} aria-hidden="true" /><span><small>{resumeReadingLabel(book.reading)}</small><strong>{book.title}</strong><span>Book updated {savedDate(book.updated_at)}{book.reading && ` · ${book.reading.completed_chunks} of ${book.reading.chunk_count} passages read`}</span><em>{book.reading?.status === "ready" ? "Explore what Raven learned" : book.reading && book.reading.status !== "withdrawn" ? "Open reading status" : "Open book details"}</em></span><ArrowUpRight size={16} aria-hidden="true" /></Link>)}
       {!data.answer && data.books.length === 0 && <p className="quiet-note">Saved answers and books will appear here as your workspace grows. <Link href="/universe" className="text-link">Start with your books</Link>.</p>}
+    </div>}
+    {data?.books.some(book => book.reading?.status === "ready") && <div className="connected-book-lenses">
+      {data.books.filter(book => book.reading?.status === "ready").map(book => <div key={book.id}><span>Go deeper with <strong>{book.title}</strong></span><nav aria-label={`Explore ${book.title}`}>
+        {[['characters', 'Characters'], ['story', 'Story arc'], ['readers', 'Marketing']] .map(([view,label]) => <Link key={view} href={`/universe/${book.slug}?knowledge=${view}#book-knowledge`}>{label}<ArrowUpRight size={12} aria-hidden="true" /></Link>)}
+      </nav></div>)}
     </div>}
   </section>;
 }
@@ -131,27 +142,12 @@ export function ConnectedHome({ dateKey }: { dateKey?: string }) {
 
   return (
     <div className="connected-home">
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow page-kicker">
-            KIRA // YOUR AUTHOR WORKSPACE{" "}
-            <span className="little-star" aria-hidden="true">
-              ✦
-            </span>
-          </span>
-          <h1>
-            Welcome home, <em>Cassandra.</em>
-          </h1>
-          <p>A place for the business. More room for your stories.</p>
-        </div>
-        <span className="connected-private">
-          <LockKeyhole size={13} aria-hidden="true" /> Private workspace
-        </span>
-      </div>
-
+      {ready && !sessionEnded && viewerEmail && <WelcomeNote viewerEmail={viewerEmail} />}
+      <CreativeWelcome data={ready && !sessionEnded ? resume.data : null} loading={resume.loading} />
       {ready && !sessionEnded && <ContinueWork data={resume.data} loading={resume.loading} error={resume.error} onRefresh={resume.refresh} />}
+      <NextMoves data={ready && !sessionEnded ? resume.data : null} />
       <DailyQuote dateKey={dateKey} compact />
-      <HomeShowcase showcase={resume.data?.showcase} />
+      <HomeShowcase showcase={ready && !sessionEnded ? resume.data?.showcase : undefined} />
       <div className="connected-main-grid">
         <InspirationShelf dateKey={dateKey} />
 

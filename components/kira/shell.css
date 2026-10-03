@@ -129,3 +129,18 @@
 .community-card .section-heading {
   justify-content: flex-end;
 }
+
+/* Shared creative workspace palette; navigation order and labels stay familiar. */
+.app-shell { background:radial-gradient(ellipse at 75% 0,#51334424,transparent 45%),#161716; }
+.desktop-sidebar,.mobile-sidebar { background:linear-gradient(175deg,#252021,#1c1d1b 65%); border-right-color:#453b3b; }
+.desktop-sidebar .brand,.mobile-sidebar .brand { padding-bottom:25px; }
+.app-shell .brand-symbol { color:#dfb89e; }
+.app-shell .nav-item { border-radius:10px; }
+.app-shell .nav-item:hover { background:#45323855; }
+.app-shell .nav-item.active { background:linear-gradient(110deg,#563e45aa,#46393888); color:#f2d1b0; box-shadow:inset 2px 0 #d4aa85; }
+.app-shell .nav-item.active small { color:#ddc4b6; }
+.app-shell .user-profile { border-radius:13px; }
+.app-shell .topbar { background:#1e1b1be8; border-bottom-color:#453939; }
+.app-shell .page-heading h1 em { color:#d9b7a5; }
+.app-shell .app-footer { border-top-color:#443a35; }
+.app-shell .page-container > .page-heading { margin-bottom:28px; }

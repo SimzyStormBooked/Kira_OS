@@ -90,12 +90,12 @@ test("an empty studio invites a first character and finds it again by an alias",
   await expect(card.getByRole("heading", { name: "Celine Dubois", exact: true })).toBeVisible();
   await expect(card).toContainText("0 portraits");
   // An alias is how a reader refers to someone, so it has to be searchable.
-  const search = page.getByLabel("Search characters by name or alias", { exact: true });
+  const search = page.getByLabel("Search private profiles by name or alias", { exact: true });
   await search.fill("lark");
   await expect(card).toHaveCount(1);
   await search.fill("someone else entirely");
   await expect(page.locator("a.character-card")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "No character found.", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No private profile found.", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Clear search", exact: true }).click();
   await expect(page.locator("a.character-card")).toHaveCount(1);
 });

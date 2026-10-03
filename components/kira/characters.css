@@ -50,3 +50,45 @@
 .character-links .library-actions, .character-relationships .library-actions { margin-top: .75rem; }
 .character-fields { display: grid; gap: 1rem; min-width: 0; margin: 0; padding: 0; border: 0; }
 .character-fields:disabled { opacity: .7; }
+
+/* A gallery of the author's public collection sits apart from private profiles. */
+.published-cast { padding:28px; border:1px solid #57444a; border-radius:22px; background:radial-gradient(ellipse at 100% 0,#54364b55,transparent 70%),#211e20; min-width:0; }
+.character-private-heading h2 { font-family:var(--font-serif); font-size:31px; font-weight:400; margin:0 0 8px; }
+.character-private-heading p { color:#c4b7a9; font-size:13px; line-height:1.8; margin:0; }
+.published-cast-disclosure summary { cursor:pointer; padding:16px 4px; color:#dec3aa; font-size:14px; }
+.published-cast-disclosure summary:focus-visible { outline:2px solid #dfb58a; outline-offset:3px; }
+.published-cast-heading { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:18px; margin-bottom:24px; }
+.published-cast-heading .eyebrow { color:#d0af9b; font-size:10px; }
+.published-cast-heading h2 { font-family:var(--font-serif); font-size:38px; font-weight:400; line-height:1.1; margin:10px 0 0; }
+.published-cast-heading h2 em { color:#ddb9a7; }
+.published-cast-heading p { max-width:35ch; font-size:13px; line-height:1.8; color:#c2b4a8; margin:0; }
+.published-cast-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:14px; }
+.published-cast-card { display:grid; gap:12px; background:transparent; padding:0; text-align:left; border:0; cursor:pointer; min-width:0; color:#ecdfce; }
+.published-cast-picture { display:block; position:relative; aspect-ratio:3/4; border:1px solid #95737766; border-radius:12px; background:#2c2529; overflow:hidden; transition:border-color 150ms; }
+.published-cast-picture img { object-fit:contain; }
+.published-cast-card:hover .published-cast-picture { border-color:#d9bba6; }
+.published-cast-name { display:flex; justify-content:space-between; align-items:center; gap:10px; font-family:var(--font-serif); font-size:25px; }
+.published-cast-name svg { color:#cfb19a; }
+.published-cast-footnote { font-size:11px; line-height:1.8; color:#bba99c; margin:22px 0 0; }
+.published-art-unavailable { display:grid; place-items:center; height:100%; padding:12px; font-size:12px; line-height:1.7; color:#c2b4a8; }
+.published-cast-card:focus-visible { outline:2px solid #dfb58a; outline-offset:5px; border-radius:12px; }
+.published-art-dialog { max-width:560px; max-height:90dvh; overflow-y:auto; }
+.published-art-full { position:relative; width:min(100%,360px); aspect-ratio:3/4; margin-inline:auto; background:#28232a; border-radius:15px; overflow:hidden; }
+.published-art-full img { object-fit:contain; }
+.published-art-full p { padding:30px; color:#c2b4a8; font-size:13px; line-height:1.8; }
+.published-art-actions { display:flex; flex-wrap:wrap; gap:14px; justify-content:space-between; align-items:center; }
+.published-art-actions a { display:flex; align-items:center; gap:6px; font-size:12px; color:#d3bb9e; }
+.published-art-actions button { white-space:normal; height:auto; min-height:40px; }
+.character-card { padding:10px; border:1px solid #4d3e43; border-radius:18px; background:linear-gradient(150deg,#2c2227,#1b191a); }
+.character-card-info { padding:4px 6px 9px; }
+.character-cover-empty { background:radial-gradient(ellipse at 50% 30%,#60424d55,transparent 80%),#251f22; }
+.character-cover-empty span { font-family:var(--font-serif); font-size:60px; color:#cbb09d; }
+@media (max-width:1100px) { .published-cast-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:640px) {
+  .published-cast { padding:20px; border-radius:17px; }
+  .published-cast-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 12px; }
+  .published-cast-heading h2 { font-size:33px; }
+  .published-art-dialog { padding:20px; }
+  .published-art-full { width:min(100%,250px); }
+}
+@media (prefers-reduced-motion:reduce) { .published-cast-picture { transition:none; } }

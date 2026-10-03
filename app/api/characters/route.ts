@@ -4,6 +4,7 @@ import { getWorkspaceRole } from "@/lib/auth/workspace-role";
 import { libraryFailure, libraryJson, privateHeaders, requireLibraryEditor } from "@/lib/manuscripts/http";
 import { characterProfileInputSchema } from "@/lib/characters/contract";
 import { createCharacterRepository } from "@/lib/characters/repository";
+import { authorArtwork } from "@/lib/author-artwork";
 
 export const runtime = "nodejs";
 
@@ -13,7 +14,7 @@ export async function GET() {
   try {
     const session = await requireWorkspaceSession();
     const repo = createCharacterRepository(session.supabase, session.authorId);
-    return NextResponse.json({ role: await getWorkspaceRole(session), profiles: await repo.listProfiles() }, { headers: privateHeaders });
+    return NextResponse.json({ role: await getWorkspaceRole(session), profiles: await repo.listProfiles(), publishedArtwork: authorArtwork(session.authorId) }, { headers: privateHeaders });
   } catch (error) { return libraryFailure(error); }
 }
 

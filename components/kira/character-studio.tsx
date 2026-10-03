@@ -11,6 +11,7 @@ import { useWorkspace } from "@/lib/db/demo-store";
 import { characterGallerySchema, type CharacterGallery, type GalleryProfile } from "@/lib/characters/contract";
 import { LibraryRequestError, useLibrary } from "./library-provider";
 import { CharacterDetailsForm, CharacterSourceLinker } from "./character-forms";
+import { PublishedCastGallery } from "./published-cast-gallery";
 import "./characters.css";
 
 export function CharacterStudio() {
@@ -52,6 +53,7 @@ function ConnectedCharacterStudio() {
   const [data, setData] = useState<CharacterGallery | null>(null);
   const [loading, setLoading] = useState(true); const [error, setError] = useState("");
   const [query, setQuery] = useState(""); const [adding, setAdding] = useState(false);
+  const [initialName, setInitialName] = useState("");
   const mounted = useRef(true);
   const load = useCallback(async () => {
     if (!mounted.current) return;
@@ -75,13 +77,14 @@ function ConnectedCharacterStudio() {
   const editable = data?.role !== "viewer";
   return <div className="character-page">
     <div className="page-heading"><StudioHeading />
-      {data && editable && <Button onClick={() => setAdding(true)}><Plus size={16} /> {formDrafts["character:new"] ? "Resume new character" : "Add character"}</Button>}</div>
+      {data && editable && <Button onClick={() => { setInitialName(""); setAdding(true); }}><Plus size={16} /> {formDrafts["character:new"] ? "Resume new character" : "Add character"}</Button>}</div>
     {loading && !data && <p role="status">Opening your Character Studio…</p>}
     {error && <div role="alert" className="library-error"><p>{error}</p><Button variant="outline" onClick={() => void load()}>Try again</Button></div>}
     {data && <>
-      {profiles.length > 0 && <div className="catalog-toolbar"><div className="catalog-search"><Search size={15} />
-        <Input aria-label="Search characters by name or alias" value={query} onChange={event => setQuery(event.target.value)} placeholder="Find a character…" /></div>
-        <span className="quiet-note">{profiles.length} {profiles.length === 1 ? "character" : "characters"}</span></div>}
+      {!profiles.length && <PublishedCastGallery artwork={data.publishedArtwork} editable={editable} hasDraft={Boolean(formDrafts["character:new"])} onCreate={name => { setInitialName(formDrafts["character:new"] ? "" : name); setAdding(true); }} />}
+      {profiles.length > 0 && <><div className="character-private-heading"><h2>Your private character profiles</h2><p>Open a profile for your portraits, notes, relationships and book links.</p></div><div className="catalog-toolbar"><div className="catalog-search"><Search size={15} />
+        <Input aria-label="Search private profiles by name or alias" value={query} onChange={event => setQuery(event.target.value)} placeholder="Find a private profile…" /></div>
+        <span className="quiet-note">{profiles.length} {profiles.length === 1 ? "private profile" : "private profiles"}</span></div></>}
       <div className="character-grid">{matches.map(profile => <Link key={profile.id} href={`/characters/${profile.id}`} className="character-card">
         <CharacterCover profile={profile} />
         <div className="character-card-info">
@@ -94,16 +97,17 @@ function ConnectedCharacterStudio() {
         </div>
       </Link>)}</div>
       {!matches.length && <div className="empty-state"><Users size={30} />
-        <h2>{profiles.length ? "No character found." : "Your cast starts here."}</h2>
+        <h2>{profiles.length ? "No private profile found." : "Your cast starts here."}</h2>
         <p>{profiles.length ? "Try another name or one of their other names." : "Add a character, then keep their portraits and your notes in one place. Nothing is published, and an image is never treated as proof of a fact in your book."}</p>
         {profiles.length > 0 && <Button variant="outline" onClick={() => setQuery("")}>Clear search</Button>}</div>}
+      {profiles.length > 0 && data.publishedArtwork.length > 0 && <details className="published-cast-disclosure"><summary>Your published collection · {data.publishedArtwork.length} familiar faces</summary><PublishedCastGallery artwork={data.publishedArtwork} editable={editable} hasDraft={Boolean(formDrafts["character:new"])} onCreate={name => { setInitialName(formDrafts["character:new"] ? "" : name); setAdding(true); }} /></details>}
       {editable && <section className="character-section" aria-labelledby="link-source-heading"><h2 id="link-source-heading">Connect a manuscript character</h2><Suspense fallback={<p>Opening source choices…</p>}><CharacterSourceLinker profiles={profiles} onSaved={() => void load()} /></Suspense></section>}
       <p className="catalog-footnote">Portraits stay private to your workspace and open through short-lived private links. Location details in an image file are removed before it is kept.</p>
     </>}
     <Dialog open={adding} onOpenChange={setAdding}><DialogContent className="library-dialog" aria-labelledby="add-character-title">
       <DialogHeader><DialogTitle id="add-character-title">Add a character</DialogTitle>
         <DialogDescription>A name is enough to start. Portraits, notes and book links come next.</DialogDescription></DialogHeader>
-      <CharacterDetailsForm onClose={() => setAdding(false)} onSaved={id => { setAdding(false); const search = new URLSearchParams(window.location.search); router.push(`/characters/${id}${search.size ? `?${search.toString()}` : ""}`); }} />
+      <CharacterDetailsForm initialName={initialName} onClose={() => setAdding(false)} onSaved={id => { setAdding(false); const search = new URLSearchParams(window.location.search); router.push(`/characters/${id}${search.size ? `?${search.toString()}` : ""}`); }} />
     </DialogContent></Dialog>
   </div>;
 }

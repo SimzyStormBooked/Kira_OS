@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const readingSchema = z.object({
   id: z.uuid(), version: z.number().int().positive(),
-  status: z.enum(["uploading", "queued", "processing", "ready", "failed"]),
+  status: z.enum(["uploading", "queued", "processing", "ready", "failed", "withdrawn"]),
   completed_chunks: z.number().int().nonnegative(), chunk_count: z.number().int().nonnegative(),
   job_state: z.enum(["queued", "running", "paused", "needs_attention", "complete"]).nullable(),
 });
@@ -11,15 +11,18 @@ export const resumeBookSchema = z.object({
 });
 export const resumeAnswerSchema = z.object({ id: z.uuid(), title: z.string().nullable(), completed_at: z.string().nullable(), created_at: z.string() });
 export const resumeShowcaseSchema = z.object({ id: z.uuid(), display_name: z.string(), cover_url: z.string().nullable() });
+export const artworkSchema = z.object({ id: z.string(), name: z.string(), image_url: z.string(), alt: z.string(), collection: z.string(), source_url: z.url() });
 export const workspaceResumeSchema = z.object({
   books: resumeBookSchema.extend({ reading: readingSchema.nullable() }).array().max(2),
   answer: resumeAnswerSchema.nullable(),
   showcase: resumeShowcaseSchema.array().max(6),
+  artwork: artworkSchema.array().max(6).default([]),
 });
 export type WorkspaceResume = z.infer<typeof workspaceResumeSchema>;
 
 export function resumeReadingLabel(reading: WorkspaceResume["books"][number]["reading"]) {
   if (!reading) return "No manuscript saved";
+  if (reading.status === "withdrawn") return "Manuscript withdrawn from use";
   if (reading.status === "ready") return "Knowledge ready";
   if (reading.job_state === "paused") return "Reading paused";
   if (reading.status === "failed" || reading.job_state === "needs_attention") return "Reading needs attention";
@@ -27,4 +30,11 @@ export function resumeReadingLabel(reading: WorkspaceResume["books"][number]["re
   if (reading.status === "uploading") return "Upload needs to finish";
   if (reading.status === "processing") return "Check reading progress";
   return "Ready to start reading";
+}
+
+export function resumeBookHref(book: WorkspaceResume["books"][number]) {
+  const base = `/universe/${book.slug}`;
+  if (book.reading?.status === "ready") return `${base}?knowledge=characters#book-knowledge`;
+  if (!book.reading || book.reading.status === "withdrawn") return base;
+  return `${base}#reading-status`;
 }

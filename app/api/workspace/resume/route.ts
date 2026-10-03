@@ -4,9 +4,10 @@ import { requireWorkspaceSession, WorkspaceAccessError } from "@/lib/auth/sessio
 import { getWorkspaceRole } from "@/lib/auth/workspace-role";
 import { resumeAnswerSchema, resumeBookSchema, workspaceResumeSchema } from "@/lib/workspace-resume";
 import { createCharacterRepository } from "@/lib/characters/repository";
+import { authorArtwork } from "@/lib/author-artwork";
 
 const headers = { "Cache-Control": "private, no-store, max-age=0", "Referrer-Policy": "no-referrer" };
-const manuscriptSchema = z.object({ id: z.uuid(), version: z.number().int().positive(), status: z.enum(["uploading", "queued", "processing", "ready", "failed"]), completed_chunks: z.number().int().nonnegative(), chunk_count: z.number().int().nonnegative() });
+const manuscriptSchema = z.object({ id: z.uuid(), version: z.number().int().positive(), status: z.enum(["uploading", "queued", "processing", "ready", "failed", "withdrawn"]), completed_chunks: z.number().int().nonnegative(), chunk_count: z.number().int().nonnegative() });
 const jobSchema = z.object({ state: z.enum(["queued", "running", "paused", "needs_attention", "complete"]) });
 function check(error: unknown) { if (error) throw new Error("Resume summary unavailable"); }
 
@@ -31,7 +32,7 @@ export async function GET() {
       check(job.error);
       return { ...book, reading: { ...reading, job_state: jobSchema.nullable().parse(job.data)?.state ?? null } };
     }));
-    return NextResponse.json(workspaceResumeSchema.parse({ books, answer: resumeAnswerSchema.nullable().parse(answerRow.data), showcase }), { headers });
+    return NextResponse.json(workspaceResumeSchema.parse({ books, answer: resumeAnswerSchema.nullable().parse(answerRow.data), showcase, artwork: authorArtwork(authorId) }), { headers });
   } catch (error) {
     if (error instanceof WorkspaceAccessError) return NextResponse.json({ error: error.message }, { status: error.status, headers });
     return NextResponse.json({ error: "Your saved work could not be loaded. Please try again." }, { status: 503, headers });

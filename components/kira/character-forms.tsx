@@ -22,10 +22,10 @@ export function useCharacterDraft(key: string, label: string, initial: Record<st
     clear: () => updateFormDraft(key, label, null) };
 }
 
-export function CharacterDetailsForm({ profile, onSaved, onClose }: { profile?: GalleryProfile; onSaved: (id: string) => void; onClose: () => void }) {
+export function CharacterDetailsForm({ profile, initialName = "", onSaved, onClose }: { profile?: GalleryProfile; initialName?: string; onSaved: (id: string) => void; onClose: () => void }) {
   const { request } = useLibrary();
   const { values, changed, change, clear, storageFailed } = useCharacterDraft(profile ? `character:${profile.id}:edit` : "character:new", profile ? `Your edits to ${profile.display_name}` : "Your new character", {
-    displayName: profile?.display_name ?? "", aliases: profile?.aliases.join(", ") ?? "", summary: profile?.summary ?? "", expectedVersion: String(profile?.version ?? ""),
+    displayName: profile?.display_name ?? initialName, aliases: profile?.aliases.join(", ") ?? "", summary: profile?.summary ?? "", expectedVersion: String(profile?.version ?? ""),
   });
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   async function submit(event: FormEvent) {

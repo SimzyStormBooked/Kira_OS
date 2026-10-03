@@ -16,6 +16,7 @@ export function portraitFormat(filename: string, declaredType: string): Portrait
 }
 
 import { z } from "zod";
+import { artworkSchema } from "@/lib/workspace-resume";
 
 export const PORTRAIT_URL_TTL_SECONDS = 300;
 const name = z.string().trim().min(1).max(120);
@@ -47,6 +48,7 @@ export const galleryProfileSchema = z.object({
 export const characterGallerySchema = z.object({
   role: z.enum(["owner", "editor", "viewer"]),
   profiles: z.array(galleryProfileSchema),
+  publishedArtwork: artworkSchema.array().max(6).default([]),
 });
 export const characterNoteSchema = z.object({
   id: z.uuid(), kind: z.enum(["author_confirmed", "visual_inspiration"]), body: z.string(),

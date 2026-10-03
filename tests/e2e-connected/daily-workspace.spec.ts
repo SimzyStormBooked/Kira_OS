@@ -45,7 +45,8 @@ test("home resumes saved work and first steps link to persistent book knowledge 
   await page.reload();
   await expect(page.getByRole("button", { name: "Story Arc", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("link", { name: "Explore what Raven learned", exact: true })).toBeVisible();
-  await page.getByText("Add another manuscript version", { exact: true }).click();
+  // Next can retain an earlier route tree; click the visible current disclosure.
+  await page.getByText("Add another manuscript version", { exact: true }).filter({ visible: true }).click();
   await expect(page.getByLabel("Manuscript file", { exact: true }).filter({ visible: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("daily-book-workspace.png"), fullPage: true });
   expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);

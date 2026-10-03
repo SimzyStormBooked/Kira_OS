@@ -5,7 +5,8 @@ vi.mock("@/lib/auth/workspace-role", () => ({ getWorkspaceRole: vi.fn() }));
 import { requireWorkspaceSession, WorkspaceAccessError } from "@/lib/auth/session";
 import { getWorkspaceRole } from "@/lib/auth/workspace-role";
 import { GET } from "@/app/api/workspace/resume/route";
-import { resumeReadingLabel } from "@/lib/workspace-resume";
+import { resumeBookHref, resumeReadingLabel } from "@/lib/workspace-resume";
+import { authorArtwork } from "@/lib/author-artwork";
 
 const authorId = "10000000-0000-4000-8000-000000000001";
 const bookId = "20000000-0000-4000-8000-000000000001";
@@ -47,6 +48,7 @@ describe("private home resume summary", () => {
     expect(body.books[0].reading).toEqual({ id: manuscriptId, version: 2, status: "processing", completed_chunks: 3, chunk_count: 8, job_state: "paused" });
     expect(body.answer).toEqual({ id: answerId, title: "An answer", completed_at: date, created_at: date });
     expect(body.showcase).toEqual([]);
+    expect(body.artwork).toHaveLength(6);
     expect(JSON.stringify(body)).not.toContain("PRIVATE");
     expect(getWorkspaceRole).toHaveBeenCalledWith(session);
     for (const table of Object.keys(records)) expect(calls).toContainEqual({ table, operation: "eq", args: ["author_id", authorId] });
@@ -74,5 +76,26 @@ describe("private home resume summary", () => {
     expect(resumeReadingLabel({ ...reading, job_state: "paused" })).toBe("Reading paused");
     expect(resumeReadingLabel({ ...reading, job_state: "running" })).toBe("Reading in the background");
     expect(resumeReadingLabel({ ...reading, status: "ready", job_state: "complete" })).toBe("Knowledge ready");
+  });
+  it("keeps Kira's published cast out of other authors' workspaces", () => {
+    expect(authorArtwork("90000000-0000-4000-8000-000000000001")).toEqual([]);
+    expect(authorArtwork(authorId).map(art => art.name)).toEqual(["Rayla", "Avery", "Cosmo", "Ax", "Lex", "Falcon"]);
+    for (const art of authorArtwork(authorId)) {
+      expect(art.image_url).toMatch(/^\/artwork\/kira\/[a-z]+\.jpg$/);
+      expect(art.source_url).toBe("https://www.kirastanleyauthor.com/product-page/syndicate-mafia-character-stickers");
+    }
+  });
+  it("keeps the home summary available after the latest manuscript is withdrawn", async () => {
+    const previous = records.manuscripts;
+    try {
+      records.manuscripts = { ...(previous as Record<string, unknown>), status: "withdrawn" };
+      const response = await GET();
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.artwork).toHaveLength(6);
+      expect(body.answer.id).toBe(answerId);
+      expect(resumeReadingLabel(body.books[0].reading)).toBe("Manuscript withdrawn from use");
+      expect(resumeBookHref(body.books[0])).toBe("/universe/a-book");
+    } finally { records.manuscripts = previous; }
   });
 });
